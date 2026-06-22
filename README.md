@@ -128,16 +128,21 @@ FROM_NAME=Blink Japan Co., Ltd.
 
 ## Vercel デプロイ（Phase 6）
 
-### 1. Vercel CLI でデプロイ
+### GitHub リポジトリ
 
-```bash
-npm i -g vercel   # または npx vercel
-vercel login
-cd crowdscout-japan
-vercel --prod
-```
+https://github.com/kikutani44-hash/crowdscout-japan
 
-### 2. 環境変数（Vercel Dashboard → Settings → Environment Variables）
+`main` ブランチへの push で Vercel が自動デプロイします（GitHub 連携設定後）。
+
+### Vercel × GitHub 連携手順
+
+1. [Vercel Import](https://vercel.com/new/import?s=https%3A%2F%2Fgithub.com%2Fkikutani44-hash%2Fcrowdscout-japan&project-name=crowdscout-japan&framework=nextjs) を開く
+2. GitHub アカウント連携 → リポジトリ `crowdscout-japan` を選択
+3. Framework: **Next.js**（自動検出）、Root Directory: **`.`**
+4. Environment Variables を設定（下表参照）
+5. **Deploy** をクリック
+
+### 環境変数（Vercel Dashboard → Settings → Environment Variables）
 
 | 変数 | 必須 | 説明 |
 |------|------|------|
