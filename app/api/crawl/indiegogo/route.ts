@@ -5,10 +5,10 @@ import path from "path";
 
 const execFileAsync = promisify(execFile);
 
-import { isVercelRuntime, pythonUnavailableResponse } from "@/lib/vercel-runtime";
+import { isServerlessRuntime, pythonUnavailableResponse } from "@/lib/serverless-runtime";
 
 export async function POST(request: Request) {
-  if (isVercelRuntime()) {
+  if (isServerlessRuntime()) {
     return NextResponse.json(pythonUnavailableResponse("Indiegogoクロール"), { status: 503 });
   }
   try {

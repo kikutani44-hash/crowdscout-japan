@@ -29,10 +29,10 @@ async function runJapanCfCheck(query: string): Promise<JapanCfResult> {
   return parsed;
 }
 
-import { isVercelRuntime, pythonUnavailableResponse } from "@/lib/vercel-runtime";
+import { isServerlessRuntime, pythonUnavailableResponse } from "@/lib/serverless-runtime";
 
 export async function POST(request: Request) {
-  if (isVercelRuntime()) {
+  if (isServerlessRuntime()) {
     return NextResponse.json(pythonUnavailableResponse("日本CFチェック"), { status: 503 });
   }
   try {

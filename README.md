@@ -44,7 +44,7 @@ supabase/      # DB スキーマ
 | 3 | Python クロール・実データ取得 | ✅ 完了 |
 | 4 | 日本CF自動チェック・スコアリング | ✅ 完了 |
 | 5 | SendGrid・ダッシュボード | ✅ 完了 |
-| 6 | Vercel デプロイ | ✅ 完了 |
+| 6 | Netlify デプロイ | ✅ 完了 |
 
 ## Supabase セットアップ
 
@@ -126,9 +126,9 @@ FROM_NAME=Blink Japan Co., Ltd.
 - 🇯🇵 優先オファー候補リスト
 - 最近追加された案件
 
-## Vercel デプロイ（Phase 6）
+## Netlify デプロイ（Phase 6）
 
-**Vercel CLI は使いません。** [vercel.com](https://vercel.com) のダッシュボードから手動でデプロイします。
+GitHub リポジトリと連携して [Netlify](https://www.netlify.com) にデプロイします。設定は `netlify.toml` に記載済みです。
 
 ### GitHub リポジトリ
 
@@ -136,30 +136,24 @@ https://github.com/kikutani44-hash/crowdscout-japan
 
 ### 初回デプロイ（ダッシュボード操作）
 
-1. [vercel.com/dashboard](https://vercel.com/dashboard) にログイン
-2. **Add New…** → **Project** をクリック
-3. **Import Git Repository** で GitHub を連携（未連携の場合）
-4. リポジトリ **`kikutani44-hash/crowdscout-japan`** を選択 → **Import**
-5. プロジェクト設定を確認:
-   - **Framework Preset**: Next.js（自動検出）
-   - **Root Directory**: `./`（変更なし）
-   - **Build Command**: `npm run build`（デフォルト）
-   - **Output Directory**: Next.js デフォルト
-6. **Environment Variables** に必要な変数を追加（下表）
-7. **Deploy** をクリック
-8. 完了後、表示される **Visit** リンクが本番 URL（例: `https://crowdscout-japan.vercel.app`）
+1. [app.netlify.com](https://app.netlify.com) にログイン
+2. **Add new site** → **Import an existing project**
+3. **Deploy with GitHub** を選択し、GitHub アカウントを連携（未連携の場合）
+4. リポジトリ **`kikutani44-hash/crowdscout-japan`** を選択
+5. ビルド設定を確認（`netlify.toml` から自動読み込み）:
+   - **Build command**: `npm run build`
+   - **Publish directory**: `.next`
+   - **Plugin**: `@netlify/plugin-nextjs`
+6. **Environment variables** に必要な変数を追加（下表）
+7. **Deploy crowdscout-japan** をクリック
+8. 完了後、表示される **Visit** リンクが本番 URL（例: `https://crowdscout-japan.netlify.app`）
 
-### 再デプロイ（手動）
+### 再デプロイ
 
-コードを GitHub に push したあと、ダッシュボードから再デプロイする場合:
+- `main` ブランチへの push で自動デプロイ（Git 連携時）
+- 手動: **Deploys** → **Trigger deploy** → **Deploy site**
 
-1. [vercel.com/dashboard](https://vercel.com/dashboard) → プロジェクト **crowdscout-japan** を開く
-2. **Deployments** タブ → 最新デプロイの **⋯** メニュー → **Redeploy**
-3. または **Settings** → **Git** で **Production Branch** が `main` になっていることを確認し、push 時の自動デプロイを有効化
-
-> 自動デプロイを有効にすると、`main` への push ごとに Vercel がビルドします。完全手動のみにしたい場合は **Settings → Git → Deploy Hooks** や自動デプロイ設定をオフにしてください。
-
-### 環境変数（Settings → Environment Variables）
+### 環境変数（Site configuration → Environment variables）
 
 | 変数 | 必須 | 説明 |
 |------|------|------|
@@ -171,13 +165,12 @@ https://github.com/kikutani44-hash/crowdscout-japan
 | `FROM_EMAIL` | 任意 | 送信元（例: `kikuya@blinkjapan.co.jp`） |
 | `FROM_NAME` | 任意 | 送信者名（例: `Blink Japan Co., Ltd.`） |
 
-変数追加・変更後は **Deployments → Redeploy** で反映してください。
+変数追加・変更後は **Deploys → Trigger deploy** で反映してください。
 
 ### 本番環境の制限
 
-- **Python クロール / 日本CFチェック** は Vercel 上では動作しません（ローカル実行 → Supabase 同期）
+- **Python クロール / 日本CFチェック** は Netlify 上では動作しません（ローカル実行 → Supabase 同期）
 - Supabase 未設定時は `data/projects_merged.json` のスナップショットを表示（読み取り専用）
-- リージョン: 東京 (`hnd1`) — `vercel.json` で設定済み
 
 ---
 

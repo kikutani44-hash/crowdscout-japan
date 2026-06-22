@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isSendGridConfigured, sendOfferLetter } from "@/lib/mailer";
 import { findLocalProject, updateLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import { isVercelRuntime } from "@/lib/vercel-runtime";
+import { isServerlessRuntime } from "@/lib/serverless-runtime";
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -66,13 +66,13 @@ export async function POST(request: Request) {
       to: result.to,
       subject: result.subject,
       offer_status: "交渉中",
-      persisted: isSupabaseConfigured() || !isVercelRuntime(),
+      persisted: isSupabaseConfigured() || !isServerlessRuntime(),
       message: result.demo
         ? "デモ送信完了（SENDGRID_API_KEY 未設定のため実際のメールは送信されていません）"
         : "オファーメールを送信しました",
       warning:
-        isVercelRuntime() && !isSupabaseConfigured()
-          ? "Vercel 本番環境では Supabase 未設定のため、オファー状況の保存はこのセッションのみ有効です"
+        isServerlessRuntime() && !isSupabaseConfigured()
+          ? "Netlify 本番環境では Supabase 未設定のため、オファー状況の保存はこのセッションのみ有効です"
           : undefined,
     });
   } catch (error) {
