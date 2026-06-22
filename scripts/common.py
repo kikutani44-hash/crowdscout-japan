@@ -156,51 +156,40 @@ def save_to_supabase(projects: list[dict[str, Any]]) -> int:
     url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
     if not url or not key:
+        print("[supabase] skipped (NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set)")
         return 0
 
     try:
         import requests
     except ImportError:
+        print("[supabase] skipped (requests not installed)")
         return 0
 
     headers = {
         "apikey": key,
         "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates",
+        "Prefer": "resolution=merge-duplicates,return=minimal",
     }
-    saved = 0
+
+    rows: list[dict[str, Any]] = []
     for project in projects:
-        row = {**project, "updated_at": utc_now_iso()}
-        # Upsert by original_url
-        resp = requests.get(
-            f"{url.rstrip('/')}/rest/v1/projects",
-            headers=headers,
-            params={"original_url": f"eq.{project['original_url']}", "select": "id"},
-            timeout=30,
-        )
-        existing = resp.json() if resp.ok else []
-        if existing:
-            project_id = existing[0]["id"]
-            patch = requests.patch(
-                f"{url.rstrip('/')}/rest/v1/projects",
-                headers=headers,
-                params={"id": f"eq.{project_id}"},
-                json=row,
-                timeout=30,
-            )
-            if patch.ok:
-                saved += 1
-        else:
-            post = requests.post(
-                f"{url.rstrip('/')}/rest/v1/projects",
-                headers=headers,
-                json=row,
-                timeout=30,
-            )
-            if post.ok:
-                saved += 1
-    return saved
+        row = {k: v for k, v in project.items() if k != "id"}
+        row["updated_at"] = utc_now_iso()
+        rows.append(row)
+
+    resp = requests.post(
+        f"{url.rstrip('/')}/rest/v1/projects",
+        headers=headers,
+        params={"on_conflict": "original_url"},
+        json=rows,
+        timeout=120,
+    )
+    if not resp.ok:
+        print(f"[supabase] upsert failed: {resp.status_code} {resp.text[:500]}")
+        return 0
+
+    return len(rows)
 
 
 def create_browser(playwright, headless: bool = True):

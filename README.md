@@ -46,11 +46,123 @@ supabase/      # DB スキーマ
 | 5 | SendGrid・ダッシュボード | ✅ 完了 |
 | 6 | Netlify デプロイ | ✅ 完了 |
 
-## Supabase セットアップ
+## Supabase セットアップ（アカウント作成〜本番反映）
 
-1. [supabase.com](https://supabase.com) でプロジェクト作成
-2. SQL Editor で `supabase/schema.sql` を実行
-3. `.env.local` に URL / キーを設定
+CrowdScout Japan の案件データを Supabase（PostgreSQL）に保存し、Netlify 本番サイトから読み込む手順です。
+
+### Step 1: Supabase アカウント作成
+
+1. [supabase.com](https://supabase.com) を開く
+2. **Start your project** → GitHub / Google / メールでサインアップ
+3. ダッシュボード（[supabase.com/dashboard](https://supabase.com/dashboard)）にログイン
+
+### Step 2: プロジェクト作成
+
+1. **New project** をクリック
+2. 設定:
+   - **Name**: `crowdscout-japan`（任意）
+   - **Database Password**: 強力なパスワードを設定（必ず控える）
+   - **Region**: **Northeast Asia (Tokyo)** を選択（日本向け）
+3. **Create new project** → 1〜2分待つ（DB プロビジョニング）
+
+### Step 3: テーブル作成（SQL）
+
+1. 左メニュー **SQL Editor** → **New query**
+2. リポジトリの `supabase/schema.sql` の内容をすべてコピー＆ペースト
+3. **Run** をクリック → `Success. No rows returned` と表示されれば OK
+
+### Step 4: API キー取得
+
+1. 左メニュー **Project Settings**（歯車）→ **API**
+2. 以下を控える:
+
+| 項目 | 環境変数名 |
+|------|-----------|
+| Project URL | `NEXT_PUBLIC_SUPABASE_URL` |
+| anon public | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| service_role secret | `SUPABASE_SERVICE_ROLE_KEY` |
+
+> **service_role** は秘密鍵です。GitHub に commit しないでください。Netlify の Environment variables にのみ設定します。
+
+### Step 5: ローカル環境変数
+
+```bash
+cd crowdscout-japan
+cp .env.local.example .env.local
+```
+
+`.env.local` を編集:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi...
+```
+
+### Step 6: クロールデータを Supabase に同期
+
+```bash
+# Python 依存（初回のみ）
+pip3 install -r scripts/requirements.txt
+
+# 既存の projects_merged.json をアップロード
+npm run sync:supabase
+# または
+python3 scripts/sync_to_supabase.py
+```
+
+成功例:
+
+```
+[sync] 11 projects from data/projects_merged.json
+[sync] OK: 11/11 projects upserted at 2026-06-22T...
+```
+
+Supabase ダッシュボード → **Table Editor** → **projects** で 11 件表示を確認。
+
+以降、クロール実行時も自動同期されます:
+
+```bash
+python3 scripts/run_crawl.py --ks-pages 15 --igg-max 15
+```
+
+### Step 7: Netlify に環境変数を設定
+
+1. [app.netlify.com](https://app.netlify.com) → サイト **crowdscout-japan** を開く
+2. **Site configuration** → **Environment variables** → **Add a variable**
+3. 以下 3 つを追加（Scopes: **All** または **Production**）:
+
+| Key | Value |
+|-----|-------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Step 4 の Project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Step 4 の anon public |
+| `SUPABASE_SERVICE_ROLE_KEY` | Step 4 の service_role |
+
+4. **Deploys** → **Trigger deploy** → **Deploy site**（環境変数反映のため再デプロイ必須）
+
+### Step 8: 本番 URL で確認
+
+1. Netlify の **Visit** リンク（例: `https://crowdscout-japan.netlify.app`）を開く
+2. トップページに Supabase の 11 件（クロール結果）が表示される
+3. オファー状況の変更・CF チェック結果も Supabase に永続化される
+
+### トラブルシューティング
+
+| 症状 | 対処 |
+|------|------|
+| 本番がサンプルデータのまま | Netlify の 3 つの Supabase 環境変数を確認 → 再デプロイ |
+| `sync:supabase` が 0 rows | `.env.local` の URL / service_role を確認 |
+| `upsert failed: 401` | service_role キーが誤っている |
+| `upsert failed: 42P01` | `schema.sql` を SQL Editor で未実行 |
+| RLS エラー | `schema.sql` の RLS ポリシー部分を再実行 |
+
+### データ更新フロー（運用）
+
+```
+ローカル: run_crawl.py → projects_merged.json + Supabase upsert
+         batch_check_japan_cf.py → 同上
+Netlify:  環境変数経由で Supabase から読み書き（永続化）
+```
 
 ## Python クロール（Phase 3）
 

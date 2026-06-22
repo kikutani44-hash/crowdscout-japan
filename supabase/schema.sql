@@ -33,3 +33,25 @@ create index if not exists idx_projects_score on projects (score desc);
 create index if not exists idx_projects_platform on projects (platform);
 create index if not exists idx_projects_offer_status on projects (offer_status);
 create unique index if not exists idx_projects_original_url on projects (original_url);
+
+-- Row Level Security (service_role bypasses RLS for server-side writes)
+alter table projects enable row level security;
+
+create policy "projects_public_read"
+  on projects for select
+  to anon, authenticated
+  using (true);
+
+-- updated_at auto-touch on update
+create or replace function set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists projects_updated_at on projects;
+create trigger projects_updated_at
+  before update on projects
+  for each row execute function set_updated_at();

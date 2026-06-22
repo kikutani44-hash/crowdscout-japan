@@ -63,8 +63,12 @@ def main() -> int:
 
     merged = merge_outputs()
     print(f"[run_crawl] merged output -> {merged}")
-    return 0
 
+    sync_code = run_script("sync_to_supabase.py", [])
+    if sync_code != 0:
+        print("[run_crawl] supabase sync skipped or failed (check .env.local)")
+
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())
