@@ -128,21 +128,38 @@ FROM_NAME=Blink Japan Co., Ltd.
 
 ## Vercel デプロイ（Phase 6）
 
+**Vercel CLI は使いません。** [vercel.com](https://vercel.com) のダッシュボードから手動でデプロイします。
+
 ### GitHub リポジトリ
 
 https://github.com/kikutani44-hash/crowdscout-japan
 
-`main` ブランチへの push で Vercel が自動デプロイします（GitHub 連携設定後）。
+### 初回デプロイ（ダッシュボード操作）
 
-### Vercel × GitHub 連携手順
+1. [vercel.com/dashboard](https://vercel.com/dashboard) にログイン
+2. **Add New…** → **Project** をクリック
+3. **Import Git Repository** で GitHub を連携（未連携の場合）
+4. リポジトリ **`kikutani44-hash/crowdscout-japan`** を選択 → **Import**
+5. プロジェクト設定を確認:
+   - **Framework Preset**: Next.js（自動検出）
+   - **Root Directory**: `./`（変更なし）
+   - **Build Command**: `npm run build`（デフォルト）
+   - **Output Directory**: Next.js デフォルト
+6. **Environment Variables** に必要な変数を追加（下表）
+7. **Deploy** をクリック
+8. 完了後、表示される **Visit** リンクが本番 URL（例: `https://crowdscout-japan.vercel.app`）
 
-1. [Vercel Import](https://vercel.com/new/import?s=https%3A%2F%2Fgithub.com%2Fkikutani44-hash%2Fcrowdscout-japan&project-name=crowdscout-japan&framework=nextjs) を開く
-2. GitHub アカウント連携 → リポジトリ `crowdscout-japan` を選択
-3. Framework: **Next.js**（自動検出）、Root Directory: **`.`**
-4. Environment Variables を設定（下表参照）
-5. **Deploy** をクリック
+### 再デプロイ（手動）
 
-### 環境変数（Vercel Dashboard → Settings → Environment Variables）
+コードを GitHub に push したあと、ダッシュボードから再デプロイする場合:
+
+1. [vercel.com/dashboard](https://vercel.com/dashboard) → プロジェクト **crowdscout-japan** を開く
+2. **Deployments** タブ → 最新デプロイの **⋯** メニュー → **Redeploy**
+3. または **Settings** → **Git** で **Production Branch** が `main` になっていることを確認し、push 時の自動デプロイを有効化
+
+> 自動デプロイを有効にすると、`main` への push ごとに Vercel がビルドします。完全手動のみにしたい場合は **Settings → Git → Deploy Hooks** や自動デプロイ設定をオフにしてください。
+
+### 環境変数（Settings → Environment Variables）
 
 | 変数 | 必須 | 説明 |
 |------|------|------|
@@ -151,10 +168,12 @@ https://github.com/kikutani44-hash/crowdscout-japan
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 推奨 | DB |
 | `SUPABASE_SERVICE_ROLE_KEY` | 推奨 | サーバー側 DB 操作 |
 | `SENDGRID_API_KEY` | 任意 | オファーメール送信 |
-| `FROM_EMAIL` | 任意 | 送信元 |
-| `FROM_NAME` | 任意 | 送信者名 |
+| `FROM_EMAIL` | 任意 | 送信元（例: `kikuya@blinkjapan.co.jp`） |
+| `FROM_NAME` | 任意 | 送信者名（例: `Blink Japan Co., Ltd.`） |
 
-### 3. 本番環境の制限
+変数追加・変更後は **Deployments → Redeploy** で反映してください。
+
+### 本番環境の制限
 
 - **Python クロール / 日本CFチェック** は Vercel 上では動作しません（ローカル実行 → Supabase 同期）
 - Supabase 未設定時は `data/projects_merged.json` のスナップショットを表示（読み取り専用）

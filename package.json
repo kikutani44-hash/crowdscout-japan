@@ -11,8 +11,7 @@
     "crawl:kickstarter": "python3 scripts/crawl_kickstarter.py",
     "crawl:indiegogo": "python3 scripts/crawl_indiegogo.py",
     "cf-check": "python3 scripts/batch_check_japan_cf.py",
-    "cf-check:one": "python3 scripts/check_japan_cf.py",
-    "deploy": "vercel deploy --prod"
+    "cf-check:one": "python3 scripts/check_japan_cf.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
