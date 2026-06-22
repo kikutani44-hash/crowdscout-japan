@@ -165,11 +165,12 @@ def save_to_supabase(projects: list[dict[str, Any]]) -> int:
         print("[supabase] skipped (requests not installed)")
         return 0
 
+    base = url.rstrip("/")
     headers = {
         "apikey": key,
         "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates,return=minimal",
+        "Prefer": "return=minimal",
     }
 
     rows: list[dict[str, Any]] = []
@@ -178,18 +179,49 @@ def save_to_supabase(projects: list[dict[str, Any]]) -> int:
         row["updated_at"] = utc_now_iso()
         rows.append(row)
 
+    bulk_headers = {**headers, "Prefer": "resolution=merge-duplicates,return=minimal"}
     resp = requests.post(
-        f"{url.rstrip('/')}/rest/v1/projects",
-        headers=headers,
+        f"{base}/rest/v1/projects",
+        headers=bulk_headers,
         params={"on_conflict": "original_url"},
         json=rows,
         timeout=120,
     )
-    if not resp.ok:
+    if resp.ok:
+        return len(rows)
+
+    if resp.status_code != 400 or "42P10" not in resp.text:
         print(f"[supabase] upsert failed: {resp.status_code} {resp.text[:500]}")
         return 0
 
-    return len(rows)
+    print("[supabase] bulk upsert unavailable (missing unique index), using row-by-row sync")
+    saved = 0
+    for row in rows:
+        lookup = requests.get(
+            f"{base}/rest/v1/projects",
+            headers=headers,
+            params={"original_url": f"eq.{row['original_url']}", "select": "id"},
+            timeout=30,
+        )
+        existing = lookup.json() if lookup.ok else []
+        if existing:
+            patch = requests.patch(
+                f"{base}/rest/v1/projects",
+                headers=headers,
+                params={"id": f"eq.{existing[0]['id']}"},
+                json=row,
+                timeout=30,
+            )
+            if patch.ok:
+                saved += 1
+        else:
+            post = requests.post(f"{base}/rest/v1/projects", headers=headers, json=row, timeout=30)
+            if post.ok:
+                saved += 1
+            else:
+                print(f"[supabase] insert failed: {post.status_code} {post.text[:200]}")
+
+    return saved
 
 
 def create_browser(playwright, headless: bool = True):
