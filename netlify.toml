@@ -2,8 +2,15 @@
   command = "npm run build"
   publish = ".next"
 
+[build.environment]
+  NODE_VERSION = "20"
+
+# Claude batch translation can take longer than the default 10s
+[functions]
+  node_bundler = "esbuild"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-[build.environment]
-  NODE_VERSION = "20"
+[functions."___netlify-server-handler"]
+  timeout = 26

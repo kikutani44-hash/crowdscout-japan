@@ -98,7 +98,10 @@ export function ProductCard({
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
           <h3 className="line-clamp-2 text-base font-bold leading-snug">
-            {isTranslating ? "翻訳中…" : displayTitle}
+            {displayTitle}
+            {isTranslating ? (
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">翻訳中…</span>
+            ) : null}
           </h3>
           {showEnglishTitle ? (
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{project.title}</p>
