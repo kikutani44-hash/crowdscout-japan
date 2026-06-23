@@ -11,16 +11,18 @@ Excluded: Games, Publishing, Art, Comics, Film & Video, Music, Theater, etc.
 from __future__ import annotations
 
 # Kickstarter discover `category_id` (parent categories to crawl)
+# HTML: /discover/advanced?category_id=N&sort=magic&page=1
 KICKSTARTER_CATEGORY_IDS: list[tuple[int, str]] = [
     (16, "Technology"),
     (7, "Design"),
-    (9, "Fashion"),
-    (10, "Food"),
-    (26, "Crafts"),
+    (11, "Fashion"),
 ]
 
-# Kickstarter-only crawl slugs (Technology / Design / Fashion / Food / Crafts)
-KICKSTARTER_DEMO_SLUGS = "technology,design,fashion,food,crafts"
+# Never crawl these Kickstarter parent category IDs
+BLOCKED_KICKSTARTER_CATEGORY_IDS = {12}  # Games
+
+# Kickstarter-only crawl slugs (Technology / Design / Fashion)
+KICKSTARTER_DEMO_SLUGS = "technology,design,fashion"
 
 EXCLUDED_PARENTS = {
     "Games",
@@ -149,7 +151,7 @@ KICKSTARTER_SLUGS: dict[str, tuple[int, str]] = {
     "design": (7, "Design"),
     "food": (10, "Food"),
     "kitchen": (10, "Food"),
-    "fashion": (9, "Fashion"),
+    "fashion": (11, "Fashion"),
     "crafts": (26, "Crafts"),
     "craft": (26, "Crafts"),
     "health": (16, "Technology"),
@@ -204,6 +206,9 @@ def resolve_kickstarter_categories(slugs: list[str] | None) -> list[tuple[int, s
             print(f"[category] unknown slug '{slug}', skipping")
             continue
         cat_id, label = entry
+        if cat_id in BLOCKED_KICKSTARTER_CATEGORY_IDS:
+            print(f"[category] blocked Games category_id={cat_id}, skipping")
+            continue
         if cat_id in seen_ids:
             continue
         seen_ids.add(cat_id)

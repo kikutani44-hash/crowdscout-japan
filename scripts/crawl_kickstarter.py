@@ -3,7 +3,14 @@
 Kickstarter successful projects crawler.
 
 Uses the public discover JSON endpoint via Playwright:
-  /discover/advanced.json?sort=most_funded&state=successful&page=N
+  /discover/advanced.json?category_id=N&sort=magic&page=N
+
+Categories crawled:
+  - Technology (category_id=16)
+  - Design (category_id=7)
+  - Fashion (category_id=11)
+
+Games (category_id=12) is never crawled.
 
 Filters (per spec):
   - pledged >= goal (state=successful)
@@ -36,13 +43,18 @@ from common import (
 )
 
 DISCOVER_BASE = "https://www.kickstarter.com/discover/advanced.json"
+DISCOVER_SORT = "magic"
+BLOCKED_CATEGORY_IDS = {12}  # Games — never crawl
 DEFAULT_CATEGORIES = KICKSTARTER_DEMO_SLUGS
 
 
 def build_discover_url(page_num: int, category_id: int | None = None) -> str:
+    """Build discover JSON URL matching Kickstarter advanced discover (sort=magic)."""
+    if category_id in BLOCKED_CATEGORY_IDS:
+        raise ValueError(f"category_id={category_id} is blocked (Games)")
+
     params: dict[str, Any] = {
-        "sort": "most_funded",
-        "state": "successful",
+        "sort": DISCOVER_SORT,
         "page": page_num,
     }
     if category_id:
@@ -61,17 +73,36 @@ def within_days_since_end(deadline_ts: int, max_days: int) -> bool:
 def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
     pledged = int(float(item.get("usd_pledged") or item.get("pledged") or 0))
     goal = int(float(item.get("goal") or 0))
+    state = str(item.get("state") or "")
+
     if pledged < MIN_RAISED_USD:
         return None
-    if goal > 0 and pledged < goal:
-        return None
-    if not within_days_since_end(int(item.get("deadline") or 0), MAX_DAYS_SINCE_END):
+
+    if state == "successful":
+        if goal > 0 and pledged < goal:
+            return None
+        if not within_days_since_end(int(item.get("deadline") or 0), MAX_DAYS_SINCE_END):
+            return None
+        status = "ended"
+    elif state == "live":
+        # sort=magic surfaces active campaigns — keep those with strong funding
+        status = "active"
+    else:
         return None
 
     category = item.get("category") or {}
     parent = category.get("parent_name") or ""
     child = category.get("name") or ""
     category_name = f"{parent}/{child}".strip("/") if parent else child
+
+    # Block Games / Comics / Publishing even if they appear in discover results
+    parent_lower = parent.lower()
+    if parent_lower in {"games", "comics", "publishing"}:
+        return None
+    cat_lower = category_name.lower()
+    if any(k in cat_lower for k in ("games/", "comics/", "publishing/", "tabletop game")):
+        return None
+
     creator = item.get("creator") or {}
     urls = item.get("urls") or {}
     web = urls.get("web") or {}
@@ -89,7 +120,7 @@ def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
             "backers": int(item.get("backers_count") or 0),
             "category": category_name or "Other",
             "country": item.get("country_displayable_name") or item.get("country"),
-            "status": "ended" if item.get("state") == "successful" else "active",
+            "status": status,
             "maker_website": (creator.get("urls") or {}).get("web", {}).get("user"),
             "created_at": utc_now_iso(),
         }
@@ -112,6 +143,9 @@ def crawl_kickstarter(
         page = context.new_page()
 
         for category_id, category_label in categories:
+            if category_id in BLOCKED_CATEGORY_IDS:
+                print(f"[kickstarter] skip blocked category: {category_label} (id={category_id})")
+                continue
             if limit and len(projects) >= limit:
                 break
             print(f"[kickstarter] category: {category_label} (id={category_id})")
@@ -180,7 +214,7 @@ def main() -> int:
         "--categories",
         type=str,
         default=DEFAULT_CATEGORIES,
-        help="Comma-separated slugs (default: technology,design,fashion,food,crafts)",
+        help="Comma-separated slugs (default: technology,design,fashion)",
     )
     parser.add_argument(
         "--replace",
