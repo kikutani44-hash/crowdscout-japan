@@ -34,7 +34,7 @@ def _load_demo_translations() -> dict[str, dict[str, str]]:
 def _anthropic_config() -> tuple[str, str]:
     load_dotenv(ENV_PATH, override=True)
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
     return api_key, model
 
 
