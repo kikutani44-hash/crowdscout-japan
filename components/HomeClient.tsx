@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ContactModal } from "@/components/ContactModal";
 import { FilterBar } from "@/components/FilterBar";
 import { Header } from "@/components/Header";
@@ -23,7 +23,10 @@ import {
   compareProjectsByLiveMomentum,
   matchesLiveHotFilter,
 } from "@/lib/project-momentum";
+import { needsJapaneseTranslation } from "@/lib/project-translation";
 import { usdToJpy } from "@/lib/utils";
+
+const TRANSLATE_BATCH_SIZE = 10;
 
 interface HomeClientProps {
   initialProjects: Project[];
@@ -35,6 +38,51 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   const [offerProject, setOfferProject] = useState<Project | null>(null);
   const [cfProject, setCfProject] = useState<Project | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [translatingIds, setTranslatingIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const missing = initialProjects.filter(needsJapaneseTranslation);
+    if (missing.length === 0) return;
+
+    let cancelled = false;
+    setTranslatingIds(new Set(missing.map((p) => p.id)));
+
+    (async () => {
+      for (let i = 0; i < missing.length; i += TRANSLATE_BATCH_SIZE) {
+        if (cancelled) break;
+        const batch = missing.slice(i, i + TRANSLATE_BATCH_SIZE).map((p) => p.id);
+        try {
+          const res = await fetch("/api/translate/batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ projectIds: batch }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+
+          if (data.projects?.length) {
+            const byId = new Map<string, Project>(
+              data.projects.map((p: Project) => [p.id, p])
+            );
+            setProjects((prev) => prev.map((p) => byId.get(p.id) ?? p));
+            setTranslatingIds((prev) => {
+              const next = new Set(prev);
+              batch.forEach((id) => next.delete(id));
+              return next;
+            });
+          }
+        } catch (err) {
+          console.error("[auto-translate]", err);
+          break;
+        }
+      }
+      if (!cancelled) setTranslatingIds(new Set());
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialProjects]);
 
   const categoryOptions = useMemo(() => buildCategoryOptions(projects), [projects]);
 
@@ -94,7 +142,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      updateProject({ ...project, ...data.project });
+      updateProject({ ...project, ...(data.project as Project) });
     } catch (err) {
       alert(err instanceof Error ? err.message : "翻訳に失敗しました");
     } finally {
@@ -159,6 +207,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
               onOffer={setOfferProject}
               onOfferStatusChange={handleOfferStatusChange}
               loadingAction={loadingAction}
+              isTranslating={translatingIds.has(project.id)}
             />
           ))}
         </div>

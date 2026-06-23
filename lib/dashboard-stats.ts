@@ -1,6 +1,7 @@
 import type { OfferStatus, Project } from "./types";
 import { getCategoryGroupJa } from "./categories";
 import { countJapanUnenteredCandidates, matchesJapanUnenteredOnlyFilter } from "./japan-cf-status";
+import { getDisplayTitle } from "./project-translation";
 
 export interface DashboardStats {
   totalProjects: number;
@@ -54,7 +55,7 @@ export function getDashboardStats(projects: Project[]): DashboardStats {
     .slice(0, 8)
     .map((p) => ({
       id: p.id,
-      title: p.title_ja ?? p.title,
+      title: getDisplayTitle(p),
       raisedUsd: p.raised_usd,
       platform: p.platform,
       score: p.score,
@@ -66,7 +67,7 @@ export function getDashboardStats(projects: Project[]): DashboardStats {
     .slice(0, 6)
     .map((p) => ({
       id: p.id,
-      title: p.title_ja ?? p.title,
+      title: getDisplayTitle(p),
       score: p.score,
       raisedUsd: p.raised_usd,
       offerStatus: p.offer_status,
