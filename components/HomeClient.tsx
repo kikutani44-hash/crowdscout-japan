@@ -26,7 +26,8 @@ import {
 import { needsJapaneseTranslation } from "@/lib/project-translation";
 import { usdToJpy } from "@/lib/utils";
 
-const TRANSLATE_BATCH_SIZE = 10;
+const TRANSLATE_BATCH_SIZE = 3;
+const TRANSLATE_FETCH_TIMEOUT_MS = 55_000;
 
 interface HomeClientProps {
   initialProjects: Project[];
@@ -52,11 +53,15 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
         if (cancelled) break;
         const batch = missing.slice(i, i + TRANSLATE_BATCH_SIZE).map((p) => p.id);
         try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), TRANSLATE_FETCH_TIMEOUT_MS);
           const res = await fetch("/api/translate/batch", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ projectIds: batch }),
+            signal: controller.signal,
           });
+          clearTimeout(timeout);
           const data = await res.json();
           if (!res.ok) throw new Error(data.error);
 
