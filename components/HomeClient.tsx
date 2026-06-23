@@ -98,13 +98,16 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           projectId: project.id,
-          query: project.title_ja ?? project.title,
+          query: project.title,
+          title: project.title,
+          title_ja: project.title_ja,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      updateProject({ ...project, ...data.project });
-      setCfProject({ ...project, ...data.project });
+      const updated = { ...project, ...(data.project as Partial<Project>) };
+      updateProject(updated);
+      setCfProject(updated);
     } catch (err) {
       alert(err instanceof Error ? err.message : "CFチェックに失敗しました");
     } finally {

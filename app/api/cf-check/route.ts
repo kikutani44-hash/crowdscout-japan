@@ -1,71 +1,79 @@
 import { NextResponse } from "next/server";
-import { execFile } from "child_process";
-import { promisify } from "util";
-import path from "path";
-import {
-  applyCfCheckToProject,
-  findLocalProject,
-  updateLocalProject,
-} from "@/lib/project-store";
+import { applyCfCheckToProject, findLocalProject, updateLocalProject } from "@/lib/project-store";
+import { buildCfSearchQuery, checkJapanCf } from "@/lib/japan-cf-check";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { JapanCfResult } from "@/lib/types";
-
-const execFileAsync = promisify(execFile);
-
-async function runJapanCfCheck(query: string): Promise<JapanCfResult> {
-  const scriptPath = path.join(process.cwd(), "scripts", "check_japan_cf.py");
-  const { stdout } = await execFileAsync(
-    "python3",
-    [scriptPath, query, "--json-only"],
-    {
-      cwd: process.cwd(),
-      timeout: 3 * 60 * 1000,
-      env: process.env,
-      maxBuffer: 10 * 1024 * 1024,
-    }
-  );
-
-  const parsed = JSON.parse(stdout.trim()) as JapanCfResult;
-  return parsed;
-}
-
-import { isServerlessRuntime, pythonUnavailableResponse } from "@/lib/serverless-runtime";
+import type { Project } from "@/lib/types";
 
 export async function POST(request: Request) {
-  if (isServerlessRuntime()) {
-    return NextResponse.json(pythonUnavailableResponse("日本CFチェック"), { status: 503 });
-  }
   try {
-    const { projectId, query } = await request.json();
+    const body = await request.json();
+    const { projectId, query: rawQuery, title, title_ja } = body as {
+      projectId?: string;
+      query?: string;
+      title?: string;
+      title_ja?: string | null;
+    };
+
+    const query = buildCfSearchQuery(
+      title_ja ?? null,
+      rawQuery || title || ""
+    );
     if (!query) {
       return NextResponse.json({ error: "検索クエリが必要です" }, { status: 400 });
     }
 
-    const result = await runJapanCfCheck(query);
-    const localProject = projectId ? await findLocalProject(projectId) : null;
-
-    const updates = applyCfCheckToProject(
-      localProject ?? {
-        raised_usd: 0,
-        goal_usd: 1,
-        backers: 0,
-        category: "",
-        japan_cf_result: null,
-      },
-      result
-    );
+    const result = await checkJapanCf(query);
 
     if (isSupabaseConfigured() && projectId) {
       const supabase = createServerSupabase();
+      const { data: existing, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .single();
+
+      if (error || !existing) {
+        return NextResponse.json({ error: "案件が見つかりません" }, { status: 404 });
+      }
+
+      const updates = applyCfCheckToProject(existing as Project, result);
+      const updatedProject = {
+        ...(existing as Project),
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+
       await supabase
         .from("projects")
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({
+          japan_cf_checked: updates.japan_cf_checked,
+          japan_cf_result: updates.japan_cf_result,
+          score: updates.score,
+          updated_at: updatedProject.updated_at,
+        })
         .eq("id", projectId);
-    } else if (projectId) {
-      await updateLocalProject(projectId, updates);
+
+      return NextResponse.json({ project: updatedProject, result });
     }
 
-    return NextResponse.json({ project: updates });
+    const localProject = projectId ? await findLocalProject(projectId) : null;
+    const base = localProject ?? {
+      raised_usd: 0,
+      goal_usd: 1,
+      backers: 0,
+      category: "",
+      japan_cf_result: null,
+    };
+    const updates = applyCfCheckToProject(base, result);
+
+    if (projectId) {
+      const saved = await updateLocalProject(projectId, updates);
+      if (saved) {
+        return NextResponse.json({ project: saved, result });
+      }
+    }
+
+    return NextResponse.json({ project: updates, result });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "CFチェックに失敗しました" },

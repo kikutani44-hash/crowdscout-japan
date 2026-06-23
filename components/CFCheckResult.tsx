@@ -29,8 +29,12 @@ export function CFCheckResult({ result }: CFCheckResultProps) {
         </Badge>
         <span className="text-xs text-muted-foreground">
           検索語: {result.query}
+          {result.checkedAt ? ` · ${new Date(result.checkedAt).toLocaleString("ja-JP")}` : ""}
         </span>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Makuake / GREEN FUNDING / CAMPFIRE の検索結果に基づく判定です。
+      </p>
       <ul className="space-y-2">
         {result.sites.map((site) => (
           <li
