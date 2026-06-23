@@ -9,6 +9,7 @@ import {
   matchesJapanUnenteredOnlyFilter,
 } from "@/lib/japan-cf-status";
 import { fetchProjects } from "@/lib/supabase";
+import { getDisplayTitle } from "@/lib/project-translation";
 import { formatJpy, formatUsd, usdToJpy } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -165,7 +166,7 @@ export default async function DashboardPage() {
               {recent.map((p) => (
                 <li key={p.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium">{p.title_ja ?? p.title}</p>
+                    <p className="truncate font-medium">{getDisplayTitle(p)}</p>
                     <p className="text-xs text-muted-foreground">
                       {p.platform} · スコア {p.score} · {formatUsd(p.raised_usd)}
                     </p>

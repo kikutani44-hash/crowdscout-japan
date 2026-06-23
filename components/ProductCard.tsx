@@ -28,6 +28,11 @@ import {
   formatUsd,
   usdToJpy,
 } from "@/lib/utils";
+import {
+  getDisplaySubtitle,
+  getDisplayTitle,
+  hasValidJapaneseTitle,
+} from "@/lib/project-translation";
 import { ExternalLink, Flame, Globe, Languages, Mail, SearchCheck, Timer, Users } from "lucide-react";
 
 interface ProductCardProps {
@@ -37,6 +42,7 @@ interface ProductCardProps {
   onOffer: (project: Project) => void;
   onOfferStatusChange: (projectId: string, status: OfferStatus) => void;
   loadingAction?: string | null;
+  isTranslating?: boolean;
 }
 
 export function ProductCard({
@@ -46,11 +52,13 @@ export function ProductCard({
   onOffer,
   onOfferStatusChange,
   loadingAction,
+  isTranslating,
 }: ProductCardProps) {
   const achievement = calcAchievementRate(project.raised_usd, project.goal_usd);
   const japanCfStatus = getJapanCfDisplayStatus(project);
-  const displayTitle = project.title_ja ?? project.title;
-  const displaySubtitle = project.subtitle_ja ?? project.subtitle;
+  const displayTitle = getDisplayTitle(project);
+  const displaySubtitle = getDisplaySubtitle(project);
+  const showEnglishTitle = hasValidJapaneseTitle(project) && displayTitle !== project.title;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
@@ -89,8 +97,10 @@ export function ProductCard({
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
-          <h3 className="line-clamp-2 text-base font-bold leading-snug">{displayTitle}</h3>
-          {project.title_ja && project.title_ja !== project.title ? (
+          <h3 className="line-clamp-2 text-base font-bold leading-snug">
+            {isTranslating ? "翻訳中…" : displayTitle}
+          </h3>
+          {showEnglishTitle ? (
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{project.title}</p>
           ) : null}
         </div>

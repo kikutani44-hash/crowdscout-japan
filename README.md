@@ -164,6 +164,42 @@ python3 scripts/run_crawl.py --ks-pages 15 --igg-max 15
 Netlify:  環境変数経由で Supabase から読み書き（永続化）
 ```
 
+### 毎日自動クロール（GitHub Actions）
+
+`.github/workflows/daily-crawl.yml` により **毎日 02:00 JST** に以下が自動実行されます。
+
+1. Kickstarter クロール（Technology / Design 等、50件以上）
+2. Claude API で日本語翻訳（`title_ja` / `subtitle_ja`）
+3. Supabase へ全件 replace 同期
+4. `data/projects_merged.json` を `main` に commit & push
+5. Netlify 自動デプロイ（GitHub 連携 + 任意の Build Hook）
+
+#### GitHub リポジトリ Secrets の設定
+
+[GitHub → Settings → Secrets and variables → Actions](https://github.com/kikutani44-hash/crowdscout-japan/settings/secrets/actions) に以下を登録してください。
+
+| Secret | 必須 | 説明 |
+|--------|------|------|
+| `ANTHROPIC_API_KEY` | 推奨 | Claude 翻訳（未設定時は英語原文のまま） |
+| `NEXT_PUBLIC_SUPABASE_URL` | **必須** | Supabase Project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | **必須** | Supabase service_role キー |
+| `NETLIFY_BUILD_HOOK_URL` | 任意 | Netlify Build Hook URL（push 以外でも再デプロイしたい場合） |
+
+Netlify Build Hook の作成: **Site configuration → Build & deploy → Build hooks → Add build hook**
+
+#### 手動実行
+
+- GitHub **Actions** タブ → **Daily Crawl** → **Run workflow**
+- ローカル（CI と同じコマンド）:
+
+```bash
+npm run crawl:scheduled
+```
+
+#### 初回確認
+
+Secrets 登録後、Actions から **Run workflow** で手動実行し、ログで `[sync] OK:` と Netlify デプロイ成功を確認してください。
+
 ## Python クロール（Phase 3）
 
 ```bash

@@ -1,12 +1,25 @@
 import { NextResponse } from "next/server";
 import { translateToJapanese } from "@/lib/claude";
+import { needsJapaneseTranslation } from "@/lib/project-translation";
 import { findLocalProject, updateLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import { sampleProjects } from "@/lib/sample-data";
 
 export async function POST(request: Request) {
   try {
-    const { projectId, title, subtitle } = await request.json();
+    const { projectId, title, subtitle, force } = await request.json();
+
+    if (isSupabaseConfigured() && projectId && !force) {
+      const supabase = createServerSupabase();
+      const { data: existing } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (existing && !needsJapaneseTranslation(existing)) {
+        return NextResponse.json({ project: existing });
+      }
+    }
+
     const translation = await translateToJapanese(title, subtitle ?? "");
 
     const updates = {
@@ -34,12 +47,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const project = sampleProjects.find((p) => p.id === projectId);
-    if (project) {
-      Object.assign(project, updates);
-    }
-
-    return NextResponse.json({ project: updates });
+    return NextResponse.json(
+      { error: "案件が見つかりません" },
+      { status: 404 }
+    );
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "翻訳に失敗しました" },

@@ -18,6 +18,7 @@ import {
   matchesJapanUnenteredOnlyFilter,
 } from "@/lib/japan-cf-status";
 import { formatUsd } from "@/lib/utils";
+import { getDisplayTitle } from "@/lib/project-translation";
 import { Eye, Mail, Send } from "lucide-react";
 
 interface ContactModalProps {
@@ -121,7 +122,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
 
         <div className="space-y-4">
           <div className="rounded-lg border border-border bg-secondary/20 p-4">
-            <p className="font-medium">{project.title_ja ?? project.title}</p>
+            <p className="font-medium">{getDisplayTitle(project)}</p>
             <p className="mt-1 text-xs text-muted-foreground">
               {project.platform} · 調達額 {formatUsd(project.raised_usd)} · 支援者{" "}
               {project.backers.toLocaleString()}人 · スコア {project.score}
