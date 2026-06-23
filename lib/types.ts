@@ -32,6 +32,10 @@ export interface Project {
   category: string;
   country: string | null;
   status: ProjectStatus;
+  deadline_at: string | null;
+  launched_at: string | null;
+  days_remaining: number | null;
+  backers_per_day: number;
   score: number;
   offer_status: OfferStatus;
   japan_cf_checked: boolean;
@@ -50,7 +54,8 @@ export interface ProjectFilters {
   platform?: Platform | "all";
   category?: string;
   offerStatus?: OfferStatus | "all";
-  sortBy?: "score" | "raised_usd" | "backers" | "created_at";
+  sortBy?: "score" | "raised_usd" | "backers" | "created_at" | "live_momentum";
+  liveHotOnly?: boolean;
 }
 
 export interface DashboardStats {

@@ -19,12 +19,16 @@ import {
   getJapanCfDisplayStatus,
 } from "@/lib/japan-cf-status";
 import {
+  formatBackersPerDay,
+  formatDaysRemaining,
+} from "@/lib/project-momentum";
+import {
   calcAchievementRate,
   formatJpy,
   formatUsd,
   usdToJpy,
 } from "@/lib/utils";
-import { ExternalLink, Globe, Languages, Mail, SearchCheck, Users } from "lucide-react";
+import { ExternalLink, Flame, Globe, Languages, Mail, SearchCheck, Timer, Users } from "lucide-react";
 
 interface ProductCardProps {
   project: Project;
@@ -68,6 +72,12 @@ export function ProductCard({
           <Badge variant="secondary" className="capitalize">
             {project.platform}
           </Badge>
+          {project.status === "active" ? (
+            <Badge className="border-orange-500/50 bg-orange-500/20 text-orange-200">
+              <Flame className="mr-1 h-3 w-3" />
+              進行中
+            </Badge>
+          ) : null}
           <Badge variant="outline" className="bg-background/80 text-xs">
             {formatCategoryLabel(project.category, project.title, project.subtitle ?? "")}
           </Badge>
@@ -112,6 +122,35 @@ export function ProductCard({
               {project.backers.toLocaleString()}
             </p>
             <p className="text-[11px] text-muted-foreground">支援者数</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div
+            className={`rounded-md border px-3 py-2 text-center ${
+              project.status === "active" && (project.days_remaining ?? 999) <= 7
+                ? "border-orange-500/40 bg-orange-500/10"
+                : "border-border/60 bg-secondary/30"
+            }`}
+          >
+            <p className="flex items-center justify-center gap-1 text-lg font-bold text-foreground">
+              <Timer className="h-4 w-4 text-muted-foreground" />
+              {formatDaysRemaining(project.days_remaining, project.status)}
+            </p>
+            <p className="text-[11px] text-muted-foreground">残り日数</p>
+          </div>
+          <div
+            className={`rounded-md border px-3 py-2 text-center ${
+              project.status === "active" && (project.backers_per_day ?? 0) >= 10
+                ? "border-emerald-500/40 bg-emerald-500/10"
+                : "border-border/60 bg-secondary/30"
+            }`}
+          >
+            <p className="flex items-center justify-center gap-1 text-lg font-bold text-foreground">
+              <Flame className="h-4 w-4 text-muted-foreground" />
+              {formatBackersPerDay(project.backers_per_day)}
+            </p>
+            <p className="text-[11px] text-muted-foreground">勢い（支援者/日）</p>
           </div>
         </div>
 

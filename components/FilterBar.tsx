@@ -65,13 +65,14 @@ export function FilterBar({ filters, onChange, categoryOptions }: FilterBarProps
         </Select>
 
         <Select
-          value={filters.sortBy ?? "score"}
+          value={filters.sortBy ?? "live_momentum"}
           onValueChange={(v) => onChange({ ...filters, sortBy: v as ProjectFilters["sortBy"] })}
         >
           <SelectTrigger>
             <SelectValue placeholder="並び順" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="live_momentum">🔥 終了間近・勢い順</SelectItem>
             <SelectItem value="score">スコア順</SelectItem>
             <SelectItem value="raised_usd">調達額順</SelectItem>
             <SelectItem value="backers">支援者数順</SelectItem>
@@ -90,17 +91,31 @@ export function FilterBar({ filters, onChange, categoryOptions }: FilterBarProps
         </div>
       )}
 
-      <div className="mt-3 flex items-center gap-2">
-        <Switch
-          id="japan-unentered"
-          checked={filters.japanUnenteredOnly ?? false}
-          onCheckedChange={(checked) =>
-            onChange({ ...filters, japanUnenteredOnly: checked })
-          }
-        />
-        <label htmlFor="japan-unentered" className="text-sm text-muted-foreground">
-          🇯🇵 日本未参入のみ表示（参入済みを除外）
-        </label>
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="flex items-center gap-2">
+          <Switch
+            id="live-hot"
+            checked={filters.liveHotOnly ?? false}
+            onCheckedChange={(checked) =>
+              onChange({ ...filters, liveHotOnly: checked, sortBy: "live_momentum" })
+            }
+          />
+          <label htmlFor="live-hot" className="text-sm text-muted-foreground">
+            🔥 終了間近×勢いありのみ（21日以内・1人/日以上）
+          </label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="japan-unentered"
+            checked={filters.japanUnenteredOnly ?? false}
+            onCheckedChange={(checked) =>
+              onChange({ ...filters, japanUnenteredOnly: checked })
+            }
+          />
+          <label htmlFor="japan-unentered" className="text-sm text-muted-foreground">
+            🇯🇵 日本未参入のみ表示（参入済みを除外）
+          </label>
+        </div>
       </div>
     </div>
   );

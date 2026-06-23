@@ -43,6 +43,54 @@ def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def ts_to_iso(ts: int | float | None) -> str | None:
+    if not ts:
+        return None
+    try:
+        return datetime.fromtimestamp(int(ts), tz=timezone.utc).replace(microsecond=0).isoformat()
+    except (OSError, ValueError, OverflowError):
+        return None
+
+
+def compute_campaign_metrics(
+    *,
+    status: str,
+    backers: int,
+    deadline_ts: int | None = None,
+    launched_ts: int | None = None,
+) -> dict[str, Any]:
+    """Compute days_remaining and backers_per_day (momentum)."""
+    now = datetime.now(timezone.utc)
+    deadline = (
+        datetime.fromtimestamp(deadline_ts, tz=timezone.utc) if deadline_ts else None
+    )
+    launched = (
+        datetime.fromtimestamp(launch_ts, tz=timezone.utc) if (launch_ts := launched_ts) else None
+    )
+
+    days_remaining: int | None = None
+    if status == "active" and deadline:
+        days_remaining = max(0, int((deadline - now).total_seconds() // 86400))
+
+    if launched and deadline and status == "ended":
+        days_elapsed = max(1, int((deadline - launched).total_seconds() // 86400))
+    elif launched:
+        days_elapsed = max(1, int((now - launched).total_seconds() // 86400))
+    elif deadline and status == "ended":
+        days_elapsed = max(1, int((deadline - now).total_seconds() // 86400))
+    else:
+        days_elapsed = 1
+
+    backers_per_day = round(backers / days_elapsed, 2)
+
+    return {
+        "deadline_at": ts_to_iso(deadline_ts),
+        "launched_at": ts_to_iso(launch_ts),
+        "days_remaining": days_remaining,
+        "backers_per_day": backers_per_day,
+    }
+
+
 def ensure_data_dir() -> Path:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     return DATA_DIR
@@ -100,6 +148,21 @@ def calculate_score(project: dict[str, Any]) -> int:
     if japan_unentered:
         score += 15
 
+    if project.get("status") == "active":
+        score += 8
+        days_left = project.get("days_remaining")
+        momentum = float(project.get("backers_per_day") or 0)
+        if days_left is not None and days_left <= 7:
+            score += 10
+        elif days_left is not None and days_left <= 14:
+            score += 6
+        if momentum >= 50:
+            score += 8
+        elif momentum >= 10:
+            score += 5
+        elif momentum >= 3:
+            score += 2
+
     popular = ("ガジェット", "Gadget", "Technology", "DIY", "Health", "ヘルス", "Phone")
     if any(p.lower() in category.lower() for p in popular):
         score += 10
@@ -125,6 +188,10 @@ def normalize_project(raw: dict[str, Any]) -> dict[str, Any]:
         "category": raw.get("category") or "Other",
         "country": raw.get("country"),
         "status": raw.get("status") or "ended",
+        "deadline_at": raw.get("deadline_at"),
+        "launched_at": raw.get("launched_at"),
+        "days_remaining": raw.get("days_remaining"),
+        "backers_per_day": float(raw.get("backers_per_day") or 0),
         "score": 0,
         "offer_status": raw.get("offer_status") or "未接触",
         "japan_cf_checked": bool(raw.get("japan_cf_checked", False)),

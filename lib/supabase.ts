@@ -5,6 +5,10 @@ import {
   matchesJapanUnenteredOnlyFilter,
 } from "./japan-cf-status";
 import { loadLocalProjects } from "./project-store";
+import {
+  compareProjectsByLiveMomentum,
+  matchesLiveHotFilter,
+} from "./project-momentum";
 import type { Project } from "./types";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -31,6 +35,7 @@ export async function fetchProjects(filters?: {
   category?: string;
   offerStatus?: string;
   sortBy?: string;
+  liveHotOnly?: boolean;
 }): Promise<Project[]> {
   if (!isSupabaseConfigured()) {
     const projects = await loadLocalProjects();
@@ -59,12 +64,26 @@ export async function fetchProjects(filters?: {
     }
   }
 
-  const sortBy = filters?.sortBy ?? "score";
-  query = query.order(sortBy, { ascending: false });
+  const sortBy = filters?.sortBy ?? "live_momentum";
+  if (sortBy !== "live_momentum") {
+    query = query.order(sortBy, { ascending: false });
+  } else {
+    query = query
+      .order("status", { ascending: true })
+      .order("days_remaining", { ascending: true, nullsFirst: false })
+      .order("backers_per_day", { ascending: false });
+  }
 
   const { data, error } = await query;
   if (error) throw error;
-  return (data ?? []) as Project[];
+  let projects = (data ?? []) as Project[];
+  if (filters?.liveHotOnly) {
+    projects = projects.filter((p) => matchesLiveHotFilter(p, true));
+  }
+  if (sortBy === "live_momentum") {
+    projects.sort(compareProjectsByLiveMomentum);
+  }
+  return projects;
 }
 
 function filterSampleProjects(
@@ -76,6 +95,7 @@ function filterSampleProjects(
     category?: string;
     offerStatus?: string;
     sortBy?: string;
+    liveHotOnly?: boolean;
   }
 ): Project[] {
   let result = [...projects];
@@ -95,14 +115,21 @@ function filterSampleProjects(
   if (filters?.japanUnenteredOnly) {
     result = result.filter(matchesJapanUnenteredOnlyFilter);
   }
+  if (filters?.liveHotOnly) {
+    result = result.filter((p) => matchesLiveHotFilter(p, true));
+  }
 
-  const sortBy = filters?.sortBy ?? "score";
-  result.sort((a, b) => {
-    const av = a[sortBy as keyof Project];
-    const bv = b[sortBy as keyof Project];
-    if (typeof av === "number" && typeof bv === "number") return bv - av;
-    return String(bv ?? "").localeCompare(String(av ?? ""));
-  });
+  const sortBy = filters?.sortBy ?? "live_momentum";
+  if (sortBy === "live_momentum") {
+    result.sort(compareProjectsByLiveMomentum);
+  } else {
+    result.sort((a, b) => {
+      const av = a[sortBy as keyof Project];
+      const bv = b[sortBy as keyof Project];
+      if (typeof av === "number" && typeof bv === "number") return bv - av;
+      return String(bv ?? "").localeCompare(String(av ?? ""));
+    });
+  }
 
   return result;
 }

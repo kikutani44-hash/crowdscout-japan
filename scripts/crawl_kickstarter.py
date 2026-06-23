@@ -33,6 +33,7 @@ from category_filters import KICKSTARTER_DEMO_SLUGS, is_allowed_category, parse_
 from common import (
     MAX_DAYS_SINCE_END,
     MIN_RAISED_USD,
+    compute_campaign_metrics,
     create_browser,
     fetch_json_page,
     normalize_project,
@@ -108,6 +109,16 @@ def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
     web = urls.get("web") or {}
     photo = item.get("photo") or {}
 
+    deadline_ts = int(item.get("deadline") or 0) or None
+    launched_ts = int(item.get("launched_at") or item.get("created_at") or 0) or None
+    backers = int(item.get("backers_count") or 0)
+    metrics = compute_campaign_metrics(
+        status=status,
+        backers=backers,
+        deadline_ts=deadline_ts,
+        launched_ts=launched_ts,
+    )
+
     return normalize_project(
         {
             "title": item.get("name") or "",
@@ -117,10 +128,11 @@ def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
             "image_url": photo.get("1024x576") or photo.get("full") or photo.get("med"),
             "raised_usd": pledged,
             "goal_usd": goal,
-            "backers": int(item.get("backers_count") or 0),
+            "backers": backers,
             "category": category_name or "Other",
             "country": item.get("country_displayable_name") or item.get("country"),
             "status": status,
+            **metrics,
             "maker_website": (creator.get("urls") or {}).get("web", {}).get("user"),
             "created_at": utc_now_iso(),
         }
@@ -224,7 +236,14 @@ def crawl_kickstarter(
                             projects.append(mapped)
                 browser.close()
 
-    projects.sort(key=lambda p: p["raised_usd"], reverse=True)
+    projects.sort(key=lambda p: (
+        0 if p.get("status") == "active" else 1,
+        -float(p.get("backers_per_day") or 0)
+        * (1 + 30 / max(1, p.get("days_remaining") or 999))
+        if p.get("status") == "active"
+        else -float(p.get("backers_per_day") or 0),
+        -p.get("raised_usd", 0),
+    ))
     if limit:
         projects = projects[:limit]
     return projects

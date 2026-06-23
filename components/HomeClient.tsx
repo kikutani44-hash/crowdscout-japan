@@ -19,6 +19,10 @@ import {
   matchesJapanUnenteredOnlyFilter,
 } from "@/lib/japan-cf-status";
 import { projectMatchesSearch } from "@/lib/project-search";
+import {
+  compareProjectsByLiveMomentum,
+  matchesLiveHotFilter,
+} from "@/lib/project-momentum";
 import { usdToJpy } from "@/lib/utils";
 
 interface HomeClientProps {
@@ -27,7 +31,7 @@ interface HomeClientProps {
 
 export function HomeClient({ initialProjects }: HomeClientProps) {
   const [projects, setProjects] = useState(initialProjects);
-  const [filters, setFilters] = useState<ProjectFilters>({ sortBy: "score" });
+  const [filters, setFilters] = useState<ProjectFilters>({ sortBy: "live_momentum" });
   const [offerProject, setOfferProject] = useState<Project | null>(null);
   const [cfProject, setCfProject] = useState<Project | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
@@ -51,13 +55,21 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
     if (filters.japanUnenteredOnly) {
       result = result.filter(matchesJapanUnenteredOnlyFilter);
     }
-    const sortBy = filters.sortBy ?? "score";
-    result.sort((a, b) => {
-      const av = a[sortBy as keyof Project];
-      const bv = b[sortBy as keyof Project];
-      if (typeof av === "number" && typeof bv === "number") return bv - av;
-      return String(bv ?? "").localeCompare(String(av ?? ""));
-    });
+    if (filters.liveHotOnly) {
+      result = result.filter((p) => matchesLiveHotFilter(p, true));
+    }
+
+    const sortBy = filters.sortBy ?? "live_momentum";
+    if (sortBy === "live_momentum") {
+      result.sort(compareProjectsByLiveMomentum);
+    } else {
+      result.sort((a, b) => {
+        const av = a[sortBy as keyof Project];
+        const bv = b[sortBy as keyof Project];
+        if (typeof av === "number" && typeof bv === "number") return bv - av;
+        return String(bv ?? "").localeCompare(String(av ?? ""));
+      });
+    }
     return result;
   }, [projects, filters]);
 

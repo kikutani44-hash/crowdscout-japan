@@ -16,6 +16,10 @@ create table if not exists projects (
   category text,
   country text,
   status text not null default 'ended' check (status in ('active', 'ended')),
+  deadline_at timestamptz,
+  launched_at timestamptz,
+  days_remaining integer,
+  backers_per_day numeric(10, 2) not null default 0,
   score integer not null default 0,
   offer_status text not null default '未接触'
     check (offer_status in ('未接触', '交渉中', '獲得済み', '却下')),

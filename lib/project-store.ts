@@ -67,7 +67,8 @@ export function applyCfCheckToProject(
   project: Pick<
     Project,
     "raised_usd" | "goal_usd" | "backers" | "category" | "japan_cf_result"
-  >,
+  > &
+    Partial<Pick<Project, "status" | "days_remaining" | "backers_per_day">>,
   result: JapanCfResult
 ) {
   return {

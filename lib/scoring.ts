@@ -1,9 +1,12 @@
 import type { Project } from "./types";
 
-export function calculateScore(project: Pick<
-  Project,
-  "raised_usd" | "goal_usd" | "backers" | "category" | "japan_cf_result"
->): number {
+export function calculateScore(
+  project: Pick<
+    Project,
+    "raised_usd" | "goal_usd" | "backers" | "category" | "japan_cf_result"
+  > &
+    Partial<Pick<Project, "status" | "days_remaining" | "backers_per_day">>
+): number {
   let score = 0;
 
   if (project.raised_usd >= 500_000) score += 30;
@@ -28,6 +31,17 @@ export function calculateScore(project: Pick<
   const popularCategories = ["ガジェット", "Gadgets", "Technology", "ヘルスケア", "Health"];
   if (popularCategories.some((c) => project.category.includes(c))) score += 10;
   else score += 5;
+
+  if (project.status === "active") {
+    score += 8;
+    const daysLeft = project.days_remaining;
+    const momentum = project.backers_per_day ?? 0;
+    if (daysLeft != null && daysLeft <= 7) score += 10;
+    else if (daysLeft != null && daysLeft <= 14) score += 6;
+    if (momentum >= 50) score += 8;
+    else if (momentum >= 10) score += 5;
+    else if (momentum >= 3) score += 2;
+  }
 
   return Math.min(score, 100);
 }
