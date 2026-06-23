@@ -9,17 +9,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+from category_filters import DEMO_CATEGORY_SLUGS
 from common import DATA_DIR, utc_now_iso
 from translator import translate_projects
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
 
-# Demo crawl: 6 priority category groups (see category_filters.py)
-DEFAULT_CATEGORIES = (
-    "technology,gadget,health,healthcare,fitness,"
-    "outdoor,sport,sports,food,kitchen,"
-    "mobility,transport,design,lifestyle,fashion"
-)
+DEFAULT_CATEGORIES = DEMO_CATEGORY_SLUGS
 
 
 def run_script(name: str, extra_args: list[str]) -> int:

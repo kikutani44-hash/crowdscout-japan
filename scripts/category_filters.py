@@ -119,6 +119,13 @@ INDIEGOGO_EXPLORE_URLS = [
     "https://www.indiegogo.com/explore/product-design",
 ]
 
+# 6 priority groups for demo crawl (CLI slugs)
+DEMO_CATEGORY_SLUGS = (
+    "technology,gadget,health,healthcare,fitness,"
+    "outdoor,sport,sports,food,kitchen,"
+    "mobility,transport,design,lifestyle,fashion"
+)
+
 # CLI slug -> Kickstarter discover category_id (parent)
 KICKSTARTER_SLUGS: dict[str, tuple[int, str]] = {
     "technology": (16, "Technology"),

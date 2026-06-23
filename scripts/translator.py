@@ -11,10 +11,30 @@ from typing import Any
 
 # Reuse .env.local loading from common (NEXT_PUBLIC_*, SUPABASE_*, ANTHROPIC_*)
 import common  # noqa: F401 — loads ENV_PATH via side effect
-from common import ENV_PATH
+from common import DATA_DIR, ENV_PATH
+from dotenv import load_dotenv
 
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
 TRANSLATE_DELAY_SEC = float(os.environ.get("CRAWL_TRANSLATE_DELAY_SEC", "0.5"))
+_DEMO_TRANSLATIONS: dict[str, dict[str, str]] | None = None
+
+
+def _load_demo_translations() -> dict[str, dict[str, str]]:
+    global _DEMO_TRANSLATIONS
+    if _DEMO_TRANSLATIONS is not None:
+        return _DEMO_TRANSLATIONS
+    path = DATA_DIR / "demo_translations.json"
+    if not path.exists():
+        _DEMO_TRANSLATIONS = {}
+        return _DEMO_TRANSLATIONS
+    _DEMO_TRANSLATIONS = json.loads(path.read_text(encoding="utf-8"))
+    return _DEMO_TRANSLATIONS
+
+
+def _anthropic_config() -> tuple[str, str]:
+    load_dotenv(ENV_PATH, override=True)
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
+    return api_key, model
 
 
 def _parse_translation_json(text: str) -> dict[str, str]:
@@ -33,13 +53,20 @@ def translate_to_japanese(title: str, subtitle: str = "") -> dict[str, str]:
     """Translate product title and subtitle to Japanese via Claude API."""
     title = (title or "").strip()
     subtitle = (subtitle or "").strip()
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    api_key, model = _anthropic_config()
+
+    demo = _load_demo_translations().get(title)
+    if demo:
+        return {
+            "title_ja": demo.get("title_ja") or title,
+            "subtitle_ja": demo.get("subtitle_ja") or subtitle,
+        }
 
     if not api_key:
-        print("[translate] ANTHROPIC_API_KEY 未設定 — デモ翻訳を使用")
+        print("[translate] ANTHROPIC_API_KEY 未設定 — 英語原文を使用（demo_translations.json に追加可）")
         return {
-            "title_ja": f"【翻訳デモ】{title}",
-            "subtitle_ja": f"【翻訳デモ】{(subtitle or title)[:120]}",
+            "title_ja": title,
+            "subtitle_ja": subtitle or "",
         }
 
     try:
@@ -59,7 +86,7 @@ title: {title}
 subtitle: {subtitle}"""
 
     message = client.messages.create(
-        model=MODEL,
+        model=model,
         max_tokens=1024,
         messages=[{"role": "user", "content": prompt}],
     )

@@ -33,6 +33,7 @@ from common import (
     create_browser,
     fetch_json_page,
     normalize_project,
+    replace_supabase_projects,
     save_json,
     save_to_supabase,
     utc_now_iso,
@@ -99,19 +100,28 @@ def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
     )
 
 
-def crawl_kickstarter(max_pages: int = 5, category_slugs: list[str] | None = None) -> list[dict[str, Any]]:
+def crawl_kickstarter(
+    max_pages: int = 5,
+    category_slugs: list[str] | None = None,
+    max_projects: int | None = None,
+) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
     categories = resolve_kickstarter_categories(category_slugs)
     pages_per_category = max(1, max_pages)
+    limit = max_projects if max_projects and max_projects > 0 else None
 
     with sync_playwright() as playwright:
         browser, context = create_browser(playwright)
         page = context.new_page()
 
         for category_id, category_label in categories:
+            if limit and len(projects) >= limit:
+                break
             print(f"[kickstarter] category: {category_label} (id={category_id})")
             for page_num in range(1, pages_per_category + 1):
+                if limit and len(projects) >= limit:
+                    break
                 url = build_discover_url(page_num, category_id)
                 print(f"[kickstarter] fetching page {page_num}: {url}")
                 data = fetch_json_page(page, url)
@@ -127,6 +137,8 @@ def crawl_kickstarter(max_pages: int = 5, category_slugs: list[str] | None = Non
                 added = 0
                 skipped_category = 0
                 for item in batch:
+                    if limit and len(projects) >= limit:
+                        break
                     mapped = map_kickstarter_project(item)
                     if not mapped:
                         continue
@@ -148,6 +160,8 @@ def crawl_kickstarter(max_pages: int = 5, category_slugs: list[str] | None = Non
         browser.close()
 
     projects.sort(key=lambda p: p["raised_usd"], reverse=True)
+    if limit:
+        projects = projects[:limit]
     return projects
 
 
@@ -159,12 +173,23 @@ def main() -> int:
         default=5,
         help="Discover pages for Technology category",
     )
+    parser.add_argument(
+        "--max",
+        type=int,
+        default=None,
+        help="Maximum number of projects to collect (e.g. 10)",
+    )
     parser.add_argument("--no-save", action="store_true", help="Skip writing output files")
     parser.add_argument(
         "--categories",
         type=str,
         default=DEFAULT_CATEGORIES,
-        help="Comma-separated slugs (default: technology only)",
+        help="Comma-separated slugs (default: technology)",
+    )
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help="Replace all Supabase rows with crawl results",
     )
     parser.add_argument("--no-supabase", action="store_true", help="Skip Supabase upsert")
     parser.add_argument(
@@ -180,7 +205,11 @@ def main() -> int:
     args = parser.parse_args()
 
     slugs = parse_category_slugs(args.categories or None)
-    projects = crawl_kickstarter(max_pages=args.pages, category_slugs=slugs)
+    projects = crawl_kickstarter(
+        max_pages=args.pages,
+        category_slugs=slugs,
+        max_projects=args.max,
+    )
     print(f"[kickstarter] total matched: {len(projects)}")
 
     if not projects:
@@ -197,9 +226,13 @@ def main() -> int:
         path = save_json(projects, "kickstarter_projects.json")
         print(f"[kickstarter] saved to {path}")
         if not args.no_supabase:
-            saved = save_to_supabase(projects)
+            if args.replace:
+                saved = replace_supabase_projects(projects)
+            else:
+                saved = save_to_supabase(projects)
             if saved:
-                print(f"[kickstarter] upserted {saved} rows to Supabase")
+                mode = "replaced" if args.replace else "upserted"
+                print(f"[kickstarter] {saved} rows {mode} to Supabase")
 
     print(json.dumps({"count": len(projects), "top": projects[:3]}, ensure_ascii=False, indent=2))
     return 0
