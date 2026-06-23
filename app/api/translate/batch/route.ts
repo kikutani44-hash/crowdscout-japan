@@ -5,7 +5,7 @@ import { findLocalProject, updateLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { Project } from "@/lib/types";
 
-const MAX_BATCH = 10;
+const MAX_BATCH = 3;
 
 async function loadProject(projectId: string): Promise<Project | null> {
   if (isSupabaseConfigured()) {
