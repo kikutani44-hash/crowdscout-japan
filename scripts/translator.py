@@ -13,6 +13,7 @@ from typing import Any
 import common  # noqa: F401 — loads ENV_PATH via side effect
 from common import DATA_DIR, ENV_PATH
 from dotenv import load_dotenv
+from translation_utils import needs_japanese_translation
 
 TRANSLATE_DELAY_SEC = float(os.environ.get("CRAWL_TRANSLATE_DELAY_SEC", "0.5"))
 _DEMO_TRANSLATIONS: dict[str, dict[str, str]] | None = None
@@ -108,12 +109,7 @@ def translate_projects(
     """Translate all projects in place; returns the same list."""
     total = len(projects)
     for index, project in enumerate(projects, start=1):
-        if (
-            skip_existing
-            and not force
-            and project.get("title_ja")
-            and project.get("subtitle_ja")
-        ):
+        if skip_existing and not force and not needs_japanese_translation(project):
             continue
 
         title = project.get("title") or ""

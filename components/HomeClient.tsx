@@ -73,7 +73,11 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
           }
         } catch (err) {
           console.error("[auto-translate]", err);
-          break;
+          setTranslatingIds((prev) => {
+            const next = new Set(prev);
+            batch.forEach((id) => next.delete(id));
+            return next;
+          });
         }
       }
       if (!cancelled) setTranslatingIds(new Set());
