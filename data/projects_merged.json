@@ -1,6 +1,6 @@
 {
-  "fetched_at": "2026-06-23T07:39:12+00:00",
-  "count": 65,
+  "fetched_at": "2026-06-23T07:42:51+00:00",
+  "count": 75,
   "projects": [
     {
       "title": "AEKE S1 Pro FULL-BODY AI HOME GYM",
@@ -24,8 +24,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/aeke",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "xTool WonderPress: The Most Creative 3D Auto Heat Press Ever",
@@ -49,8 +49,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/makeblock",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "Gweike MCore Desktop 400W Fiber and 80W CO2 Laser Cutter",
@@ -60,9 +60,9 @@
       "platform": "kickstarter",
       "original_url": "https://www.kickstarter.com/projects/gweikelaser/gweike-mcore-desktop-400w-fiber-and-80w-co2-laser-cutter",
       "image_url": "https://i.kickstarter.com/assets/054/199/437/d492b141c49b6b0cfe20813c2089d738_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1782175540&width=1024&sig=KvFerW71l6ALdQXIsv66MXfV5TMh29AIoYlPzsqVArQ%3D",
-      "raised_usd": 3535091,
+      "raised_usd": 3543998,
       "goal_usd": 100000,
-      "backers": 611,
+      "backers": 612,
       "category": "Technology/Fabrication Tools",
       "country": "Singapore",
       "status": "active",
@@ -74,8 +74,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/gweikelaser",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "Pongbot Aura-The First Ultralight AI Coach Multi-Sport Robot",
@@ -99,8 +99,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/pongbot",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "CardputerZero, Pocket Raspberry Pi Computer for Makers",
@@ -124,8 +124,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/m5stack",
-      "created_at": "2026-06-23T07:37:41+00:00",
-      "updated_at": "2026-06-23T07:37:41+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "TerraMow X AWD | World’s 1st Turn-Free AWD AI Robot Mower",
@@ -149,8 +149,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/terramow",
-      "created_at": "2026-06-23T07:37:34+00:00",
-      "updated_at": "2026-06-23T07:37:34+00:00"
+      "created_at": "2026-06-23T07:40:59+00:00",
+      "updated_at": "2026-06-23T07:40:59+00:00"
     },
     {
       "title": "DUSQ - The World’s Only Sleep Regulation System",
@@ -174,8 +174,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/dusq",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "Procolored X one: UV Printing, Engrave, Sticker - All in One",
@@ -199,8 +199,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/procolored",
-      "created_at": "2026-06-23T07:37:34+00:00",
-      "updated_at": "2026-06-23T07:37:34+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "GL.iNet Comet Q: Wake, Unlock & Control Remotely",
@@ -210,7 +210,7 @@
       "platform": "kickstarter",
       "original_url": "https://www.kickstarter.com/projects/glinet/comet-q",
       "image_url": "https://i.kickstarter.com/assets/053/528/492/d8084aafa8b40a2ba3ec9beee0ecad30_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1777446985&width=1024&sig=jFCXfv3Kw5Hhv2iyDPft2uiP2WO4QxGq%2B%2FcZQE3mHqY%3D",
-      "raised_usd": 812116,
+      "raised_usd": 812318,
       "goal_usd": 10000,
       "backers": 5380,
       "category": "Technology/Gadgets",
@@ -224,8 +224,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/glinet",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "Misenware: Everything-Safe Food Containers",
@@ -235,9 +235,9 @@
       "platform": "kickstarter",
       "original_url": "https://www.kickstarter.com/projects/misenkitchen/misenware",
       "image_url": "https://i.kickstarter.com/assets/054/077/669/7af426536b91379c2d52d55a481d273b_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1781209919&width=1024&sig=VrZ2SZ7NBrEJiYQb0a6%2BNoc0HE%2FCZNv7zPz5%2Fj4zF1I%3D",
-      "raised_usd": 793590,
+      "raised_usd": 793818,
       "goal_usd": 25000,
-      "backers": 5691,
+      "backers": 5693,
       "category": "Design/Product Design",
       "country": "the United States",
       "status": "active",
@@ -249,8 +249,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/misenkitchen",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
+      "created_at": "2026-06-23T07:41:12+00:00",
+      "updated_at": "2026-06-23T07:41:12+00:00"
     },
     {
       "title": "Sierro: The Compact Home Backup That Fits Anywhere",
@@ -274,8 +274,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/sierro",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
+    },
+    {
+      "title": "GOKO M6 Al-Powered 4WD Robotic Lawn Mower",
+      "title_ja": "GOKO M6 Al-Powered 4WD Robotic Lawn Mower",
+      "subtitle": "Up to 1 Acre per Charge I 2 Cutting Options I Wire-Free Setup I Built for Real Terrain I Smart Obstacle Avoidance I Turf-Friendly Turns",
+      "subtitle_ja": "Up to 1 Acre per Charge I 2 Cutting Options I Wire-Free Setup I Built for Real Terrain I Smart Obstacle Avoidance I Turf-Friendly Turns",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/goko/goko-m6-robotic-mower-for-large-lawns-and-tough-terrain",
+      "image_url": "https://i.kickstarter.com/assets/053/972/518/5fc70a615eb88ced9f72fa0164015658_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1780484820&width=1024&sig=rrmG5eQ1HZQfnC3uH%2BsxmkUxll1wMzHakvI84EY9X3E%3D",
+      "raised_usd": 741402,
+      "goal_usd": 50000,
+      "backers": 324,
+      "category": "Technology/Robots",
+      "country": "the United States",
+      "status": "active",
+      "score": 65,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/goko",
+      "created_at": "2026-06-23T07:41:01+00:00",
+      "updated_at": "2026-06-23T07:41:01+00:00"
     },
     {
       "title": "Lumos Sonorus: Mesh Intercom Helmet with 360° Visibility",
@@ -299,8 +324,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/lumoshelmet",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "ProClad: A Hybrid 2.0 Nonstick Pan",
@@ -324,8 +349,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/liiton",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
+      "created_at": "2026-06-23T07:41:12+00:00",
+      "updated_at": "2026-06-23T07:41:12+00:00"
     },
     {
       "title": "The First 12-Signal Sleep Earbuds That Improve Your Sleep",
@@ -349,8 +374,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/sond",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "Craftphilia: World's First Fully Automated Tufting Machine",
@@ -374,8 +399,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/207408103",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "Superlite by Tortuga: Ultralight (2.2 lb) Carry On Backpack",
@@ -399,8 +424,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/tortugabackpacks",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
+    },
+    {
+      "title": "TSUKI: A Japanese Knife Designed to be Admired",
+      "title_ja": "TSUKI: A Japanese Knife Designed to be Admired",
+      "subtitle": "A chef knife that blends Japanese craftsmanship with moon-inspired design—made to bring moments of pause and appreciation.",
+      "subtitle_ja": "A chef knife that blends Japanese craftsmanship with moon-inspired design—made to bring moments of pause and appreciation.",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/718696440/tsuki-a-japanese-knife-designed-to-be-admired",
+      "image_url": "https://i.kickstarter.com/assets/054/019/423/98a0512278d32c910dc44aace5156f88_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1780844588&width=1024&sig=MT0lqD06wmud3YvvStlooyDSIRcFvXBTlKp9jd7GISY%3D",
+      "raised_usd": 338608,
+      "goal_usd": 500000,
+      "backers": 1298,
+      "category": "Design/Product Design",
+      "country": "Japan",
+      "status": "active",
+      "score": 33,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/718696440",
+      "created_at": "2026-06-23T07:41:20+00:00",
+      "updated_at": "2026-06-23T07:41:20+00:00"
     },
     {
       "title": "The Everything Towel",
@@ -424,8 +474,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/casamera",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
+      "created_at": "2026-06-23T07:41:12+00:00",
+      "updated_at": "2026-06-23T07:41:12+00:00"
     },
     {
       "title": "MorningBlues SonicGlass A1 Lyric Speaker",
@@ -449,8 +499,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/morningblues",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "Sleepal AI Lamp: Sleep Better and Snore Less, Naturally",
@@ -474,8 +524,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/sleepal",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "NexFold Fold7: Triple Your Productivity, Not Your Desk Space",
@@ -499,8 +549,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/fold7",
-      "created_at": "2026-06-23T07:37:44+00:00",
-      "updated_at": "2026-06-23T07:37:44+00:00"
+      "created_at": "2026-06-23T07:41:15+00:00",
+      "updated_at": "2026-06-23T07:41:15+00:00"
     },
     {
       "title": "Linyo H1: Cordless All-in-one Car wash machine",
@@ -524,8 +574,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/465535565",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "D1 Milano x Peter Tarka: The Impossible Watch",
@@ -549,8 +599,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/840192188",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
+      "created_at": "2026-06-23T07:41:12+00:00",
+      "updated_at": "2026-06-23T07:41:12+00:00"
     },
     {
       "title": "Aironox GO: Wrinkle-Free Clothes, Wherever You Land",
@@ -574,33 +624,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/aironox",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
-    },
-    {
-      "title": "Coco Slim: The dining table that disappears.",
-      "title_ja": "Coco Slim: The dining table that disappears.",
-      "subtitle": "A 12” slim console that transforms into a full dining setup in seconds, designed for modern living and small spaces.",
-      "subtitle_ja": "A 12” slim console that transforms into a full dining setup in seconds, designed for modern living and small spaces.",
-      "platform": "kickstarter",
-      "original_url": "https://www.kickstarter.com/projects/cocoslim/one-table-endless-possibilities-0",
-      "image_url": "https://i.kickstarter.com/assets/054/027/115/eced8facf769d2d4900cceea7931133c_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1780904756&width=1024&sig=v5OcqF8foT7WjBzpKtg7WBcJGd6myABfZuLB0WYcMsc%3D",
-      "raised_usd": 236242,
-      "goal_usd": 35000,
-      "backers": 130,
-      "category": "Design/Product Design",
-      "country": "Canada",
-      "status": "active",
-      "score": 50,
-      "offer_status": "未接触",
-      "japan_cf_checked": false,
-      "japan_cf_result": null,
-      "pse_ok": false,
-      "giteki_ok": false,
-      "maker_email": null,
-      "maker_website": "https://www.kickstarter.com/profile/cocoslim",
-      "created_at": "2026-06-23T07:37:46+00:00",
-      "updated_at": "2026-06-23T07:37:46+00:00"
+      "created_at": "2026-06-23T07:41:12+00:00",
+      "updated_at": "2026-06-23T07:41:12+00:00"
     },
     {
       "title": "MYHIXEL Sync Pump: Stronger Firmness & Measurable Gains",
@@ -610,9 +635,9 @@
       "platform": "kickstarter",
       "original_url": "https://www.kickstarter.com/projects/myhixel/myhixel-sync-pump-stronger-firmness-and-measurable-gains",
       "image_url": "https://i.kickstarter.com/assets/054/142/678/1afe658425f793d1613fcdb2d6a29043_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1781705518&width=1024&sig=hlFXOlkeX37GWIsywNYj%2BYY%2BiufmQ1wGLPZObOyKWd8%3D",
-      "raised_usd": 216644,
+      "raised_usd": 216423,
       "goal_usd": 10000,
-      "backers": 813,
+      "backers": 812,
       "category": "Technology/Hardware",
       "country": "Spain",
       "status": "active",
@@ -624,8 +649,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/myhixel",
-      "created_at": "2026-06-23T07:37:34+00:00",
-      "updated_at": "2026-06-23T07:37:34+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "Pen N — Minimal by design. Built for versatile writing.",
@@ -635,7 +660,7 @@
       "platform": "kickstarter",
       "original_url": "https://www.kickstarter.com/projects/antou/penn-minimal-by-design-built-for-versatile-writing",
       "image_url": "https://i.kickstarter.com/assets/053/512/590/e6282b73eba7597a222b87bbfa22c169_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1777367754&width=1024&sig=H3qLXHADy1e7y%2FadeZVFQsiJLhns9xlMrwkvv6lBA5E%3D",
-      "raised_usd": 201658,
+      "raised_usd": 201648,
       "goal_usd": 3000,
       "backers": 2059,
       "category": "Design/Product Design",
@@ -649,8 +674,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/antou",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "Rokkoyo Titan Kettle: Taste the Roast, Not the Metal",
@@ -674,8 +699,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/rokkoyo-2",
-      "created_at": "2026-06-23T07:37:41+00:00",
-      "updated_at": "2026-06-23T07:37:41+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "ICECO VL45 PLUS: World's First 3-Way Access Portable Freezer",
@@ -699,8 +724,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/iceco",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:59+00:00",
+      "updated_at": "2026-06-23T07:40:59+00:00"
     },
     {
       "title": "Blast Air - Redefining Portable Air Power",
@@ -724,8 +749,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/flextail",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
+      "created_at": "2026-06-23T07:41:12+00:00",
+      "updated_at": "2026-06-23T07:41:12+00:00"
     },
     {
       "title": "Ray: Watch Anything. Understand Everything.",
@@ -749,8 +774,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/techspecs",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:59+00:00",
+      "updated_at": "2026-06-23T07:40:59+00:00"
     },
     {
       "title": "Melo-D: Create & Play With World's 1st Generative AI Guitar",
@@ -774,8 +799,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/1676689999",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "TROOPER | The Ball Your Dog’s Been Waiting For.",
@@ -799,8 +824,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/610086504",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
+      "created_at": "2026-06-23T07:41:12+00:00",
+      "updated_at": "2026-06-23T07:41:12+00:00"
     },
     {
       "title": "Veolo Bike Trailer 2.0 – high performance & modularity",
@@ -824,8 +849,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/veolo",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "Kynooe: Not Just a Robotic Arm — Your Real-World Partner",
@@ -849,8 +874,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/925044833",
-      "created_at": "2026-06-23T07:37:34+00:00",
-      "updated_at": "2026-06-23T07:37:34+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "Neakasa Riko Fresh-Made Wet Meal Feeder",
@@ -874,33 +899,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/neakasa",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
-      "title": "Memoir - An E-ink Frame That Does Not Glow Like a Screen",
-      "title_ja": "Memoir - An E-ink Frame That Does Not Glow Like a Screen",
-      "subtitle": "A beautiful paper like digital frame for your art & memories. Wireless, Portable, Long Lasting Battery, iOS & Android, 3 sizes.",
-      "subtitle_ja": "A beautiful paper like digital frame for your art & memories. Wireless, Portable, Long Lasting Battery, iOS & Android, 3 sizes.",
+      "title": "MAVO Lumicurve – The All-in-One Precision Coffee Scale.",
+      "title_ja": "MAVO Lumicurve – The All-in-One Precision Coffee Scale.",
+      "subtitle": "Brew Curve Display| 360° Auto-Rotating Screen | 5 Dedicated Brewing Modes | Slim& Portable | Water & Steam Resistant",
+      "subtitle_ja": "Brew Curve Display| 360° Auto-Rotating Screen | 5 Dedicated Brewing Modes | Slim& Portable | Water & Steam Resistant",
       "platform": "kickstarter",
-      "original_url": "https://www.kickstarter.com/projects/698611014/memoir-a-paper-like-e-ink-digital-frame",
-      "image_url": "https://i.kickstarter.com/assets/054/130/064/a7592df5f64a1603d5550d1fec986c2c_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1781624740&width=1024&sig=QbSuDT4HrLeZ5J5wqljYnyj%2BqNL%2FdE%2BCaZVSXqjdcjU%3D",
-      "raised_usd": 125739,
-      "goal_usd": 80000,
-      "backers": 210,
-      "category": "Design/Product Design",
+      "original_url": "https://www.kickstarter.com/projects/mavo/mavo-lumicurve-the-all-in-one-precision-coffee-scale",
+      "image_url": "https://i.kickstarter.com/assets/053/658/967/e5ab6f62eff1d1a4910cd3019c658089_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1778317842&width=1024&sig=QpVKuSvrYP7Nkl%2BawiLiVPQI2gYJ7Gf%2FyxeAYJiQF%2BM%3D",
+      "raised_usd": 139048,
+      "goal_usd": 39186,
+      "backers": 1517,
+      "category": "Technology/Gadgets",
       "country": "Hong Kong",
       "status": "active",
-      "score": 35,
+      "score": 58,
       "offer_status": "未接触",
       "japan_cf_checked": false,
       "japan_cf_result": null,
       "pse_ok": false,
       "giteki_ok": false,
       "maker_email": null,
-      "maker_website": "https://www.kickstarter.com/profile/698611014",
-      "created_at": "2026-06-23T07:37:49+00:00",
-      "updated_at": "2026-06-23T07:37:49+00:00"
+      "maker_website": "https://www.kickstarter.com/profile/mavo",
+      "created_at": "2026-06-23T07:41:11+00:00",
+      "updated_at": "2026-06-23T07:41:11+00:00"
     },
     {
       "title": "SkySphere: Building an Intelligent All-Sky Camera Network",
@@ -924,8 +949,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/allplanets",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "MatchGrip - Precision Tweezers You’ll Actually Carry",
@@ -949,8 +974,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/lastoolx",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
+    },
+    {
+      "title": "DAJA S6, The Most Affordable & Compact Fiber Laser Engraver",
+      "title_ja": "DAJA S6, The Most Affordable & Compact Fiber Laser Engraver",
+      "subtitle": "Engrave metals, jewelry, tools, tags, and custom gifts with a 3KG desktop fiber laser built for creators, makers, and small businesses.",
+      "subtitle_ja": "Engrave metals, jewelry, tools, tags, and custom gifts with a 3KG desktop fiber laser built for creators, makers, and small businesses.",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/dajalaser/daja-s6-the-most-affordable-and-compact-fiber-laser-engraver",
+      "image_url": "https://i.kickstarter.com/assets/053/855/346/f394fa239081effc31867efbe8b703ff_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1779698743&width=1024&sig=HNUCUt8iZpWkMbDLKLi6%2FQqUTJn3BdX%2B3IoPQn5kwKw%3D",
+      "raised_usd": 109926,
+      "goal_usd": 35000,
+      "backers": 150,
+      "category": "Technology/Fabrication Tools",
+      "country": "Hong Kong",
+      "status": "active",
+      "score": 50,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/dajalaser",
+      "created_at": "2026-06-23T07:41:03+00:00",
+      "updated_at": "2026-06-23T07:41:03+00:00"
     },
     {
       "title": "nLab: The world's smallest all-in-one electronics lab.",
@@ -974,8 +1024,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/nlab",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "Gesture HW1 — A 10-DOF Robotic Hand & Wrist",
@@ -999,8 +1049,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/gesture-platforms",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
+    },
+    {
+      "title": "AEROGO | 80KM/H Dual-Brushless Customizable RC Hovercraft",
+      "title_ja": "AEROGO | 80KM/H Dual-Brushless Customizable RC Hovercraft",
+      "subtitle": "10ms Ultra-Low Latency｜20,000 RPM｜350m/1150 ft 2.4GHz｜A Customizable 1:12 STEM Hovercraft Built for High-Speed Action on Any Terrain.",
+      "subtitle_ja": "10ms Ultra-Low Latency｜20,000 RPM｜350m/1150 ft 2.4GHz｜A Customizable 1:12 STEM Hovercraft Built for High-Speed Action on Any Terrain.",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/premiercraft/shifty-x-high-speed80km-h-dual-brushless-diy-rchovercraftt",
+      "image_url": "https://i.kickstarter.com/assets/053/846/329/c23938a63367409ead6c83921ab8f6bf_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1779613114&width=1024&sig=2ZgFMXtLj90DhHiusdKFbemOd48ZRIJX8%2FzYx5JZpT0%3D",
+      "raised_usd": 103399,
+      "goal_usd": 25000,
+      "backers": 393,
+      "category": "Technology/Robots",
+      "country": "Hong Kong",
+      "status": "active",
+      "score": 50,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/premiercraft",
+      "created_at": "2026-06-23T07:41:06+00:00",
+      "updated_at": "2026-06-23T07:41:06+00:00"
     },
     {
       "title": "C-Rebro™ Alpha: Actively Improve Your Sleep",
@@ -1024,8 +1099,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/gamma-wave",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "UniPop: The Last Jar & Bottle Opener You'll Ever Need 🥫",
@@ -1049,8 +1124,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/298262371",
-      "created_at": "2026-06-23T07:37:40+00:00",
-      "updated_at": "2026-06-23T07:37:40+00:00"
+      "created_at": "2026-06-23T07:41:12+00:00",
+      "updated_at": "2026-06-23T07:41:12+00:00"
     },
     {
       "title": "Sychedelic - Smart Headphones for Stress, Focus & Sleep",
@@ -1074,33 +1149,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/riarus",
-      "created_at": "2026-06-23T07:37:37+00:00",
-      "updated_at": "2026-06-23T07:37:37+00:00"
+      "created_at": "2026-06-23T07:41:01+00:00",
+      "updated_at": "2026-06-23T07:41:01+00:00"
     },
     {
-      "title": "M2 Vinyl Flattener by WHITE BRIDGE Technology",
-      "title_ja": "M2 Vinyl Flattener by WHITE BRIDGE Technology",
-      "subtitle": "Designed from the ground up to safely restore warped records with professional-grade precision and modern simplicity.",
-      "subtitle_ja": "Designed from the ground up to safely restore warped records with professional-grade precision and modern simplicity.",
+      "title": "Linklan 5G eSIM Hotspot: Portable Unlocked eSIM Wi-Fi Device",
+      "title_ja": "Linklan 5G eSIM Hotspot: Portable Unlocked eSIM Wi-Fi Device",
+      "subtitle": "Unlocked 5G eSIM hotspot | No contract/roaming | No APN setup | Works With Any eSIM Plan | Auto network | Smart App",
+      "subtitle_ja": "Unlocked 5G eSIM hotspot | No contract/roaming | No APN setup | Works With Any eSIM Plan | Auto network | Smart App",
       "platform": "kickstarter",
-      "original_url": "https://www.kickstarter.com/projects/whitebridgetech/m2-vinyl-flattener-by-white-bridge-technology",
-      "image_url": "https://i.kickstarter.com/assets/054/151/393/8098cd78e3042207d202ae42274e2ebb_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1781759930&width=1024&sig=UrL65yOC2Z5%2FJnkb1JuctJwlUThF0%2BoSMcrVJ18FLBI%3D",
-      "raised_usd": 93498,
-      "goal_usd": 10000,
-      "backers": 159,
-      "category": "Technology/Gadgets",
-      "country": "the United States",
+      "original_url": "https://www.kickstarter.com/projects/linklan/linklan-5g-esim-hotspot-portable-open-esim-wi-fi-device",
+      "image_url": "https://i.kickstarter.com/assets/053/854/102/fe317c3f9e967609f1c13d30181ade9a_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1779690357&width=1024&sig=hmXf4sW8lhjFxSFRPkM25XBpqjHlpJiGSKCdEvfjYFY%3D",
+      "raised_usd": 92155,
+      "goal_usd": 25000,
+      "backers": 319,
+      "category": "Technology/Hardware",
+      "country": "Hong Kong",
       "status": "active",
-      "score": 45,
+      "score": 40,
       "offer_status": "未接触",
       "japan_cf_checked": false,
       "japan_cf_result": null,
       "pse_ok": false,
       "giteki_ok": false,
       "maker_email": null,
-      "maker_website": "https://www.kickstarter.com/profile/whitebridgetech",
-      "created_at": "2026-06-23T07:37:39+00:00",
-      "updated_at": "2026-06-23T07:37:39+00:00"
+      "maker_website": "https://www.kickstarter.com/profile/linklan",
+      "created_at": "2026-06-23T07:41:08+00:00",
+      "updated_at": "2026-06-23T07:41:08+00:00"
     },
     {
       "title": "Ysea: A Convertible Dining & Gaming Table by Merelle",
@@ -1124,8 +1199,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/1623384398",
-      "created_at": "2026-06-23T07:37:44+00:00",
-      "updated_at": "2026-06-23T07:37:44+00:00"
+      "created_at": "2026-06-23T07:41:19+00:00",
+      "updated_at": "2026-06-23T07:41:19+00:00"
     },
     {
       "title": "Ryzer Go: The Bag Stand That Attaches To Almost Any Bag",
@@ -1149,8 +1224,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/mojoh",
-      "created_at": "2026-06-23T07:37:46+00:00",
-      "updated_at": "2026-06-23T07:37:46+00:00"
+      "created_at": "2026-06-23T07:41:24+00:00",
+      "updated_at": "2026-06-23T07:41:24+00:00"
     },
     {
       "title": "AIR™ Zero-Odor Socks",
@@ -1174,8 +1249,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/ivanadesigns",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "MagWave + MagSound: Next Gen Bluetooth Speakers",
@@ -1199,8 +1274,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/magbeat",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "Breeze 2.0: Stay Cool When it's Hot, Sleep Better, Walk Easy",
@@ -1224,8 +1299,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/outdoor-home-fitness",
-      "created_at": "2026-06-23T07:37:41+00:00",
-      "updated_at": "2026-06-23T07:37:41+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "XFANIC: A SmartView Dock for AI Productivity & Monitoring",
@@ -1249,8 +1324,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/visiondock",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
     },
     {
       "title": "Rorolee: Your Pocket AI Agent and Workstation, Anywhere.",
@@ -1274,8 +1349,58 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/deotaland",
-      "created_at": "2026-06-23T07:37:38+00:00",
-      "updated_at": "2026-06-23T07:37:38+00:00"
+      "created_at": "2026-06-23T07:41:02+00:00",
+      "updated_at": "2026-06-23T07:41:02+00:00"
+    },
+    {
+      "title": "MOVESPEED Touch to Interact The Ultimate Smart SSD Enclosure",
+      "title_ja": "MOVESPEED Touch to Interact The Ultimate Smart SSD Enclosure",
+      "subtitle": "Smart Touch Screen | Password Encryption & Unlock | Status monitoring | Up to 8TB | 10Gbps | 100W PD | Supports 2230/2242/2260/2280 SSD",
+      "subtitle_ja": "Smart Touch Screen | Password Encryption & Unlock | Status monitoring | Up to 8TB | 10Gbps | 100W PD | Supports 2230/2242/2260/2280 SSD",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/movespeedtech/movespeed-smart-touchscreen-ssd-enclosure",
+      "image_url": "https://i.kickstarter.com/assets/053/944/076/d58397c411e8e72178de6fe7457b9e57_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1780319787&width=1024&sig=oRLwfko%2BzHNaMEhYERWXMDnqT0Xrh%2FZxoTfUeyXxA20%3D",
+      "raised_usd": 74774,
+      "goal_usd": 39141,
+      "backers": 842,
+      "category": "Technology/Gadgets",
+      "country": "Hong Kong",
+      "status": "active",
+      "score": 30,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/movespeedtech",
+      "created_at": "2026-06-23T07:41:01+00:00",
+      "updated_at": "2026-06-23T07:41:01+00:00"
+    },
+    {
+      "title": "VORO 60mm Ultra-Long Distance Invisible Wireless Charger",
+      "title_ja": "VORO 60mm Ultra-Long Distance Invisible Wireless Charger",
+      "subtitle": "60mm/2.36in Desktop Penetration | 15W Fast Charging | Full Qi Compatibility | Non-Destructive Invisible Installation",
+      "subtitle_ja": "60mm/2.36in Desktop Penetration | 15W Fast Charging | Full Qi Compatibility | Non-Destructive Invisible Installation",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/voro/voro-60mm-ultra-long-distance-invisible-wireless-charger",
+      "image_url": "https://i.kickstarter.com/assets/053/939/948/9ea70b0173e8fdeedfccd20e6c90430b_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1780295570&width=1024&sig=%2FUn7Wo1ntGbsuikYsOa%2FeL3q8ZIqPty0ZWQ0Fr1AjNw%3D",
+      "raised_usd": 70818,
+      "goal_usd": 20000,
+      "backers": 510,
+      "category": "Technology/Gadgets",
+      "country": "Hong Kong",
+      "status": "active",
+      "score": 40,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/voro",
+      "created_at": "2026-06-23T07:41:08+00:00",
+      "updated_at": "2026-06-23T07:41:08+00:00"
     },
     {
       "title": "MANIME | An Elegant True GMT Watch for Gentlemen Travelers",
@@ -1299,33 +1424,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/manime",
-      "created_at": "2026-06-23T07:37:43+00:00",
-      "updated_at": "2026-06-23T07:37:43+00:00"
-    },
-    {
-      "title": "KCOPE 2 — One Slide. Every Card in Sight",
-      "title_ja": "KCOPE 2 — One Slide. Every Card in Sight",
-      "subtitle": "A fast-access titanium wallet. Find any card instantly",
-      "subtitle_ja": "A fast-access titanium wallet. Find any card instantly",
-      "platform": "kickstarter",
-      "original_url": "https://www.kickstarter.com/projects/1569875698/kcope-2-slide-open-find-your-card-fast",
-      "image_url": "https://i.kickstarter.com/assets/053/923/338/add003bf3f586594d42144dfaeca9e3c_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1780136522&width=1024&sig=hnKERPj0VtroWiO9igWmPMlbxY%2BQ8vfFBm0fCV%2B3yHE%3D",
-      "raised_usd": 65487,
-      "goal_usd": 5000,
-      "backers": 459,
-      "category": "Design/Product Design",
-      "country": "the United States",
-      "status": "active",
-      "score": 40,
-      "offer_status": "未接触",
-      "japan_cf_checked": false,
-      "japan_cf_result": null,
-      "pse_ok": false,
-      "giteki_ok": false,
-      "maker_email": null,
-      "maker_website": "https://www.kickstarter.com/profile/1569875698",
-      "created_at": "2026-06-23T07:37:49+00:00",
-      "updated_at": "2026-06-23T07:37:49+00:00"
+      "created_at": "2026-06-23T07:41:22+00:00",
+      "updated_at": "2026-06-23T07:41:22+00:00"
     },
     {
       "title": "The LEVEL UP WRAP - Stay Warm During Gaming or Work Sessions",
@@ -1349,8 +1449,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/levelupwrap",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
+    },
+    {
+      "title": "OASIS: The Outdoor Lounge Tesla Was Missing",
+      "title_ja": "OASIS: The Outdoor Lounge Tesla Was Missing",
+      "subtitle": "|Outdoor Lounge Mode|Premium Leather & Metal|Trunk-Integrated Design||Built for Model X & Y|Plug & Play|Travel-Ready Design |",
+      "subtitle_ja": "|Outdoor Lounge Mode|Premium Leather & Metal|Trunk-Integrated Design||Built for Model X & Y|Plug & Play|Travel-Ready Design |",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/oasis-tesla-lounge/oasis-the-outdoor-lounge-tesla-was-missing",
+      "image_url": "https://i.kickstarter.com/assets/052/690/506/18d549991d1eac9882ff007f99991217_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1771744818&width=1024&sig=JkO2PR5nRJCfKLEaxydbPXlxAeUzzBRm%2BnoGSb1CTYg%3D",
+      "raised_usd": 61969,
+      "goal_usd": 8700,
+      "backers": 109,
+      "category": "Technology/Gadgets",
+      "country": "the United Kingdom",
+      "status": "active",
+      "score": 45,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/oasis-tesla-lounge",
+      "created_at": "2026-06-23T07:41:06+00:00",
+      "updated_at": "2026-06-23T07:41:06+00:00"
     },
     {
       "title": "Wasted Watts | Wind tunnel data in Real Time, on your Bike.",
@@ -1374,8 +1499,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/aeroscale",
-      "created_at": "2026-06-23T07:37:34+00:00",
-      "updated_at": "2026-06-23T07:37:34+00:00"
+      "created_at": "2026-06-23T07:40:59+00:00",
+      "updated_at": "2026-06-23T07:40:59+00:00"
     },
     {
       "title": "4D Maxx: triple your luggage capacity. Now semi-transparent",
@@ -1399,8 +1524,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/travel-gear-backpack",
-      "created_at": "2026-06-23T07:37:41+00:00",
-      "updated_at": "2026-06-23T07:37:41+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
+    },
+    {
+      "title": "VbookScan - All-in-One Smart Scanning Solution",
+      "title_ja": "VbookScan - All-in-One Smart Scanning Solution",
+      "subtitle": "Curve-Flatten Tech | Digitalize Everthing | Turn Pics To Editable Files | Scan Anything| Universal Compatibility | Adjustable Stand",
+      "subtitle_ja": "Curve-Flatten Tech | Digitalize Everthing | Turn Pics To Editable Files | Scan Anything| Universal Compatibility | Adjustable Stand",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/1180418196/vbookscan-all-in-one-smart-scanning-solution",
+      "image_url": "https://i.kickstarter.com/assets/053/621/553/6a45a7338c61a83f297031a87193bf86_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1778083069&width=1024&sig=vgytTXRfE3YR5RQjSpAxh3QHv1q4Lxam5aiMdspYOVE%3D",
+      "raised_usd": 61509,
+      "goal_usd": 10000,
+      "backers": 778,
+      "category": "Technology/Gadgets",
+      "country": "Hong Kong",
+      "status": "active",
+      "score": 45,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/1180418196",
+      "created_at": "2026-06-23T07:41:02+00:00",
+      "updated_at": "2026-06-23T07:41:02+00:00"
     },
     {
       "title": "ATuMan X3 Precision Toolkit — No Stripping, Full Control",
@@ -1424,8 +1574,58 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/atumanofficial",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:58+00:00",
+      "updated_at": "2026-06-23T07:40:58+00:00"
+    },
+    {
+      "title": "Renote Snap: World’s 1st Metal Notebook Wallet",
+      "title_ja": "Renote Snap: World’s 1st Metal Notebook Wallet",
+      "subtitle": "∞ Notes | MagSafe Wallet | Capture Ideas | Productivity | Remember More | Carry Less | Digital Detox | Reusable | EDC | Stand | Ruler",
+      "subtitle_ja": "∞ Notes | MagSafe Wallet | Capture Ideas | Productivity | Remember More | Carry Less | Digital Detox | Reusable | EDC | Stand | Ruler",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/renote-snap/renote-snap-worlds-first-7-in-1-notebook-wallet",
+      "image_url": "https://i.kickstarter.com/assets/053/894/955/f162a541bbc698d99b7efa992a15bd83_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1779928271&width=1024&sig=3P2dCb9Dweb6rCGyWgYaysuxbv78s24E8yZBOweJA8E%3D",
+      "raised_usd": 61253,
+      "goal_usd": 1127,
+      "backers": 568,
+      "category": "Design/Product Design",
+      "country": "the United Kingdom",
+      "status": "active",
+      "score": 40,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/renote-snap",
+      "created_at": "2026-06-23T07:41:16+00:00",
+      "updated_at": "2026-06-23T07:41:16+00:00"
+    },
+    {
+      "title": "Recoil Pen- Titanium Click Pen Tough from The Inside Out",
+      "title_ja": "Recoil Pen- Titanium Click Pen Tough from The Inside Out",
+      "subtitle": "Titanium Click Pen with Adjustable Center of Gravity. Capture Your Idea with A Click, Conclude with Another.",
+      "subtitle_ja": "Titanium Click Pen with Adjustable Center of Gravity. Capture Your Idea with A Click, Conclude with Another.",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/glabs/recoil-pen-titanium-click-pen-tough-from-the-inside-out",
+      "image_url": "https://i.kickstarter.com/assets/053/741/076/8e1825bb9e51d8f294bc3672f62791dd_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1778840288&width=1024&sig=7X5b%2FIUTD0z9qTXpmhrsUKZ9DZl7iTjHSPgI3lIBugk%3D",
+      "raised_usd": 60461,
+      "goal_usd": 5000,
+      "backers": 497,
+      "category": "Design/Product Design",
+      "country": "the United States",
+      "status": "active",
+      "score": 40,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/glabs",
+      "created_at": "2026-06-23T07:41:20+00:00",
+      "updated_at": "2026-06-23T07:41:20+00:00"
     },
     {
       "title": "The Gyro Coin — Defy Gravity With Physics",
@@ -1449,8 +1649,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/aerohart",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "OMENDIAL DICE: A Mechanical 7-in-1 Spinner Die for RPGs",
@@ -1474,8 +1674,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/looplull",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:59+00:00",
+      "updated_at": "2026-06-23T07:40:59+00:00"
     },
     {
       "title": "50th Anniversary Chuck E-Cheese Action Figure",
@@ -1499,8 +1699,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/bullairs",
-      "created_at": "2026-06-23T07:37:42+00:00",
-      "updated_at": "2026-06-23T07:37:42+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "Miko- World's Smallest 30W GaN Wall Charger For Your Keys",
@@ -1524,8 +1724,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/asaptechnologies",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:57+00:00",
+      "updated_at": "2026-06-23T07:40:57+00:00"
     },
     {
       "title": "Plantiemoji: See How Your Plant Feels",
@@ -1549,8 +1749,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/plantalk",
-      "created_at": "2026-06-23T07:37:41+00:00",
-      "updated_at": "2026-06-23T07:37:41+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     },
     {
       "title": "Sunflower X: AI Sensing Auto Rotating Sunrise Wake-Up Lamp",
@@ -1574,8 +1774,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/moonlex",
-      "created_at": "2026-06-23T07:37:33+00:00",
-      "updated_at": "2026-06-23T07:37:33+00:00"
+      "created_at": "2026-06-23T07:40:59+00:00",
+      "updated_at": "2026-06-23T07:40:59+00:00"
     },
     {
       "title": "Rive - Handmade Damascus Double-Bit Axe",
@@ -1599,8 +1799,58 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/ecary",
-      "created_at": "2026-06-23T07:37:45+00:00",
-      "updated_at": "2026-06-23T07:37:45+00:00"
+      "created_at": "2026-06-23T07:41:22+00:00",
+      "updated_at": "2026-06-23T07:41:22+00:00"
+    },
+    {
+      "title": "Vytasync: The Smart Air Pillow for Better Sleep",
+      "title_ja": "Vytasync: The Smart Air Pillow for Better Sleep",
+      "subtitle": "Smart pillow technology designed to improve neck support, help you fall asleep faster, and make every night more comfortable.",
+      "subtitle_ja": "Smart pillow technology designed to improve neck support, help you fall asleep faster, and make every night more comfortable.",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/185996931/vytasync-the-smart-air-pillow",
+      "image_url": "https://i.kickstarter.com/assets/054/003/081/2e933eb85866bbf2d7e0047cd5baecf9_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1780672521&width=1024&sig=J5vKDsETaAUB808CP6Hdwm0vqlZSSYf5fbvBzv1sCh4%3D",
+      "raised_usd": 51682,
+      "goal_usd": 10000,
+      "backers": 174,
+      "category": "Technology/Hardware",
+      "country": "Hong Kong",
+      "status": "active",
+      "score": 45,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/185996931",
+      "created_at": "2026-06-23T07:41:09+00:00",
+      "updated_at": "2026-06-23T07:41:09+00:00"
+    },
+    {
+      "title": "WinEye: The First Reusable Glass-Mounted Security Camera",
+      "title_ja": "WinEye: The First Reusable Glass-Mounted Security Camera",
+      "subtitle": "Indoor installation, outdoor surveillance. Designed for window viewing. Just a simple way to keep an eye on what’s beyond your window.",
+      "subtitle_ja": "Indoor installation, outdoor surveillance. Designed for window viewing. Just a simple way to keep an eye on what’s beyond your window.",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/showmo/wineye-the-next-generation-window-mounted-security-camera",
+      "image_url": "https://i.kickstarter.com/assets/053/646/362/68e671fad316de98524ed129eb940917_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1778229003&width=1024&sig=TITyKF%2BkWJ5%2Fj%2F5a%2F7dtY6N3xGn58vPuZdiDb3uKMXY%3D",
+      "raised_usd": 51681,
+      "goal_usd": 5000,
+      "backers": 262,
+      "category": "Technology/Gadgets",
+      "country": "the United States",
+      "status": "active",
+      "score": 45,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/showmo",
+      "created_at": "2026-06-23T07:41:04+00:00",
+      "updated_at": "2026-06-23T07:41:04+00:00"
     },
     {
       "title": "Help save Castro Valley's toy The Prize Booth!",
@@ -1624,8 +1874,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/save-theprizebooth",
-      "created_at": "2026-06-23T07:37:41+00:00",
-      "updated_at": "2026-06-23T07:37:41+00:00"
+      "created_at": "2026-06-23T07:41:13+00:00",
+      "updated_at": "2026-06-23T07:41:13+00:00"
     }
   ]
 }

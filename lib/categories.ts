@@ -19,29 +19,34 @@ export interface CategoryOption {
   count: number;
 }
 
-/** Map platform category string → Japanese priority group. */
-export function getCategoryGroupJa(category: string): CategoryGroupJa | "その他" {
+/** Map category + title → Japanese priority group. */
+export function getCategoryGroupJa(
+  category: string,
+  title = "",
+  subtitle = ""
+): CategoryGroupJa | "その他" {
+  const blob = `${category} ${title} ${subtitle}`.toLowerCase();
+  if (/health|fitness|medical|wellness|sleep|massage|tracker|vitals|wearable/.test(blob)) {
+    return "ヘルスケア・フィットネス";
+  }
+  if (/outdoor|camping|hike|backpack|travel bag|climb|fishing|swim|water park/.test(blob)) {
+    return "アウトドア・スポーツ";
+  }
+  if (/kitchen|food|grill|espresso|coffee|brew|cook|appliance/.test(blob)) {
+    return "キッチン・家電";
+  }
+  if (/mobility|transport|vehicle|ebike|e-bike|scooter|wheelchair|skateboard/.test(blob)) {
+    return "モビリティ・乗り物";
+  }
   const lower = (category || "").toLowerCase();
   if (
-    /technology|gadget|hardware|software|3d printing|robot|phone|camera equipment|maker|nas|scanner|keyboard|handheld|projector|ai |computer|device|electronic/.test(
+    /technology|gadget|hardware|software|3d printing|robot|phone|nas|scanner|projector|computer|device/.test(
       lower
     )
   ) {
     return "テクノロジー・ガジェット";
   }
-  if (/health|fitness|medical|wellness|sport(?!s wear)/.test(lower)) {
-    return "ヘルスケア・フィットネス";
-  }
-  if (/outdoor|camping|hike|travel bag|backpack|climb|mountain|fishing|swim|water park/.test(lower)) {
-    return "アウトドア・スポーツ";
-  }
-  if (/kitchen|food|craft beer|cook|appliance|home|garden|brew|coffee|espresso/.test(lower)) {
-    return "キッチン・家電";
-  }
-  if (/mobility|transport|vehicle|bike|ebike|scooter|flight|automotive|motor|wheel/.test(lower)) {
-    return "モビリティ・乗り物";
-  }
-  if (/design|lifestyle|fashion|wearable|furniture|product|bag|instrument|music making|accessories/.test(lower)) {
+  if (/design|lifestyle|fashion|furniture|product|instrument/.test(lower)) {
     return "ライフスタイル・デザイン";
   }
   if (lower.includes("sport")) {
@@ -50,15 +55,20 @@ export function getCategoryGroupJa(category: string): CategoryGroupJa | "その�
   return "その他";
 }
 
-export function projectMatchesCategoryGroup(project: Pick<Project, "category">, group: string): boolean {
+export function projectMatchesCategoryGroup(
+  project: Pick<Project, "category" | "title" | "subtitle">,
+  group: string
+): boolean {
   if (group === "all") return true;
-  return getCategoryGroupJa(project.category) === group;
+  return getCategoryGroupJa(project.category, project.title, project.subtitle ?? "") === group;
 }
 
-export function buildCategoryOptions(projects: Pick<Project, "category">[]): CategoryOption[] {
+export function buildCategoryOptions(
+  projects: Pick<Project, "category" | "title" | "subtitle">[]
+): CategoryOption[] {
   const counts = new Map<string, number>();
   for (const project of projects) {
-    const group = getCategoryGroupJa(project.category);
+    const group = getCategoryGroupJa(project.category, project.title, project.subtitle ?? "");
     counts.set(group, (counts.get(group) ?? 0) + 1);
   }
 
@@ -72,6 +82,10 @@ export function buildCategoryOptions(projects: Pick<Project, "category">[]): Cat
   }));
 }
 
-export function formatCategoryLabel(category: string): string {
-  return getCategoryGroupJa(category);
+export function formatCategoryLabel(
+  category: string,
+  title = "",
+  subtitle = ""
+): string {
+  return getCategoryGroupJa(category, title, subtitle);
 }

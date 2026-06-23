@@ -5,17 +5,17 @@ Kickstarter successful projects crawler.
 Uses the public discover JSON endpoint via Playwright:
   /discover/advanced.json?category_id=N&sort=magic&page=N
 
-Categories crawled:
-  - Technology (category_id=16)
-  - Design (category_id=7)
-  - Fashion (category_id=11)
+Categories crawled (sort=magic):
+  - Technology (16) — ガジェット / ヘルスケア / モビリティ
+  - Design (7) — アウトドア / ライフスタイル
+  - Fashion (11)
+  - Food (10) — キッチン
 
 Games (category_id=12) is never crawled.
 
-Filters (per spec):
-  - pledged >= goal (state=successful)
+Filters:
   - raised >= $50,000 USD
-  - ended within 180 days
+  - successful (ended within 180 days) or live with strong funding
 """
 
 from __future__ import annotations
@@ -131,6 +131,7 @@ def crawl_kickstarter(
     max_pages: int = 5,
     category_slugs: list[str] | None = None,
     max_projects: int | None = None,
+    min_projects: int | None = None,
 ) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
@@ -189,6 +190,40 @@ def crawl_kickstarter(
 
         browser.close()
 
+    # Extra pages on Technology if below minimum target
+    if min_projects and len(projects) < min_projects:
+        tech_cats = [(cid, label) for cid, label in categories if cid == 16]
+        if tech_cats:
+            extra_start = pages_per_category + 1
+            extra_end = pages_per_category + 15
+            print(
+                f"[kickstarter] {len(projects)} < min {min_projects}, "
+                f"fetching Technology pages {extra_start}-{extra_end}..."
+            )
+            with sync_playwright() as playwright:
+                browser, context = create_browser(playwright)
+                page = context.new_page()
+                for category_id, category_label in tech_cats:
+                    for page_num in range(extra_start, extra_end + 1):
+                        if len(projects) >= min_projects:
+                            break
+                        url = build_discover_url(page_num, category_id)
+                        data = fetch_json_page(page, url)
+                        if not data:
+                            break
+                        for item in data.get("projects") or []:
+                            if len(projects) >= min_projects:
+                                break
+                            mapped = map_kickstarter_project(item)
+                            if not mapped or not is_allowed_category(mapped["category"]):
+                                continue
+                            key = mapped["original_url"]
+                            if key in seen_urls:
+                                continue
+                            seen_urls.add(key)
+                            projects.append(mapped)
+                browser.close()
+
     projects.sort(key=lambda p: p["raised_usd"], reverse=True)
     if limit:
         projects = projects[:limit]
@@ -200,7 +235,7 @@ def main() -> int:
     parser.add_argument(
         "--pages",
         type=int,
-        default=5,
+        default=20,
         help="Discover pages per Kickstarter parent category",
     )
     parser.add_argument(
@@ -209,12 +244,18 @@ def main() -> int:
         default=None,
         help="Maximum number of projects to collect (e.g. 10)",
     )
+    parser.add_argument(
+        "--min",
+        type=int,
+        default=50,
+        help="Minimum projects to collect (extra Technology pages if needed)",
+    )
     parser.add_argument("--no-save", action="store_true", help="Skip writing output files")
     parser.add_argument(
         "--categories",
         type=str,
         default=DEFAULT_CATEGORIES,
-        help="Comma-separated slugs (default: technology,design,fashion)",
+        help="Comma-separated slugs (default: tech+design+fashion+health+outdoor+kitchen+mobility)",
     )
     parser.add_argument(
         "--replace",
@@ -239,8 +280,11 @@ def main() -> int:
         max_pages=args.pages,
         category_slugs=slugs,
         max_projects=args.max,
+        min_projects=args.min,
     )
     print(f"[kickstarter] total matched: {len(projects)}")
+    if args.min and len(projects) < args.min:
+        print(f"[kickstarter] WARN: collected {len(projects)} < min {args.min}", file=sys.stderr)
 
     if not projects:
         print("[kickstarter] no projects found")

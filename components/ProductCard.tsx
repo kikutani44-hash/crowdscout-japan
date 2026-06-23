@@ -69,7 +69,7 @@ export function ProductCard({
             {project.platform}
           </Badge>
           <Badge variant="outline" className="bg-background/80 text-xs">
-            {formatCategoryLabel(project.category)}
+            {formatCategoryLabel(project.category, project.title, project.subtitle ?? "")}
           </Badge>
         </div>
         <div className="absolute right-3 top-3">

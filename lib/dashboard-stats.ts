@@ -41,7 +41,7 @@ export function getDashboardStats(projects: Project[]): DashboardStats {
 
   for (const p of projects) {
     byOfferStatus[p.offer_status]++;
-    const group = getCategoryGroupJa(p.category);
+    const group = getCategoryGroupJa(p.category, p.title, p.subtitle ?? "");
     byCategory[group] = (byCategory[group] ?? 0) + 1;
     byPlatform[p.platform] = (byPlatform[p.platform] ?? 0) + 1;
     scoreSum += p.score;

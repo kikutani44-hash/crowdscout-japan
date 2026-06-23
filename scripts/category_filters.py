@@ -13,16 +13,23 @@ from __future__ import annotations
 # Kickstarter discover `category_id` (parent categories to crawl)
 # HTML: /discover/advanced?category_id=N&sort=magic&page=1
 KICKSTARTER_CATEGORY_IDS: list[tuple[int, str]] = [
-    (16, "Technology"),
-    (7, "Design"),
+    (16, "Technology"),  # ガジェット / ヘルスケア / モビリティ
+    (7, "Design"),       # アウトドア / ライフスタイル
     (11, "Fashion"),
+    (10, "Food"),        # キッチン・家電
 ]
 
 # Never crawl these Kickstarter parent category IDs
 BLOCKED_KICKSTARTER_CATEGORY_IDS = {12}  # Games
 
-# Kickstarter-only crawl slugs (Technology / Design / Fashion)
-KICKSTARTER_DEMO_SLUGS = "technology,design,fashion"
+# Kickstarter crawl slugs (Tech / Design / Fashion / Food + priority groups)
+KICKSTARTER_DEMO_SLUGS = (
+    "technology,design,fashion,"
+    "health,healthcare,fitness,"
+    "outdoor,sport,sports,"
+    "food,kitchen,"
+    "mobility,transport"
+)
 
 EXCLUDED_PARENTS = {
     "Games",
@@ -111,6 +118,18 @@ ALLOWED_KEYWORDS = (
     "bike",
     "ebike",
     "scooter",
+    "e-bike",
+    "wheelchair",
+    "skateboard",
+    "grill",
+    "espresso",
+    "coffee",
+    "brew",
+    "sleep",
+    "recovery",
+    "massage",
+    "tracker",
+    "watch",
     "product design",
     "lifestyle",
     "furniture",
@@ -258,8 +277,17 @@ def is_allowed_category(category: str) -> bool:
     return False
 
 
-def category_group_ja(category: str) -> str | None:
-    """Map a platform category string to a Japanese priority group label."""
+def category_group_ja(category: str, title: str = "", subtitle: str = "") -> str | None:
+    """Map category + title to a Japanese priority group label."""
+    blob = f"{category} {title} {subtitle}".lower()
+    if any(k in blob for k in ("health", "fitness", "medical", "wellness", "sleep", "massage", "tracker", "vitals")):
+        return "ヘルスケア・フィットネス"
+    if any(k in blob for k in ("outdoor", "camping", "hike", "backpack", "travel bag", "climb", "fishing", "swim")):
+        return "アウトドア・スポーツ"
+    if any(k in blob for k in ("kitchen", "food", "cook", "grill", "espresso", "coffee", "brew", "appliance")):
+        return "キッチン・家電"
+    if any(k in blob for k in ("mobility", "transport", "vehicle", "ebike", "e-bike", "scooter", "bike", "wheelchair")):
+        return "モビリティ・乗り物"
     lower = category.lower()
     if any(k in lower for k in ("technology", "gadget", "hardware", "software", "3d printing", "robot", "phone")):
         return "テクノロジー・ガジェット"
