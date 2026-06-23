@@ -1,6 +1,6 @@
 {
-  "fetched_at": "2026-06-23T07:04:17+00:00",
-  "count": 10,
+  "fetched_at": "2026-06-23T07:10:41+00:00",
+  "count": 13,
   "projects": [
     {
       "title": "AWOL Vision Aetherion: Pixel-Clarity RGB Laser UST Projector",
@@ -24,8 +24,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/awolvision",
-      "created_at": "2026-06-23T07:03:16+00:00",
-      "updated_at": "2026-06-23T07:03:16+00:00"
+      "created_at": "2026-06-23T07:05:45+00:00",
+      "updated_at": "2026-06-23T07:05:45+00:00"
     },
     {
       "title": "UGREEN AI NAS: Your Private Cloud Powered by Secure Local AI",
@@ -49,8 +49,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/ugreen",
-      "created_at": "2026-06-23T07:03:16+00:00",
-      "updated_at": "2026-06-23T07:03:16+00:00"
+      "created_at": "2026-06-23T07:05:45+00:00",
+      "updated_at": "2026-06-23T07:05:45+00:00"
     },
     {
       "title": "FibreSeeker 3-the First Consumer Continuous Fibre 3D Printer",
@@ -74,8 +74,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/1763117873",
-      "created_at": "2026-06-23T07:03:19+00:00",
-      "updated_at": "2026-06-23T07:03:19+00:00"
+      "created_at": "2026-06-23T07:05:46+00:00",
+      "updated_at": "2026-06-23T07:05:46+00:00"
     },
     {
       "title": "FluxPose: An occlusion free 6DOF FBT tracking system",
@@ -99,8 +99,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/fluxpose",
-      "created_at": "2026-06-23T07:03:19+00:00",
-      "updated_at": "2026-06-23T07:03:19+00:00"
+      "created_at": "2026-06-23T07:05:46+00:00",
+      "updated_at": "2026-06-23T07:05:46+00:00"
     },
     {
       "title": "iGarden Swim Jet X Series: Bring the Water Park Home",
@@ -124,8 +124,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/1312001986",
-      "created_at": "2026-06-23T07:03:19+00:00",
-      "updated_at": "2026-06-23T07:03:19+00:00"
+      "created_at": "2026-06-23T07:05:46+00:00",
+      "updated_at": "2026-06-23T07:05:46+00:00"
     },
     {
       "title": "Titan 2 Elite: The 5G Keyboard Phone You’ve Been Waiting For",
@@ -149,8 +149,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/jellyphone",
-      "created_at": "2026-06-23T07:03:19+00:00",
-      "updated_at": "2026-06-23T07:03:19+00:00"
+      "created_at": "2026-06-23T07:05:46+00:00",
+      "updated_at": "2026-06-23T07:05:46+00:00"
     },
     {
       "title": "Tiiny AI Pocket Lab: The First Pocket-Size AI Supercomputer",
@@ -174,8 +174,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/tiinyai",
-      "created_at": "2026-06-23T07:03:22+00:00",
-      "updated_at": "2026-06-23T07:03:22+00:00"
+      "created_at": "2026-06-23T07:05:47+00:00",
+      "updated_at": "2026-06-23T07:05:47+00:00"
     },
     {
       "title": "NeoSander: Mini Electric Reciprocating Detail Sander",
@@ -199,8 +199,8 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/hozodesign",
-      "created_at": "2026-06-23T07:03:22+00:00",
-      "updated_at": "2026-06-23T07:03:22+00:00"
+      "created_at": "2026-06-23T07:05:48+00:00",
+      "updated_at": "2026-06-23T07:05:48+00:00"
     },
     {
       "title": "Revopoint POP 4 3D Scanner",
@@ -224,8 +224,33 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/revopoint3d",
-      "created_at": "2026-06-23T07:03:22+00:00",
-      "updated_at": "2026-06-23T07:03:22+00:00"
+      "created_at": "2026-06-23T07:05:48+00:00",
+      "updated_at": "2026-06-23T07:05:48+00:00"
+    },
+    {
+      "title": "4 New Travel Bags by Peak Design",
+      "title_ja": "Peak Design 新トラベルバッグ4モデル",
+      "subtitle": "Bring delight and dignity back to your travel experience with 4 new bags designed to elevate your life on the road.",
+      "subtitle_ja": "旅に最適化された新ラインアップ。機能性とデザインを両立したバッグシリーズ",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/peak-design/4-new-travel-bags-by-peak-design",
+      "image_url": "https://i.kickstarter.com/assets/052/808/251/c3f9abafb7a21faeb2d1b6684b2fd9e8_original.png?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1772537497&width=1024&sig=vsJnLz9GAH8jmnh4pg6vihpIoX0AOAJto%2F7kbaGzZlk%3D",
+      "raised_usd": 2428996,
+      "goal_usd": 100000,
+      "backers": 7149,
+      "category": "Design/Product Design",
+      "country": "the United States",
+      "status": "ended",
+      "score": 75,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/peak-design",
+      "created_at": "2026-06-23T07:05:55+00:00",
+      "updated_at": "2026-06-23T07:05:55+00:00"
     },
     {
       "title": "Olares One: Your Local Desktop AI Powerhouse",
@@ -249,8 +274,58 @@
       "giteki_ok": false,
       "maker_email": null,
       "maker_website": "https://www.kickstarter.com/profile/167544890",
-      "created_at": "2026-06-23T07:03:24+00:00",
-      "updated_at": "2026-06-23T07:03:24+00:00"
+      "created_at": "2026-06-23T07:05:49+00:00",
+      "updated_at": "2026-06-23T07:05:49+00:00"
+    },
+    {
+      "title": "Tembo: A New Musical Instrument for Playful Music Making",
+      "title_ja": "Tembo：遊び心あふれる新しい楽器",
+      "subtitle": "Tembo is a playful intuitive instrument for your creative and musical home. Start by creating and learn through play.",
+      "subtitle_ja": "誰でも直感的に演奏できる新感覚のミュージックインストゥルメント",
+      "platform": "kickstarter",
+      "original_url": "https://www.kickstarter.com/projects/musicalbeings/tembo-a-new-musical-instrument-for-playful-music-making",
+      "image_url": "https://i.kickstarter.com/assets/053/014/838/5e7bf1c1a24c810d2ac1cecc7183d395_original.jpg?anim=false&fit=cover&gravity=auto&height=576&origin=ugc&q=92&v=1773905994&width=1024&sig=SaPVxQ23fVHrj52avq2w%2Fp%2F3lt5YVXZ6Trpi2FjkybY%3D",
+      "raised_usd": 2165315,
+      "goal_usd": 50000,
+      "backers": 5347,
+      "category": "Technology/Gadgets",
+      "country": "the United States",
+      "status": "ended",
+      "score": 80,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.kickstarter.com/profile/musicalbeings",
+      "created_at": "2026-06-23T07:05:50+00:00",
+      "updated_at": "2026-06-23T07:05:50+00:00"
+    },
+    {
+      "title": "OneXPlayer X2 Mini Pro:The Ultimate 3-in-1 OLED Gaming Handheld",
+      "title_ja": "OneXPlayer X2 Mini Pro：3-in-1 OLEDゲーミングハンドヘルド",
+      "subtitle": "AMD Ryzen™ AI Max+ 388 • 8.8\" Native Landscape OLED Display with 144Hz VRR & HDR • Detachable Controllers • Magnetic Keyboard Support • 85Wh External Battery ",
+      "subtitle_ja": "AMD Ryzen AI Max+ 388｜8.8インチOLED 144Hz｜着脱コントローラー｜85Whバッテリー",
+      "platform": "indiegogo",
+      "original_url": "https://www.indiegogo.com/en/projects/one-netbook/onexplayer-x2-mini-prothe-ultimate-3-in-1-oled-gaming-handheld",
+      "image_url": "https://cdn.images.indiegogo.com/og-image-square/projects/431288/2b66b85f-973e-4808-b10f-88aba1f2117a.png",
+      "raised_usd": 500975,
+      "goal_usd": 100195,
+      "backers": 189,
+      "category": "Phones & Accessories",
+      "country": null,
+      "status": "ended",
+      "score": 65,
+      "offer_status": "未接触",
+      "japan_cf_checked": false,
+      "japan_cf_result": null,
+      "pse_ok": false,
+      "giteki_ok": false,
+      "maker_email": null,
+      "maker_website": "https://www.indiegogo.com/en/projects/onexplayer",
+      "created_at": "2026-06-23T07:07:31+00:00",
+      "updated_at": "2026-06-23T07:07:31+00:00"
     }
   ]
 }
