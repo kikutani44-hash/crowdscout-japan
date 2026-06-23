@@ -51,14 +51,20 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
     (async () => {
       for (let i = 0; i < missing.length; i += TRANSLATE_BATCH_SIZE) {
         if (cancelled) break;
-        const batch = missing.slice(i, i + TRANSLATE_BATCH_SIZE).map((p) => p.id);
+        const batch = missing.slice(i, i + TRANSLATE_BATCH_SIZE);
         try {
           const controller = new AbortController();
           const timeout = setTimeout(() => controller.abort(), TRANSLATE_FETCH_TIMEOUT_MS);
           const res = await fetch("/api/translate/batch", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ projectIds: batch }),
+            body: JSON.stringify({
+              items: batch.map((p) => ({
+                id: p.id,
+                title: p.title,
+                subtitle: p.subtitle,
+              })),
+            }),
             signal: controller.signal,
           });
           clearTimeout(timeout);
@@ -66,13 +72,21 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
           if (!res.ok) throw new Error(data.error);
 
           if (data.projects?.length) {
-            const byId = new Map<string, Project>(
-              data.projects.map((p: Project) => [p.id, p])
+            const byId = new Map<string, { title_ja: string; subtitle_ja: string }>(
+              data.projects.map((p: { id: string; title_ja: string; subtitle_ja: string }) => [
+                p.id,
+                { title_ja: p.title_ja, subtitle_ja: p.subtitle_ja },
+              ])
             );
-            setProjects((prev) => prev.map((p) => byId.get(p.id) ?? p));
+            setProjects((prev) =>
+              prev.map((p) => {
+                const translated = byId.get(p.id);
+                return translated ? { ...p, ...translated } : p;
+              })
+            );
             setTranslatingIds((prev) => {
               const next = new Set(prev);
-              batch.forEach((id) => next.delete(id));
+              batch.forEach((p) => next.delete(p.id));
               return next;
             });
           }
@@ -80,7 +94,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
           console.error("[auto-translate]", err);
           setTranslatingIds((prev) => {
             const next = new Set(prev);
-            batch.forEach((id) => next.delete(id));
+            batch.forEach((p) => next.delete(p.id));
             return next;
           });
         }

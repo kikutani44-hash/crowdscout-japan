@@ -1,80 +1,74 @@
 import { NextResponse } from "next/server";
 import { translateToJapanese } from "@/lib/claude";
-import {
-  findProjectByClientId,
-  withClientProjectId,
-} from "@/lib/project-id";
-import { needsJapaneseTranslation } from "@/lib/project-translation";
-import { findLocalProject, updateLocalProject } from "@/lib/project-store";
-import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import type { Project } from "@/lib/types";
 
 const MAX_BATCH = 3;
 
-async function loadProject(projectId: string): Promise<Project | null> {
-  if (isSupabaseConfigured()) {
-    const supabase = createServerSupabase();
-    return findProjectByClientId(supabase, projectId);
-  }
-  return findLocalProject(projectId);
-}
+type BatchItem = {
+  id: string;
+  title: string;
+  subtitle: string;
+};
 
-async function saveTranslation(
-  clientProjectId: string,
-  loadedProject: Project,
-  translation: { title_ja: string; subtitle_ja: string }
-) {
-  const updates = {
-    title_ja: translation.title_ja,
-    subtitle_ja: translation.subtitle_ja,
-    updated_at: new Date().toISOString(),
-  };
+function parseItems(body: unknown): BatchItem[] | null {
+  if (!body || typeof body !== "object") return null;
 
-  if (isSupabaseConfigured()) {
-    const supabase = createServerSupabase();
-    const { data, error } = await supabase
-      .from("projects")
-      .update(updates)
-      .eq("id", loadedProject.id)
-      .select("*")
-      .single();
-    if (error) throw error;
-    return withClientProjectId(data as Project, clientProjectId);
+  const record = body as Record<string, unknown>;
+
+  if ("projectIds" in record && !("items" in record)) {
+    return null;
   }
 
-  const updated = await updateLocalProject(clientProjectId, updates);
-  if (updated) return updated;
-  throw new Error(`Project not found: ${clientProjectId}`);
+  if (!Array.isArray(record.items)) return null;
+
+  const items: BatchItem[] = [];
+  for (const raw of record.items) {
+    if (!raw || typeof raw !== "object") continue;
+    const item = raw as Record<string, unknown>;
+    if (typeof item.id !== "string" || typeof item.title !== "string") continue;
+    items.push({
+      id: item.id,
+      title: item.title,
+      subtitle: typeof item.subtitle === "string" ? item.subtitle : "",
+    });
+  }
+
+  return items;
 }
 
 export async function POST(request: Request) {
+  let body: unknown;
   try {
-    const body = (await request.json()) as { projectIds?: string[] };
-    const ids = (body.projectIds ?? []).slice(0, MAX_BATCH);
-    if (ids.length === 0) {
-      return NextResponse.json({ projects: [] });
-    }
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "リクエストボディが不正です" }, { status: 400 });
+  }
 
-    const updated: Project[] = [];
+  const items = parseItems(body);
+  if (items === null) {
+    return NextResponse.json(
+      {
+        error:
+          "items 配列が必要です。各要素に id, title, subtitle を含めてください。",
+      },
+      { status: 400 }
+    );
+  }
 
-    for (const projectId of ids) {
-      const project = await loadProject(projectId);
-      if (!project || !needsJapaneseTranslation(project)) {
-        if (project) {
-          updated.push(withClientProjectId(project, projectId));
-        }
-        continue;
-      }
+  const batch = items.slice(0, MAX_BATCH);
+  if (batch.length === 0) {
+    return NextResponse.json({ projects: [] });
+  }
 
-      const translation = await translateToJapanese(
-        project.title,
-        project.subtitle ?? ""
+  try {
+    const projects = [];
+    for (const item of batch) {
+      const { title_ja, subtitle_ja } = await translateToJapanese(
+        item.title,
+        item.subtitle
       );
-      const saved = await saveTranslation(projectId, project, translation);
-      updated.push(saved);
+      projects.push({ id: item.id, title_ja, subtitle_ja });
     }
-
-    return NextResponse.json({ projects: updated });
+    return NextResponse.json({ projects });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "一括翻訳に失敗しました" },
