@@ -56,6 +56,12 @@ def main() -> int:
     parser.add_argument("--ks-pages", type=int, default=5)
     parser.add_argument("--igg-max", type=int, default=15)
     parser.add_argument(
+        "--min",
+        type=int,
+        default=50,
+        help="Minimum Kickstarter projects to collect",
+    )
+    parser.add_argument(
         "--categories",
         type=str,
         default=DEFAULT_CATEGORIES,
@@ -78,6 +84,11 @@ def main() -> int:
     )
     parser.add_argument("--kickstarter-only", action="store_true")
     parser.add_argument("--indiegogo-only", action="store_true")
+    parser.add_argument(
+        "--fail-on-sync-error",
+        action="store_true",
+        help="Exit with error if Supabase sync fails (for CI)",
+    )
     args = parser.parse_args()
 
     category_args: list[str] = ["--categories", args.categories or DEFAULT_CATEGORIES]
@@ -88,7 +99,7 @@ def main() -> int:
     if not args.indiegogo_only:
         code = run_script(
             "crawl_kickstarter.py",
-            ["--pages", str(args.ks_pages), *crawl_common],
+            ["--pages", str(args.ks_pages), "--min", str(args.min), *crawl_common],
         )
         if code != 0:
             return code
@@ -111,6 +122,8 @@ def main() -> int:
     sync_code = run_script("sync_to_supabase.py", sync_args)
     if sync_code != 0:
         print("[run_crawl] supabase sync skipped or failed (check .env.local)")
+        if args.fail_on_sync_error:
+            return sync_code or 1
 
     return 0
 
