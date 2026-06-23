@@ -22,11 +22,7 @@ from urllib.parse import urlencode
 
 from playwright.sync_api import sync_playwright
 
-from category_filters import (
-    is_allowed_category,
-    parse_category_slugs,
-    resolve_kickstarter_categories,
-)
+from category_filters import KICKSTARTER_DEMO_SLUGS, is_allowed_category, parse_category_slugs, resolve_kickstarter_categories
 from common import (
     MAX_DAYS_SINCE_END,
     MIN_RAISED_USD,
@@ -40,7 +36,7 @@ from common import (
 )
 
 DISCOVER_BASE = "https://www.kickstarter.com/discover/advanced.json"
-DEFAULT_CATEGORIES = "technology"
+DEFAULT_CATEGORIES = KICKSTARTER_DEMO_SLUGS
 
 
 def build_discover_url(page_num: int, category_id: int | None = None) -> str:
@@ -171,7 +167,7 @@ def main() -> int:
         "--pages",
         type=int,
         default=5,
-        help="Discover pages for Technology category",
+        help="Discover pages per Kickstarter parent category",
     )
     parser.add_argument(
         "--max",
@@ -184,7 +180,7 @@ def main() -> int:
         "--categories",
         type=str,
         default=DEFAULT_CATEGORIES,
-        help="Comma-separated slugs (default: technology)",
+        help="Comma-separated slugs (default: technology,design,fashion,food,crafts)",
     )
     parser.add_argument(
         "--replace",

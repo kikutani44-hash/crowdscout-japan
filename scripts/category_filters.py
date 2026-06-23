@@ -14,9 +14,13 @@ from __future__ import annotations
 KICKSTARTER_CATEGORY_IDS: list[tuple[int, str]] = [
     (16, "Technology"),
     (7, "Design"),
+    (9, "Fashion"),
     (10, "Food"),
-    (9, "Fashion"),  # wearables / lifestyle accessories
+    (26, "Crafts"),
 ]
+
+# Kickstarter-only crawl slugs (Technology / Design / Fashion / Food / Crafts)
+KICKSTARTER_DEMO_SLUGS = "technology,design,fashion,food,crafts"
 
 EXCLUDED_PARENTS = {
     "Games",
@@ -29,7 +33,6 @@ EXCLUDED_PARENTS = {
     "Dance",
     "Photography",
     "Journalism",
-    "Crafts",
     "Fiction",
     "Nonfiction",
     "Podcasts",
@@ -38,12 +41,15 @@ EXCLUDED_PARENTS = {
 
 EXCLUDED_KEYWORDS = (
     "game",
+    "games/",
     "tabletop",
     "comic",
+    "comics/",
     "manga",
     "novel",
     "fiction",
     "nonfiction",
+    "publishing/",
     "film",
     "documentary",
     "music",
@@ -66,6 +72,7 @@ ALLOWED_PARENTS = {
     "Design",
     "Food",
     "Fashion",
+    "Crafts",
     "Health",
     "Sports",
     "Sport",
@@ -110,6 +117,12 @@ ALLOWED_KEYWORDS = (
     "drone",
     "camera equipment",
     "maker",
+    "craft",
+    "crafts",
+    "knit",
+    "sewing",
+    "embroidery",
+    "woodworking",
 )
 
 INDIEGOGO_EXPLORE_URLS = [
@@ -137,6 +150,8 @@ KICKSTARTER_SLUGS: dict[str, tuple[int, str]] = {
     "food": (10, "Food"),
     "kitchen": (10, "Food"),
     "fashion": (9, "Fashion"),
+    "crafts": (26, "Crafts"),
+    "craft": (26, "Crafts"),
     "health": (16, "Technology"),
     "healthcare": (16, "Technology"),
     "fitness": (16, "Technology"),
