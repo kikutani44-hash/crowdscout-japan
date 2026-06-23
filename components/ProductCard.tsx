@@ -13,6 +13,11 @@ import {
 } from "@/components/ui/select";
 import type { OfferStatus, Project } from "@/lib/types";
 import {
+  getJapanCfBadgeLabel,
+  getJapanCfBadgeVariant,
+  getJapanCfDisplayStatus,
+} from "@/lib/japan-cf-status";
+import {
   calcAchievementRate,
   formatJpy,
   formatUsd,
@@ -38,7 +43,7 @@ export function ProductCard({
   loadingAction,
 }: ProductCardProps) {
   const achievement = calcAchievementRate(project.raised_usd, project.goal_usd);
-  const isJapanUnentered = project.japan_cf_result?.isJapanUnentered;
+  const japanCfStatus = getJapanCfDisplayStatus(project);
 
   return (
     <article className="group overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
@@ -71,12 +76,19 @@ export function ProductCard({
           <h3 className="line-clamp-1 text-base font-semibold">
             {project.title_ja ?? project.title}
           </h3>
-          <p className="line-clamp-1 text-xs text-muted-foreground">{project.title}</p>
+          {project.title_ja && project.title_ja !== project.title ? (
+            <p className="line-clamp-1 text-xs text-muted-foreground">{project.title}</p>
+          ) : null}
         </div>
 
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {project.subtitle_ja ?? project.subtitle}
         </p>
+        {project.subtitle_ja &&
+        project.subtitle &&
+        project.subtitle_ja !== project.subtitle ? (
+          <p className="line-clamp-1 text-xs text-muted-foreground/70">{project.subtitle}</p>
+        ) : null}
 
         <div className="flex items-end justify-between">
           <div>
@@ -98,11 +110,16 @@ export function ProductCard({
           <Badge variant={project.giteki_ok ? "success" : "outline"}>
             技適 {project.giteki_ok ? "OK" : "要確認"}
           </Badge>
-          {project.japan_cf_checked && (
-            <Badge variant={isJapanUnentered ? "success" : "warning"}>
-              {isJapanUnentered ? "🇯🇵 未参入" : "🇯🇵 発売済み"}
-            </Badge>
-          )}
+          <Badge
+            variant={getJapanCfBadgeVariant(japanCfStatus)}
+            className={
+              japanCfStatus === "unchecked"
+                ? "border-sky-500/40 text-sky-400"
+                : undefined
+            }
+          >
+            {getJapanCfBadgeLabel(japanCfStatus)}
+          </Badge>
         </div>
 
         {project.maker_website && (

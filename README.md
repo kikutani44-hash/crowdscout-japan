@@ -171,12 +171,29 @@ cd scripts
 pip install -r requirements.txt
 python3 -m playwright install chromium
 
-# 両方実行して data/projects_merged.json に統合
-python3 run_crawl.py --ks-pages 15 --igg-max 15
+# 両方実行して data/projects_merged.json に統合（Claude で自動翻訳 → Supabase 同期）
+python3 run_crawl.py --ks-pages 15 --igg-max 15 --replace
 
-# 個別実行
+# 翻訳をスキップする場合
+python3 run_crawl.py --ks-pages 15 --igg-max 15 --no-translate
+
+# 既存データだけ翻訳して Supabase に反映
+python3 sync_to_supabase.py --translate --replace
+
+# 個別実行（単体でも翻訳されます）
 python3 crawl_kickstarter.py --pages 10
 python3 crawl_indiegogo.py --max 15
+```
+
+### 自動翻訳
+
+`.env.local` に `ANTHROPIC_API_KEY` を設定すると、クロール完了後に Claude API で **商品名・説明を日本語翻訳** し、`title_ja` / `subtitle_ja` として Supabase に保存します。キー未設定時は `【翻訳デモ】` プレフィックス付きのフォールバックを使用します。
+
+アプリでは `title_ja ?? title` / `subtitle_ja ?? subtitle` で **日本語を優先表示** します。
+
+```bash
+# .env.local
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 または npm から:
@@ -189,6 +206,24 @@ npm run crawl
 
 - **Kickstarter**: 成功案件、`$50,000` 以上、終了から180日以内
 - **Indiegogo**: Explore から案件 URL を収集し、各ページから調達額・支援者数を取得
+
+### カテゴリ（優先取得・除外）
+
+クロールは以下のカテゴリを **優先** し、ゲーム・出版・アート系は **除外** します（`scripts/category_filters.py`）。
+
+| 優先グループ | 例 |
+|-------------|-----|
+| テクノロジー・ガジェット | Technology/Hardware, Gadgets |
+| ヘルスケア・フィットネス | Health, Fitness |
+| アウトドア・スポーツ | Outdoor, Sports |
+| キッチン・家電 | Food, Home, Kitchen |
+| モビリティ・乗り物 | Transportation, Bike, Mobility |
+| ライフスタイル・デザイン | Design/Product Design, Fashion |
+
+**除外**: Games, Publishing, Art, Comics, Film & Video, Music, Theater など
+
+- Kickstarter: Technology / Design / Food / Fashion カテゴリごとに `--pages` 分クロール
+- Indiegogo: tech-and-innovation, health-and-fitness, home, product-design の Explore のみ
 
 Supabase 設定時は `original_url` をキーに自動 upsert されます。
 

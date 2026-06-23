@@ -37,6 +37,7 @@ create unique index if not exists idx_projects_original_url on projects (origina
 -- Row Level Security (service_role bypasses RLS for server-side writes)
 alter table projects enable row level security;
 
+drop policy if exists "projects_public_read" on projects;
 create policy "projects_public_read"
   on projects for select
   to anon, authenticated

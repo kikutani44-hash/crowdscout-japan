@@ -1,4 +1,9 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { buildSupabaseSearchOrFilter, projectMatchesSearch } from "./project-search";
+import {
+  buildSupabaseJapanUnenteredOrFilter,
+  matchesJapanUnenteredOnlyFilter,
+} from "./japan-cf-status";
 import { loadLocalProjects } from "./project-store";
 import type { Project } from "./types";
 
@@ -45,12 +50,13 @@ export async function fetchProjects(filters?: {
     query = query.eq("offer_status", filters.offerStatus);
   }
   if (filters?.japanUnenteredOnly) {
-    query = query.eq("japan_cf_checked", true).eq("japan_cf_result->>isJapanUnentered", "true");
+    query = query.or(buildSupabaseJapanUnenteredOrFilter());
   }
   if (filters?.search) {
-    query = query.or(
-      `title.ilike.%${filters.search}%,title_ja.ilike.%${filters.search}%,subtitle.ilike.%${filters.search}%`
-    );
+    const orFilter = buildSupabaseSearchOrFilter(filters.search);
+    if (orFilter) {
+      query = query.or(orFilter);
+    }
   }
 
   const sortBy = filters?.sortBy ?? "score";
@@ -75,13 +81,7 @@ function filterSampleProjects(
   let result = [...projects];
 
   if (filters?.search) {
-    const q = filters.search.toLowerCase();
-    result = result.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        (p.title_ja?.toLowerCase().includes(q) ?? false) ||
-        (p.subtitle?.toLowerCase().includes(q) ?? false)
-    );
+    result = result.filter((p) => projectMatchesSearch(p, filters.search!));
   }
   if (filters?.platform && filters.platform !== "all") {
     result = result.filter((p) => p.platform === filters.platform);
@@ -93,7 +93,7 @@ function filterSampleProjects(
     result = result.filter((p) => p.offer_status === filters.offerStatus);
   }
   if (filters?.japanUnenteredOnly) {
-    result = result.filter((p) => p.japan_cf_result?.isJapanUnentered === true);
+    result = result.filter(matchesJapanUnenteredOnlyFilter);
   }
 
   const sortBy = filters?.sortBy ?? "score";

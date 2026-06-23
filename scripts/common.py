@@ -224,6 +224,43 @@ def save_to_supabase(projects: list[dict[str, Any]]) -> int:
     return saved
 
 
+def clear_supabase_projects() -> bool:
+    url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not url or not key:
+        print("[supabase] skipped clear (credentials not set)")
+        return False
+
+    try:
+        import requests
+    except ImportError:
+        return False
+
+    base = url.rstrip("/")
+    headers = {
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
+        "Prefer": "return=minimal",
+    }
+    resp = requests.delete(
+        f"{base}/rest/v1/projects",
+        headers=headers,
+        params={"id": "not.is.null"},
+        timeout=120,
+    )
+    if not resp.ok:
+        print(f"[supabase] clear failed: {resp.status_code} {resp.text[:300]}")
+        return False
+    print("[supabase] cleared existing projects table")
+    return True
+
+
+def replace_supabase_projects(projects: list[dict[str, Any]]) -> int:
+    if not clear_supabase_projects():
+        return 0
+    return save_to_supabase(projects)
+
+
 def create_browser(playwright, headless: bool = True):
     browser = playwright.chromium.launch(
         headless=headless,

@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/dialog";
 import { CFCheckResult } from "@/components/CFCheckResult";
 import type { OfferStatus, Project, ProjectFilters } from "@/lib/types";
+import { buildCategoryOptions, projectMatchesCategoryGroup } from "@/lib/categories";
+import {
+  countJapanUnenteredCandidates,
+  matchesJapanUnenteredOnlyFilter,
+} from "@/lib/japan-cf-status";
+import { projectMatchesSearch } from "@/lib/project-search";
 import { usdToJpy } from "@/lib/utils";
 
 interface HomeClientProps {
@@ -26,32 +32,24 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   const [cfProject, setCfProject] = useState<Project | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  const categories = useMemo(
-    () => Array.from(new Set(projects.map((p) => p.category))),
-    [projects]
-  );
+  const categoryOptions = useMemo(() => buildCategoryOptions(projects), [projects]);
 
   const filtered = useMemo(() => {
     let result = [...projects];
     if (filters.search) {
-      const q = filters.search.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          (p.title_ja?.toLowerCase().includes(q) ?? false)
-      );
+      result = result.filter((p) => projectMatchesSearch(p, filters.search!));
     }
     if (filters.platform && filters.platform !== "all") {
       result = result.filter((p) => p.platform === filters.platform);
     }
     if (filters.category && filters.category !== "all") {
-      result = result.filter((p) => p.category === filters.category);
+      result = result.filter((p) => projectMatchesCategoryGroup(p, filters.category!));
     }
     if (filters.offerStatus && filters.offerStatus !== "all") {
       result = result.filter((p) => p.offer_status === filters.offerStatus);
     }
     if (filters.japanUnenteredOnly) {
-      result = result.filter((p) => p.japan_cf_result?.isJapanUnentered);
+      result = result.filter(matchesJapanUnenteredOnlyFilter);
     }
     const sortBy = filters.sortBy ?? "score";
     result.sort((a, b) => {
@@ -64,9 +62,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   }, [projects, filters]);
 
   const totalRaisedJpy = projects.reduce((sum, p) => sum + usdToJpy(p.raised_usd), 0);
-  const japanUnenteredCount = projects.filter(
-    (p) => p.japan_cf_result?.isJapanUnentered
-  ).length;
+  const japanUnenteredCount = countJapanUnenteredCandidates(projects);
 
   const updateProject = useCallback((updated: Project) => {
     setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
@@ -136,7 +132,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
       />
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-        <FilterBar filters={filters} onChange={setFilters} categories={categories} />
+        <FilterBar filters={filters} onChange={setFilters} categoryOptions={categoryOptions} />
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((project) => (

@@ -20,6 +20,7 @@ from urllib.parse import urlparse
 
 from playwright.sync_api import sync_playwright
 
+from category_filters import INDIEGOGO_EXPLORE_URLS, is_allowed_category, parse_category_slugs, resolve_indiegogo_explore_urls
 from common import (
     MIN_RAISED_USD,
     create_browser,
@@ -30,13 +31,7 @@ from common import (
     utc_now_iso,
 )
 
-EXPLORE_URLS = [
-    "https://www.indiegogo.com/explore/all",
-    "https://www.indiegogo.com/explore/tech-and-innovation",
-    "https://www.indiegogo.com/explore/health-and-fitness",
-    "https://www.indiegogo.com/explore/home",
-    "https://www.indiegogo.com/explore/product-design",
-]
+EXPLORE_URLS = INDIEGOGO_EXPLORE_URLS
 
 
 def extract_card_previews(page) -> list[dict[str, Any]]:
@@ -202,6 +197,10 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
         print(f"[indiegogo] skip (raised ${raised_usd:,} < ${MIN_RAISED_USD:,}): {title}")
         return None
 
+    if not is_allowed_category(category):
+        print(f"[indiegogo] skip (category excluded: {category}): {title}")
+        return None
+
     image_url = og.get("og:image") or data.get("hero") or (preview or {}).get("img")
     maker_website = None
     if creator:
@@ -226,18 +225,19 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
     )
 
 
-def crawl_indiegogo(max_projects: int = 20) -> list[dict[str, Any]]:
+def crawl_indiegogo(max_projects: int = 20, category_slugs: list[str] | None = None) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
+    explore_urls = resolve_indiegogo_explore_urls(category_slugs)
 
     with sync_playwright() as playwright:
         browser, context = create_browser(playwright)
         page = context.new_page()
 
         # Warm up session on explore page first
-        page.goto(EXPLORE_URLS[0], wait_until="domcontentloaded", timeout=90000)
+        page.goto(explore_urls[0], wait_until="domcontentloaded", timeout=90000)
         page.wait_for_timeout(4000)
 
-        urls = collect_project_urls(page, EXPLORE_URLS, max_links=max_projects * 3)
+        urls = collect_project_urls(page, explore_urls, max_links=max_projects * 3)
         print(f"[indiegogo] discovered {len(urls)} candidate URLs")
 
         for item in urls:
@@ -262,9 +262,27 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Crawl Indiegogo projects")
     parser.add_argument("--max", type=int, default=20, help="Maximum projects to save")
     parser.add_argument("--no-save", action="store_true", help="Skip writing output files")
+    parser.add_argument(
+        "--categories",
+        type=str,
+        default="",
+        help="Comma-separated slugs: technology,hardware,design,fashion,food,...",
+    )
+    parser.add_argument("--no-supabase", action="store_true", help="Skip Supabase upsert")
+    parser.add_argument(
+        "--no-translate",
+        action="store_true",
+        help="Skip Claude API translation (run_crawl translates after merge)",
+    )
+    parser.add_argument(
+        "--force-translate",
+        action="store_true",
+        help="Re-translate even when title_ja / subtitle_ja already exist",
+    )
     args = parser.parse_args()
 
-    projects = crawl_indiegogo(max_projects=args.max)
+    slugs = parse_category_slugs(args.categories or None)
+    projects = crawl_indiegogo(max_projects=args.max, category_slugs=slugs)
     print(f"[indiegogo] total matched: {len(projects)}")
 
     if not projects:
@@ -272,11 +290,18 @@ def main() -> int:
         return 1
 
     if not args.no_save:
+        if not args.no_translate:
+            from translator import translate_projects
+
+            print(f"[indiegogo] translating {len(projects)} projects...")
+            translate_projects(projects, force=args.force_translate)
+
         path = save_json(projects, "indiegogo_projects.json")
         print(f"[indiegogo] saved to {path}")
-        saved = save_to_supabase(projects)
-        if saved:
-            print(f"[indiegogo] upserted {saved} rows to Supabase")
+        if not args.no_supabase:
+            saved = save_to_supabase(projects)
+            if saved:
+                print(f"[indiegogo] upserted {saved} rows to Supabase")
 
     print(json.dumps({"count": len(projects), "top": projects[:3]}, ensure_ascii=False, indent=2))
     return 0

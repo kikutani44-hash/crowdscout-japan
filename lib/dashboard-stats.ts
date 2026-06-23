@@ -1,4 +1,6 @@
 import type { OfferStatus, Project } from "./types";
+import { getCategoryGroupJa } from "./categories";
+import { countJapanUnenteredCandidates, matchesJapanUnenteredOnlyFilter } from "./japan-cf-status";
 
 export interface DashboardStats {
   totalProjects: number;
@@ -39,11 +41,13 @@ export function getDashboardStats(projects: Project[]): DashboardStats {
 
   for (const p of projects) {
     byOfferStatus[p.offer_status]++;
-    byCategory[p.category] = (byCategory[p.category] ?? 0) + 1;
+    const group = getCategoryGroupJa(p.category);
+    byCategory[group] = (byCategory[group] ?? 0) + 1;
     byPlatform[p.platform] = (byPlatform[p.platform] ?? 0) + 1;
-    if (p.japan_cf_result?.isJapanUnentered) japanUnenteredCount++;
     scoreSum += p.score;
   }
+
+  japanUnenteredCount = countJapanUnenteredCandidates(projects);
 
   const topByRaised = [...projects]
     .sort((a, b) => b.raised_usd - a.raised_usd)
@@ -57,7 +61,7 @@ export function getDashboardStats(projects: Project[]): DashboardStats {
     }));
 
   const priorityOpportunities = [...projects]
-    .filter((p) => p.japan_cf_result?.isJapanUnentered && p.offer_status !== "却下")
+    .filter((p) => matchesJapanUnenteredOnlyFilter(p) && p.offer_status !== "却下")
     .sort((a, b) => b.score - a.score)
     .slice(0, 6)
     .map((p) => ({

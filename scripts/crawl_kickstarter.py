@@ -22,6 +22,11 @@ from urllib.parse import urlencode
 
 from playwright.sync_api import sync_playwright
 
+from category_filters import (
+    is_allowed_category,
+    parse_category_slugs,
+    resolve_kickstarter_categories,
+)
 from common import (
     MAX_DAYS_SINCE_END,
     MIN_RAISED_USD,
@@ -34,6 +39,7 @@ from common import (
 )
 
 DISCOVER_BASE = "https://www.kickstarter.com/discover/advanced.json"
+DEFAULT_CATEGORIES = "technology"
 
 
 def build_discover_url(page_num: int, category_id: int | None = None) -> str:
@@ -93,40 +99,51 @@ def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
     )
 
 
-def crawl_kickstarter(max_pages: int = 5) -> list[dict[str, Any]]:
+def crawl_kickstarter(max_pages: int = 5, category_slugs: list[str] | None = None) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
+    categories = resolve_kickstarter_categories(category_slugs)
+    pages_per_category = max(1, max_pages)
 
     with sync_playwright() as playwright:
         browser, context = create_browser(playwright)
         page = context.new_page()
 
-        for page_num in range(1, max_pages + 1):
-            url = build_discover_url(page_num)
-            print(f"[kickstarter] fetching page {page_num}: {url}")
-            data = fetch_json_page(page, url)
-            if not data:
-                print(f"[kickstarter] no data on page {page_num}, stopping")
-                break
+        for category_id, category_label in categories:
+            print(f"[kickstarter] category: {category_label} (id={category_id})")
+            for page_num in range(1, pages_per_category + 1):
+                url = build_discover_url(page_num, category_id)
+                print(f"[kickstarter] fetching page {page_num}: {url}")
+                data = fetch_json_page(page, url)
+                if not data:
+                    print(f"[kickstarter] no data on page {page_num}, stopping category")
+                    break
 
-            batch = data.get("projects") or []
-            if not batch:
-                print(f"[kickstarter] empty page {page_num}, stopping")
-                break
+                batch = data.get("projects") or []
+                if not batch:
+                    print(f"[kickstarter] empty page {page_num}, stopping category")
+                    break
 
-            added = 0
-            for item in batch:
-                mapped = map_kickstarter_project(item)
-                if not mapped:
-                    continue
-                key = mapped["original_url"]
-                if key in seen_urls:
-                    continue
-                seen_urls.add(key)
-                projects.append(mapped)
-                added += 1
+                added = 0
+                skipped_category = 0
+                for item in batch:
+                    mapped = map_kickstarter_project(item)
+                    if not mapped:
+                        continue
+                    if not is_allowed_category(mapped["category"]):
+                        skipped_category += 1
+                        continue
+                    key = mapped["original_url"]
+                    if key in seen_urls:
+                        continue
+                    seen_urls.add(key)
+                    projects.append(mapped)
+                    added += 1
 
-            print(f"[kickstarter] page {page_num}: {added} projects matched filters")
+                print(
+                    f"[kickstarter] page {page_num}: {added} matched, "
+                    f"{skipped_category} excluded by category"
+                )
 
         browser.close()
 
@@ -136,11 +153,34 @@ def crawl_kickstarter(max_pages: int = 5) -> list[dict[str, Any]]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Crawl successful Kickstarter projects")
-    parser.add_argument("--pages", type=int, default=5, help="Number of discover pages")
+    parser.add_argument(
+        "--pages",
+        type=int,
+        default=5,
+        help="Discover pages for Technology category",
+    )
     parser.add_argument("--no-save", action="store_true", help="Skip writing output files")
+    parser.add_argument(
+        "--categories",
+        type=str,
+        default=DEFAULT_CATEGORIES,
+        help="Comma-separated slugs (default: technology only)",
+    )
+    parser.add_argument("--no-supabase", action="store_true", help="Skip Supabase upsert")
+    parser.add_argument(
+        "--no-translate",
+        action="store_true",
+        help="Skip Claude API translation (run_crawl translates after merge)",
+    )
+    parser.add_argument(
+        "--force-translate",
+        action="store_true",
+        help="Re-translate even when title_ja / subtitle_ja already exist",
+    )
     args = parser.parse_args()
 
-    projects = crawl_kickstarter(max_pages=args.pages)
+    slugs = parse_category_slugs(args.categories or None)
+    projects = crawl_kickstarter(max_pages=args.pages, category_slugs=slugs)
     print(f"[kickstarter] total matched: {len(projects)}")
 
     if not projects:
@@ -148,11 +188,18 @@ def main() -> int:
         return 1
 
     if not args.no_save:
+        if not args.no_translate:
+            from translator import translate_projects
+
+            print(f"[kickstarter] translating {len(projects)} projects...")
+            translate_projects(projects, force=args.force_translate)
+
         path = save_json(projects, "kickstarter_projects.json")
         print(f"[kickstarter] saved to {path}")
-        saved = save_to_supabase(projects)
-        if saved:
-            print(f"[kickstarter] upserted {saved} rows to Supabase")
+        if not args.no_supabase:
+            saved = save_to_supabase(projects)
+            if saved:
+                print(f"[kickstarter] upserted {saved} rows to Supabase")
 
     print(json.dumps({"count": len(projects), "top": projects[:3]}, ensure_ascii=False, indent=2))
     return 0

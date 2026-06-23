@@ -2,6 +2,12 @@ import Link from "next/link";
 import { DashboardCharts } from "@/components/DashboardCharts";
 import { Badge } from "@/components/ui/badge";
 import { getDashboardStats } from "@/lib/dashboard-stats";
+import {
+  getJapanCfBadgeLabel,
+  getJapanCfBadgeVariant,
+  getJapanCfDisplayStatus,
+  matchesJapanUnenteredOnlyFilter,
+} from "@/lib/japan-cf-status";
 import { fetchProjects } from "@/lib/supabase";
 import { formatJpy, formatUsd, usdToJpy } from "@/lib/utils";
 import {
@@ -166,9 +172,14 @@ export default async function DashboardPage() {
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <Badge variant="outline">{p.offer_status}</Badge>
-                    {p.japan_cf_result?.isJapanUnentered && (
-                      <Badge variant="success" className="text-[10px]">
-                        未参入
+                    {matchesJapanUnenteredOnlyFilter(p) && (
+                      <Badge
+                        variant={getJapanCfBadgeVariant(getJapanCfDisplayStatus(p))}
+                        className="text-[10px]"
+                      >
+                        {getJapanCfDisplayStatus(p) === "unchecked"
+                          ? "可能性あり"
+                          : getJapanCfBadgeLabel(getJapanCfDisplayStatus(p)).replace("🇯🇵 ", "")}
                       </Badge>
                     )}
                   </div>

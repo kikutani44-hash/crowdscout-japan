@@ -11,6 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { OfferStatus, Project } from "@/lib/types";
+import {
+  getJapanCfBadgeLabel,
+  getJapanCfBadgeVariant,
+  getJapanCfDisplayStatus,
+  matchesJapanUnenteredOnlyFilter,
+} from "@/lib/japan-cf-status";
 import { formatUsd } from "@/lib/utils";
 import { Eye, Mail, Send } from "lucide-react";
 
@@ -120,9 +126,16 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
               {project.platform} · 調達額 {formatUsd(project.raised_usd)} · 支援者{" "}
               {project.backers.toLocaleString()}人 · スコア {project.score}
             </p>
-            {project.japan_cf_result?.isJapanUnentered && (
-              <Badge variant="success" className="mt-2">
-                🇯🇵 日本未参入
+            {matchesJapanUnenteredOnlyFilter(project) && (
+              <Badge
+                variant={getJapanCfBadgeVariant(getJapanCfDisplayStatus(project))}
+                className={
+                  getJapanCfDisplayStatus(project) === "unchecked"
+                    ? "mt-2 border-sky-500/40 text-sky-400"
+                    : "mt-2"
+                }
+              >
+                {getJapanCfBadgeLabel(getJapanCfDisplayStatus(project))}
               </Badge>
             )}
           </div>
