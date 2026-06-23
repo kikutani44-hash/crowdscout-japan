@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "fs/promises";
 import path from "path";
+import { slugId } from "./project-id";
 import type { JapanCfResult, OfferStatus, Project } from "./types";
 import { calculateScore } from "./scoring";
 
@@ -9,11 +10,6 @@ interface MergedPayload {
   projects: Project[];
   fetched_at?: string;
   cf_checked_at?: string;
-}
-
-function slugId(originalUrl: string, platform: string): string {
-  const slug = originalUrl.split("/").filter(Boolean).slice(-2).join("-");
-  return `${platform}-${slug}`.slice(0, 80);
 }
 
 export async function findLocalProject(projectId: string): Promise<Project | null> {

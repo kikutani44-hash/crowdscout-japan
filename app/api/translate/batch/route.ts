@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { translateToJapanese } from "@/lib/claude";
+import {
+  findProjectByClientId,
+  withClientProjectId,
+} from "@/lib/project-id";
 import { needsJapaneseTranslation } from "@/lib/project-translation";
 import { findLocalProject, updateLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -10,18 +14,16 @@ const MAX_BATCH = 3;
 async function loadProject(projectId: string): Promise<Project | null> {
   if (isSupabaseConfigured()) {
     const supabase = createServerSupabase();
-    const { data, error } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
-      .maybeSingle();
-    if (error) throw error;
-    return (data as Project | null) ?? null;
+    return findProjectByClientId(supabase, projectId);
   }
   return findLocalProject(projectId);
 }
 
-async function saveTranslation(projectId: string, translation: { title_ja: string; subtitle_ja: string }) {
+async function saveTranslation(
+  clientProjectId: string,
+  loadedProject: Project,
+  translation: { title_ja: string; subtitle_ja: string }
+) {
   const updates = {
     title_ja: translation.title_ja,
     subtitle_ja: translation.subtitle_ja,
@@ -33,16 +35,16 @@ async function saveTranslation(projectId: string, translation: { title_ja: strin
     const { data, error } = await supabase
       .from("projects")
       .update(updates)
-      .eq("id", projectId)
+      .eq("id", loadedProject.id)
       .select("*")
       .single();
     if (error) throw error;
-    return data as Project;
+    return withClientProjectId(data as Project, clientProjectId);
   }
 
-  const updated = await updateLocalProject(projectId, updates);
+  const updated = await updateLocalProject(clientProjectId, updates);
   if (updated) return updated;
-  throw new Error(`Project not found: ${projectId}`);
+  throw new Error(`Project not found: ${clientProjectId}`);
 }
 
 export async function POST(request: Request) {
@@ -58,7 +60,9 @@ export async function POST(request: Request) {
     for (const projectId of ids) {
       const project = await loadProject(projectId);
       if (!project || !needsJapaneseTranslation(project)) {
-        if (project) updated.push(project);
+        if (project) {
+          updated.push(withClientProjectId(project, projectId));
+        }
         continue;
       }
 
@@ -66,7 +70,7 @@ export async function POST(request: Request) {
         project.title,
         project.subtitle ?? ""
       );
-      const saved = await saveTranslation(projectId, translation);
+      const saved = await saveTranslation(projectId, project, translation);
       updated.push(saved);
     }
 

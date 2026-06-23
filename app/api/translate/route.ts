@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { translateToJapanese } from "@/lib/claude";
+import {
+  findProjectByClientId,
+  withClientProjectId,
+} from "@/lib/project-id";
 import { needsJapaneseTranslation } from "@/lib/project-translation";
-import { findLocalProject, updateLocalProject } from "@/lib/project-store";
+import { updateLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export async function POST(request: Request) {
@@ -10,13 +14,11 @@ export async function POST(request: Request) {
 
     if (isSupabaseConfigured() && projectId && !force) {
       const supabase = createServerSupabase();
-      const { data: existing } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("id", projectId)
-        .maybeSingle();
+      const existing = await findProjectByClientId(supabase, projectId);
       if (existing && !needsJapaneseTranslation(existing)) {
-        return NextResponse.json({ project: existing });
+        return NextResponse.json({
+          project: withClientProjectId(existing, projectId),
+        });
       }
     }
 
@@ -30,14 +32,23 @@ export async function POST(request: Request) {
 
     if (isSupabaseConfigured() && projectId) {
       const supabase = createServerSupabase();
+      const existing = await findProjectByClientId(supabase, projectId);
+      if (!existing) {
+        return NextResponse.json(
+          { error: "案件が見つかりません" },
+          { status: 404 }
+        );
+      }
       const { data, error } = await supabase
         .from("projects")
         .update(updates)
-        .eq("id", projectId)
+        .eq("id", existing.id)
         .select("*")
         .single();
       if (error) throw error;
-      return NextResponse.json({ project: data });
+      return NextResponse.json({
+        project: withClientProjectId(data, projectId),
+      });
     }
 
     if (projectId) {
