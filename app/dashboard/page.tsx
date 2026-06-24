@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GuestPasswordIssuer } from "@/components/GuestPasswordIssuer";
 import { DashboardCharts } from "@/components/DashboardCharts";
 import { Badge } from "@/components/ui/badge";
 import { getDashboardStats } from "@/lib/dashboard-stats";
@@ -66,6 +67,8 @@ export default async function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-8 px-4 py-8">
+        <GuestPasswordIssuer />
+
         {/* サマリーカード */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <StatCard

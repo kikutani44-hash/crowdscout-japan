@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import { BarChart3, Telescope } from "lucide-react";
+import { BarChart3, LogOut, Telescope } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider";
+import { authRoleLabel } from "@/lib/auth-types";
 
 interface HeaderProps {
   totalRaisedJpy: number;
@@ -8,6 +12,8 @@ interface HeaderProps {
 }
 
 export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: HeaderProps) {
+  const { role, logout } = useAuth();
+
   return (
     <header className="border-b border-border bg-card/40 backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -19,6 +25,11 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
             <h1 className="text-xl font-bold tracking-tight">CrowdScout Japan</h1>
             <p className="text-xs text-muted-foreground">
               海外クラファン案件発掘・日本独占権獲得
+              {role && (
+                <span className="ml-2 rounded bg-secondary/60 px-1.5 py-0.5 text-[10px]">
+                  {authRoleLabel(role)}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -45,6 +56,14 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
             <BarChart3 className="h-4 w-4" />
             ダッシュボード
           </Link>
+          <button
+            type="button"
+            onClick={logout}
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+            ログアウト
+          </button>
         </div>
       </div>
     </header>
