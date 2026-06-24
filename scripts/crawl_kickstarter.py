@@ -30,6 +30,7 @@ from urllib.parse import urlencode
 from playwright.sync_api import sync_playwright
 
 from category_filters import KICKSTARTER_DEMO_SLUGS, is_allowed_category, parse_category_slugs, resolve_kickstarter_categories
+from extract_contacts import enrich_kickstarter_projects
 from common import (
     MAX_DAYS_SINCE_END,
     MIN_RAISED_USD,
@@ -104,7 +105,6 @@ def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
     if any(k in cat_lower for k in ("games/", "comics/", "publishing/", "tabletop game")):
         return None
 
-    creator = item.get("creator") or {}
     urls = item.get("urls") or {}
     web = urls.get("web") or {}
     photo = item.get("photo") or {}
@@ -133,7 +133,6 @@ def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
             "country": item.get("country_displayable_name") or item.get("country"),
             "status": status,
             **metrics,
-            "maker_website": (creator.get("urls") or {}).get("web", {}).get("user"),
             "created_at": utc_now_iso(),
         }
     )
@@ -144,6 +143,7 @@ def crawl_kickstarter(
     category_slugs: list[str] | None = None,
     max_projects: int | None = None,
     min_projects: int | None = None,
+    skip_contacts: bool = False,
 ) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
@@ -246,6 +246,12 @@ def crawl_kickstarter(
     ))
     if limit:
         projects = projects[:limit]
+
+    if not skip_contacts and projects:
+        print(f"[kickstarter] extracting contacts from {len(projects)} project pages...")
+        enriched = enrich_kickstarter_projects(projects)
+        print(f"[kickstarter] contacts found on {enriched}/{len(projects)} projects")
+
     return projects
 
 
@@ -292,6 +298,11 @@ def main() -> int:
         action="store_true",
         help="Re-translate even when title_ja / subtitle_ja already exist",
     )
+    parser.add_argument(
+        "--no-contacts",
+        action="store_true",
+        help="Skip visiting project pages to extract maker website / SNS",
+    )
     args = parser.parse_args()
 
     slugs = parse_category_slugs(args.categories or None)
@@ -300,6 +311,7 @@ def main() -> int:
         category_slugs=slugs,
         max_projects=args.max,
         min_projects=args.min,
+        skip_contacts=args.no_contacts,
     )
     print(f"[kickstarter] total matched: {len(projects)}")
     if args.min and len(projects) < args.min:

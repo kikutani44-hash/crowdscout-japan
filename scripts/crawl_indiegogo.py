@@ -59,23 +59,97 @@ def extract_card_previews(page) -> list[dict[str, Any]]:
     )
 
 
-def parse_card_funding(text: str) -> tuple[int, int]:
-    """Try to parse raised/backers from explore card text."""
+def parse_card_funding(text: str) -> tuple[int, int, bool]:
+    """Try to parse raised/backers from explore card text. Returns (raised, backers, found)."""
     raised = 0
     backers = 0
-    for pattern in (
-        r"([A-Z]{2,3}\$?[\d,]+)\s+raised",
-        r"raised\s+([A-Z]{2,3}\$?[\d,]+)",
-        r"TOTAL FUNDING:?\s*([^\s]+[\d,]+)",
-        r"(\$[\d,]+)",
-    ):
-        m = re.search(pattern, text, re.IGNORECASE)
-        if m:
-            raised = max(raised, parse_money_to_usd(m.group(1)))
+    found = False
+    patterns = (
+        r"([A-Z]{2,3}\$?[\d,]+(?:\.\d+)?)\s+raised",
+        r"raised\s+([A-Z]{2,3}\$?[\d,]+(?:\.\d+)?)",
+        r"TOTAL FUNDING:?\s*([^\n\r]+)",
+        r"([\$€£][\d,]+(?:\.\d+)?)\s*(?:USD|usd)?\s*raised",
+        r"raised\s*([\$€£][\d,]+(?:\.\d+)?)",
+        r"Funding\s*([\$€£][\d,]+(?:\.\d+)?)",
+        r"Pledged\s*([\$€£][\d,]+(?:\.\d+)?)",
+        r"(\$[\d,]+(?:\.\d+)?)",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        amount = parse_money_to_usd(match.group(1))
+        if amount > 0:
+            raised = max(raised, amount)
+            found = True
     backers_match = re.search(r"([\d,]+)\s+backers?", text, re.IGNORECASE)
     if backers_match:
         backers = int(backers_match.group(1).replace(",", ""))
-    return raised, backers
+    return raised, backers, found
+
+
+def parse_page_funding(text: str) -> tuple[int, int, bool]:
+    """Parse raised/backers from a project page body."""
+    raised = 0
+    backers = 0
+    found = False
+    patterns = (
+        r"TOTAL FUNDING:?\s*([^\n\r]+)",
+        r"Total\s+funding:?\s*([^\n\r]+)",
+        r"([\$€£][\d,]+(?:\.\d+)?)\s*(?:USD|usd)?\s*raised",
+        r"raised\s*([\$€£][\d,]+(?:\.\d+)?)",
+        r"([\d,]+(?:\.\d+)?)\s*USD\s*raised",
+        r"Funding\s*([\$€£][\d,]+(?:\.\d+)?)",
+        r"Pledged\s*([\$€£][\d,]+(?:\.\d+)?)",
+        r"Amount\s+raised:?\s*([\$€£][\d,]+(?:\.\d+)?)",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if not match:
+            continue
+        amount = parse_money_to_usd(match.group(1))
+        if amount > 0:
+            raised = max(raised, amount)
+            found = True
+    backers_match = re.search(r"([\d,]+)\s+backers?", text, re.IGNORECASE)
+    if backers_match:
+        backers = int(backers_match.group(1).replace(",", ""))
+    return raised, backers, found
+
+
+def _parse_json_ld_funding(data: Any) -> tuple[int, int, bool]:
+    raised = 0
+    backers = 0
+    found = False
+
+    def walk(obj: Any) -> None:
+        nonlocal raised, backers, found
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                key_lower = str(key).lower()
+                if key_lower in {"price", "amount", "value", "pricecurrency"} and isinstance(value, (str, int, float)):
+                    if key_lower != "pricecurrency":
+                        if isinstance(value, (int, float)):
+                            amount = int(value)
+                        else:
+                            amount = parse_money_to_usd(str(value))
+                        if amount > 0:
+                            raised = max(raised, amount)
+                            found = True
+                if key_lower in {"interactioncount", "reviewcount"} and isinstance(value, (str, int)):
+                    try:
+                        count = int(str(value).replace(",", ""))
+                        if count > backers:
+                            backers = count
+                    except ValueError:
+                        pass
+                walk(value)
+        elif isinstance(obj, list):
+            for item in obj:
+                walk(item)
+
+    walk(data)
+    return raised, backers, found
 
 
 def is_indiegogo_project_url(url: str) -> bool:
@@ -148,11 +222,23 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
             });
             const text = document.body?.innerText || '';
             const hero = document.querySelector('img[src*="cdn.images.indiegogo.com"], img[src*="project"]');
+            const statTexts = [...document.querySelectorAll(
+                '[class*="funding"], [class*="Funding"], [class*="raised"], [class*="stats"], [class*="Stats"], [data-testid*="funding"]'
+            )].map(el => (el.innerText || '').trim()).filter(Boolean);
+            const jsonLd = [];
+            document.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
+                try {
+                    jsonLd.push(JSON.parse(script.textContent || ''));
+                } catch (e) {}
+            });
             return {
                 title: document.title.replace(/ by .* - Indiegogo$/i, '').trim(),
                 text,
                 og,
                 hero: hero ? hero.src : null,
+                statTexts,
+                jsonLd,
+                isIndemand: /indemand/i.test(location.href) || /indemand/i.test(text),
             };
         }
         """
@@ -163,16 +249,48 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
 
     raised_usd = 0
     backers = 0
-    if preview:
-        raised_usd, backers = parse_card_funding(preview.get("text") or "")
+    raised_found = False
 
-    if raised_usd < MIN_RAISED_USD:
-        funding_match = re.search(r"TOTAL FUNDING:\s*([^\n]+)", text, re.IGNORECASE)
-        if funding_match:
-            raised_usd = max(raised_usd, parse_money_to_usd(funding_match.group(1).strip()))
-        alt_match = re.search(r"([\d,]+)\s+backers?", text, re.IGNORECASE)
-        if alt_match and not backers:
-            backers = int(alt_match.group(1).replace(",", ""))
+    if preview:
+        preview_raised, preview_backers, preview_found = parse_card_funding(preview.get("text") or "")
+        if preview_found:
+            raised_usd = max(raised_usd, preview_raised)
+            raised_found = True
+        backers = max(backers, preview_backers)
+
+    page_raised, page_backers, page_found = parse_page_funding(text)
+    if page_found:
+        raised_usd = max(raised_usd, page_raised)
+        raised_found = True
+    backers = max(backers, page_backers)
+
+    for stat_text in data.get("statTexts") or []:
+        stat_raised, stat_backers, stat_found = parse_page_funding(stat_text)
+        if stat_found:
+            raised_usd = max(raised_usd, stat_raised)
+            raised_found = True
+        backers = max(backers, stat_backers)
+
+    for blob in data.get("jsonLd") or []:
+        ld_raised, ld_backers, ld_found = _parse_json_ld_funding(blob)
+        if ld_found:
+            raised_usd = max(raised_usd, ld_raised)
+            raised_found = True
+        backers = max(backers, ld_backers)
+
+    title = data.get("title") or og.get("og:title") or "Untitled"
+    title = re.sub(r"\s*by .*$", "", title).strip()
+
+    if not raised_found:
+        # InDemand campaigns often hide funding totals — assume threshold met
+        raised_usd = MIN_RAISED_USD
+        print(
+            f"[indiegogo] raised unknown, assuming >= ${MIN_RAISED_USD:,}"
+            f"{' (InDemand)' if data.get('isIndemand') else ''}: {title}"
+        )
+    elif raised_usd < MIN_RAISED_USD:
+        print(f"[indiegogo] skip (raised ${raised_usd:,} < ${MIN_RAISED_USD:,}): {title}")
+        return None
 
     category_match = re.search(r"CATEGORY\s*\n([^\n]+)", text, re.IGNORECASE)
     category = category_match.group(1).strip() if category_match else "Other"
@@ -188,14 +306,6 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
             if ln.startswith("by ") and i + 1 < len(lines):
                 subtitle = lines[i + 1][:280]
                 break
-
-    title = data.get("title") or og.get("og:title") or "Untitled"
-    title = re.sub(r"\s*by .*$", "", title).strip()
-
-    # Skip live campaigns below threshold; keep funded ones
-    if raised_usd < MIN_RAISED_USD:
-        print(f"[indiegogo] skip (raised ${raised_usd:,} < ${MIN_RAISED_USD:,}): {title}")
-        return None
 
     if not is_allowed_category(category):
         print(f"[indiegogo] skip (category excluded: {category}): {title}")
@@ -302,6 +412,13 @@ def main() -> int:
             saved = save_to_supabase(projects)
             if saved:
                 print(f"[indiegogo] upserted {saved} rows to Supabase")
+            else:
+                print(
+                    "[indiegogo] ERROR: Supabase sync failed (0 rows saved). "
+                    "Check [supabase] messages above for details.",
+                    file=sys.stderr,
+                )
+                return 1
 
     print(json.dumps({"count": len(projects), "top": projects[:3]}, ensure_ascii=False, indent=2))
     return 0

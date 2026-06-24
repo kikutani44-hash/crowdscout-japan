@@ -200,6 +200,7 @@ def normalize_project(raw: dict[str, Any]) -> dict[str, Any]:
         "giteki_ok": bool(raw.get("giteki_ok", False)),
         "maker_email": raw.get("maker_email"),
         "maker_website": raw.get("maker_website"),
+        "maker_sns": raw.get("maker_sns"),
         "created_at": raw.get("created_at") or now,
         "updated_at": now,
     }
@@ -281,13 +282,23 @@ def save_to_supabase(projects: list[dict[str, Any]]) -> int:
             )
             if patch.ok:
                 saved += 1
+            else:
+                print(
+                    f"[supabase] patch failed: {patch.status_code} {patch.text[:300]}",
+                    file=sys.stderr,
+                )
         else:
             post = requests.post(f"{base}/rest/v1/projects", headers=headers, json=row, timeout=30)
             if post.ok:
                 saved += 1
             else:
-                print(f"[supabase] insert failed: {post.status_code} {post.text[:200]}")
+                print(
+                    f"[supabase] insert failed: {post.status_code} {post.text[:300]}",
+                    file=sys.stderr,
+                )
 
+    if saved == 0 and rows:
+        print("[supabase] row-by-row sync saved 0 rows", file=sys.stderr)
     return saved
 
 
