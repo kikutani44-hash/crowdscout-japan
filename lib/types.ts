@@ -1,3 +1,5 @@
+import type { PlatformFilterValue } from "@/lib/platforms";
+
 export type Platform = "kickstarter" | "indiegogo";
 export type ProjectStatus = "active" | "ended";
 export type OfferStatus = "未接触" | "交渉中" | "獲得済み" | "却下";
@@ -51,7 +53,7 @@ export interface Project {
 export interface ProjectFilters {
   search?: string;
   japanUnenteredOnly?: boolean;
-  platform?: Platform | "all";
+  platform?: PlatformFilterValue;
   category?: string;
   offerStatus?: OfferStatus | "all";
   sortBy?: "score" | "raised_usd" | "backers" | "created_at" | "live_momentum";

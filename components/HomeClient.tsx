@@ -14,6 +14,7 @@ import {
 import { CFCheckResult } from "@/components/CFCheckResult";
 import type { OfferStatus, Project, ProjectFilters } from "@/lib/types";
 import { buildCategoryOptions, projectMatchesCategoryGroup } from "@/lib/categories";
+import { buildPlatformCounts, isComingSoonPlatform } from "@/lib/platforms";
 import {
   countJapanUnenteredCandidates,
   matchesJapanUnenteredOnlyFilter,
@@ -108,6 +109,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   }, [initialProjects]);
 
   const categoryOptions = useMemo(() => buildCategoryOptions(projects), [projects]);
+  const platformCounts = useMemo(() => buildPlatformCounts(projects), [projects]);
 
   const filtered = useMemo(() => {
     let result = [...projects];
@@ -218,7 +220,12 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
       />
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
-        <FilterBar filters={filters} onChange={setFilters} categoryOptions={categoryOptions} />
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          categoryOptions={categoryOptions}
+          platformCounts={platformCounts}
+        />
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((project) => (
@@ -237,7 +244,9 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
 
         {filtered.length === 0 && (
           <p className="py-12 text-center text-muted-foreground">
-            条件に一致する案件がありません。
+            {filters.platform && isComingSoonPlatform(filters.platform)
+              ? "データなし"
+              : "条件に一致する案件がありません。"}
           </p>
         )}
       </main>
