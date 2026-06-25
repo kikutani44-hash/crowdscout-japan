@@ -22,7 +22,7 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
             <Telescope className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">CrowdScout Japan</h1>
+            <h1 className="text-xl font-bold tracking-tight">Crowd JARVIS</h1>
             <p className="text-xs text-muted-foreground">
               海外クラファン案件発掘・日本独占権獲得
               {role && (

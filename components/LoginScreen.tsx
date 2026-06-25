@@ -34,7 +34,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20 text-primary">
             <Telescope className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">CrowdScout Japan</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Crowd JARVIS</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             海外クラファン案件発掘・日本独占権獲得システム
           </p>
