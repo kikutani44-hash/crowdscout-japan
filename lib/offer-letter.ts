@@ -14,7 +14,8 @@ export interface OfferLetterContent {
 }
 
 const COMPANY = "Blink Japan Co., Ltd.";
-const CONTACT_EMAIL = "kikuya@blinkjapan.co.jp";
+const CONTACT_EMAIL = "cbec@blink-japan.com";
+const COMPANY_URL = "https://blink-japan.com/";
 
 const COMPANY_CREDENTIALS = [
   "TV program production & TV shopping network connections",
@@ -54,12 +55,12 @@ We would like to discuss exclusive distribution and localization partnership rig
 
 Campaign: ${input.productUrl}
 ${customBlock}
-We would welcome a brief call to explore collaboration.
+We look forward to hearing from you and hope to explore a potential collaboration together.
 
 Best regards,
 ${COMPANY}
 ${CONTACT_EMAIL}
-https://blinkjapan.co.jp`;
+${COMPANY_URL}`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -85,11 +86,12 @@ https://blinkjapan.co.jp`;
   </ul>
   <p>Campaign: <a href="${escapeHtml(input.productUrl)}">${escapeHtml(input.productUrl)}</a></p>
   ${input.customNote ? `<p><strong>Additional note:</strong><br>${escapeHtml(input.customNote).replace(/\n/g, "<br>")}</p>` : ""}
-  <p>We would welcome a brief call to explore collaboration.</p>
+  <p>We look forward to hearing from you and hope to explore a potential collaboration together.</p>
   <p>
     Best regards,<br>
     <strong>${COMPANY}</strong><br>
-    <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>
+    <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a><br>
+    <a href="${escapeHtml(COMPANY_URL)}">${escapeHtml(COMPANY_URL)}</a>
   </p>
 </body>
 </html>`;
