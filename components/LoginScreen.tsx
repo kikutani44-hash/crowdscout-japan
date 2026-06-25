@@ -72,7 +72,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          管理者パスワードは永続有効です。ゲストコードは7日間有効です。
+          管理者パスワードは永続有効です。ゲストコードは発行時に設定した期限まで有効です。
         </p>
       </div>
     </div>

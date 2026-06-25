@@ -35,12 +35,13 @@ export function createAdminAuthToken(): string {
   return `${payloadStr}.${signPayload(payloadStr)}`;
 }
 
-export function createGuestAuthToken(guestId: string, expiresAt: string): string {
+export function createGuestAuthToken(guestId: string, expiresAt: string | null): string {
   const now = Date.now();
+  const exp = expiresAt ? new Date(expiresAt).getTime() : now + ADMIN_TOKEN_TTL_MS;
   const payload: AuthTokenPayload = {
     role: "guest",
     iat: now,
-    exp: new Date(expiresAt).getTime(),
+    exp,
     guestId,
   };
   const payloadStr = base64UrlEncode(JSON.stringify(payload));

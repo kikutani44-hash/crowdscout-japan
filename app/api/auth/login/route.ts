@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     }
 
     const guest = await findValidGuestPassword(password);
-    if (!guest?.expires_at) {
+    if (!guest) {
       return NextResponse.json({ error: "パスワードが正しくないか、有効期限が切れています" }, { status: 401 });
     }
 
