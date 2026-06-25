@@ -15,6 +15,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
@@ -23,7 +24,9 @@ from playwright.sync_api import sync_playwright
 from category_filters import INDIEGOGO_EXPLORE_URLS, is_allowed_category, parse_category_slugs, resolve_indiegogo_explore_urls
 from common import (
     MIN_RAISED_USD,
+    compute_campaign_metrics,
     create_browser,
+    dismiss_cookie_consent,
     normalize_project,
     parse_money_to_usd,
     save_json,
@@ -32,6 +35,136 @@ from common import (
 )
 
 EXPLORE_URLS = INDIEGOGO_EXPLORE_URLS
+
+_DATE_FORMATS = (
+    "%B %d, %Y",
+    "%b %d, %Y",
+    "%B %d %Y",
+    "%b %d %Y",
+    "%Y-%m-%d",
+    "%m/%d/%Y",
+    "%d/%m/%Y",
+)
+
+_DEADLINE_PATTERNS = (
+    re.compile(r"(?:campaign\s+)?ended\s+(?:on\s+)?(.+)", re.IGNORECASE),
+    re.compile(r"end(?:ed|s)?\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})", re.IGNORECASE),
+    re.compile(r"deadline:?\s*(.+)", re.IGNORECASE),
+    re.compile(r"funding\s+ended:?\s*(.+)", re.IGNORECASE),
+    re.compile(r"closed\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})", re.IGNORECASE),
+)
+
+_LAUNCH_PATTERNS = (
+    re.compile(r"launch(?:ed|es)?\s+(?:on\s+)?([A-Za-z]+\s+\d{1,2},?\s+\d{4})", re.IGNORECASE),
+    re.compile(r"started:?\s*(.+)", re.IGNORECASE),
+    re.compile(r"created:?\s*(.+)", re.IGNORECASE),
+)
+
+
+def _try_parse_date(text: str) -> int | None:
+    cleaned = text.strip().rstrip(".")
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    # Strip trailing time fragments if present
+    cleaned = re.sub(r"\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?", "", cleaned, flags=re.IGNORECASE)
+    for fmt in _DATE_FORMATS:
+        try:
+            dt = datetime.strptime(cleaned, fmt).replace(tzinfo=timezone.utc)
+            return int(dt.timestamp())
+        except ValueError:
+            continue
+    iso_match = re.search(r"(\d{4}-\d{2}-\d{2})", cleaned)
+    if iso_match:
+        try:
+            dt = datetime.strptime(iso_match.group(1), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            return int(dt.timestamp())
+        except ValueError:
+            pass
+    return None
+
+
+def _extract_date_from_patterns(texts: list[str], patterns: tuple[re.Pattern[str], ...]) -> int | None:
+    for text in texts:
+        for pattern in patterns:
+            match = pattern.search(text)
+            if not match:
+                continue
+            parsed = _try_parse_date(match.group(1))
+            if parsed:
+                return parsed
+    return None
+
+
+def _extract_dates_from_json_ld(json_ld: list[Any]) -> tuple[int | None, int | None]:
+    deadline_ts: int | None = None
+    launched_ts: int | None = None
+
+    def walk(obj: Any) -> None:
+        nonlocal deadline_ts, launched_ts
+        if isinstance(obj, dict):
+            for key, value in obj.items():
+                key_lower = str(key).lower()
+                if key_lower in {"enddate", "datemodified", "validthrough"} and isinstance(value, str):
+                    parsed = _try_parse_date(value) or _try_parse_date(value[:10])
+                    if parsed:
+                        deadline_ts = parsed if deadline_ts is None else max(deadline_ts, parsed)
+                if key_lower in {"startdate", "datepublished", "datecreated"} and isinstance(value, str):
+                    parsed = _try_parse_date(value) or _try_parse_date(value[:10])
+                    if parsed:
+                        launched_ts = parsed if launched_ts is None else min(launched_ts, parsed)
+                walk(value)
+        elif isinstance(obj, list):
+            for item in obj:
+                walk(item)
+
+    for blob in json_ld:
+        walk(blob)
+    return deadline_ts, launched_ts
+
+
+def parse_indiegogo_dates(
+    date_texts: list[str],
+    body_text: str,
+    json_ld: list[Any],
+) -> tuple[int | None, int | None]:
+    """Extract deadline and launch timestamps from DOM date snippets and JSON-LD."""
+    snippets = [t.strip() for t in date_texts if t and t.strip()]
+    if body_text:
+        for line in body_text.splitlines():
+            line = line.strip()
+            if line and any(
+                token in line.lower()
+                for token in ("end", "deadline", "launch", "started", "closed", "ended")
+            ):
+                snippets.append(line)
+
+    deadline_ts = _extract_date_from_patterns(snippets, _DEADLINE_PATTERNS)
+    launched_ts = _extract_date_from_patterns(snippets, _LAUNCH_PATTERNS)
+
+    ld_deadline, ld_launched = _extract_dates_from_json_ld(json_ld)
+    if ld_deadline:
+        deadline_ts = ld_deadline if deadline_ts is None else max(deadline_ts, ld_deadline)
+    if ld_launched:
+        launched_ts = ld_launched if launched_ts is None else min(launched_ts, ld_launched)
+
+    return deadline_ts, launched_ts
+
+
+def infer_indiegogo_status(
+    *,
+    deadline_ts: int | None,
+    is_indemand: bool,
+    body_text: str,
+) -> str:
+    if is_indemand or re.search(r"\bindemand\b", body_text, re.IGNORECASE):
+        return "ended"
+    if deadline_ts:
+        deadline = datetime.fromtimestamp(deadline_ts, tz=timezone.utc)
+        if deadline > datetime.now(timezone.utc):
+            return "active"
+        return "ended"
+    if re.search(r"\b(live|active|days?\s+left|ends?\s+in)\b", body_text, re.IGNORECASE):
+        return "active"
+    return "ended"
 
 
 def extract_card_previews(page) -> list[dict[str, Any]]:
@@ -173,6 +306,7 @@ def collect_project_urls(page, explore_urls: list[str], max_links: int) -> list[
     for explore_url in explore_urls:
         print(f"[indiegogo] loading explore: {explore_url}")
         page.goto(explore_url, wait_until="domcontentloaded", timeout=90000)
+        dismiss_cookie_consent(page)
         page.wait_for_timeout(6000)
 
         previews = extract_card_previews(page)
@@ -207,6 +341,7 @@ def collect_project_urls(page, explore_urls: list[str], max_links: int) -> list[
 def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -> dict[str, Any] | None:
     print(f"[indiegogo] scraping {url}")
     page.goto(url, wait_until="domcontentloaded", timeout=90000)
+    dismiss_cookie_consent(page)
     page.wait_for_timeout(5000)
 
     if "Just a moment" in (page.title() or ""):
@@ -225,6 +360,9 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
             const statTexts = [...document.querySelectorAll(
                 '[class*="funding"], [class*="Funding"], [class*="raised"], [class*="stats"], [class*="Stats"], [data-testid*="funding"]'
             )].map(el => (el.innerText || '').trim()).filter(Boolean);
+            const dateTexts = [...document.querySelectorAll(
+                '[class*="date"], [class*="Date"], [class*="time"], [class*="Time"], [class*="deadline"], [class*="end"]'
+            )].map(el => el.innerText?.trim()).filter(Boolean);
             const jsonLd = [];
             document.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
                 try {
@@ -237,6 +375,7 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
                 og,
                 hero: hero ? hero.src : null,
                 statTexts,
+                dateTexts,
                 jsonLd,
                 isIndemand: /indemand/i.test(location.href) || /indemand/i.test(text),
             };
@@ -311,6 +450,24 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
         print(f"[indiegogo] skip (category excluded: {category}): {title}")
         return None
 
+    deadline_ts, launched_ts = parse_indiegogo_dates(
+        data.get("dateTexts") or [],
+        text,
+        data.get("jsonLd") or [],
+    )
+    is_indemand = bool(data.get("isIndemand"))
+    status = infer_indiegogo_status(
+        deadline_ts=deadline_ts,
+        is_indemand=is_indemand,
+        body_text=text,
+    )
+    metrics = compute_campaign_metrics(
+        status=status,
+        backers=backers,
+        deadline_ts=deadline_ts,
+        launched_ts=launched_ts,
+    )
+
     image_url = og.get("og:image") or data.get("hero") or (preview or {}).get("img")
     maker_website = None
     if creator:
@@ -328,7 +485,8 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
             "backers": backers,
             "category": category,
             "country": None,
-            "status": "ended",
+            "status": status,
+            **metrics,
             "maker_website": maker_website,
             "created_at": utc_now_iso(),
         }
@@ -345,6 +503,7 @@ def crawl_indiegogo(max_projects: int = 20, category_slugs: list[str] | None = N
 
         # Warm up session on explore page first
         page.goto(explore_urls[0], wait_until="domcontentloaded", timeout=90000)
+        dismiss_cookie_consent(page)
         page.wait_for_timeout(4000)
 
         urls = collect_project_urls(page, explore_urls, max_links=max_projects * 3)

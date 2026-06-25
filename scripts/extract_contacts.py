@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-Extract maker contacts from Kickstarter creator profile pages.
+Extract maker contacts from crowdfunding project pages.
 
-Supabase maker_website example:
-  https://www.kickstarter.com/profile/xxx
-
-Playwright loads the profile page and extracts:
+Opens each project's original_url (Kickstarter / Indiegogo project page) and extracts:
   - maker_sns: Instagram / X / Facebook
-  - maker_website: external website (replaces profile URL when found)
+  - maker_website: external website (when found on the page)
+
+Supabase target: all projects with maker_sns IS NULL (unless --force).
 """
 
 from __future__ import annotations
@@ -21,12 +20,14 @@ from urllib.parse import unquote, urlparse
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page, sync_playwright
 
-from common import create_browser, utc_now_iso
+from common import create_browser, dismiss_cookie_consent, utc_now_iso
 
 KICKSTARTER_DOMAINS = ("kickstarter.com", "ksr.io")
+INDIEGOGO_DOMAINS = ("indiegogo.com",)
 
 BLOCKED_WEBSITE_DOMAINS = (
     *KICKSTARTER_DOMAINS,
+    *INDIEGOGO_DOMAINS,
     "instagram.com",
     "twitter.com",
     "x.com",
@@ -66,11 +67,7 @@ SNS_SKIP_PATHS = (
     "/signup",
 )
 
-SNS_HANDLE_BLOCKLIST = ("kickstarter",)
-
-
-def is_kickstarter_profile_url(url: str) -> bool:
-    return "kickstarter.com/profile" in url.lower()
+SNS_HANDLE_BLOCKLIST = ("kickstarter", "indiegogo")
 
 
 def fetch_page_html(page: Page, url: str) -> Optional[str]:
@@ -81,6 +78,7 @@ def fetch_page_html(page: Page, url: str) -> Optional[str]:
         response = page.goto(url, wait_until="domcontentloaded", timeout=90000)
     if not response or response.status >= 400:
         return None
+    dismiss_cookie_consent(page)
     page.wait_for_timeout(3000)
     html = page.content()
     return html if html else None
@@ -104,8 +102,9 @@ def _domain(url: str) -> str:
     return (urlparse(url).netloc or "").lower().removeprefix("www.")
 
 
-def _is_kickstarter_url(url: str) -> bool:
-    return any(domain in url.lower() for domain in KICKSTARTER_DOMAINS)
+def _is_platform_url(url: str) -> bool:
+    lowered = url.lower()
+    return any(domain in lowered for domain in (*KICKSTARTER_DOMAINS, *INDIEGOGO_DOMAINS))
 
 
 def _is_blocked_link_tool_domain(domain: str) -> bool:
@@ -115,7 +114,7 @@ def _is_blocked_link_tool_domain(domain: str) -> bool:
 
 
 def _is_valid_external_website(url: str) -> bool:
-    if _is_kickstarter_url(url):
+    if _is_platform_url(url):
         return False
     domain = _domain(url)
     if not domain or _is_blocked_link_tool_domain(domain):
@@ -165,8 +164,8 @@ def _extract_links_from_html(html: str) -> list[str]:
     return links
 
 
-def extract_contacts_from_profile_html(html: str) -> dict[str, Any]:
-    """Extract SNS links and external website from a Kickstarter profile page."""
+def extract_contacts_from_html(html: str) -> dict[str, Any]:
+    """Extract SNS links and external website from a project page."""
     sns: dict[str, str] = {}
     external_candidates: list[str] = []
 
@@ -187,27 +186,27 @@ def extract_contacts_from_profile_html(html: str) -> dict[str, Any]:
     }
 
 
-def extract_contacts_from_profile(
+def extract_contacts_from_project_page(
     page: Page,
-    profile_url: str,
+    project_url: str,
     *,
     debug: bool = False,
 ) -> dict[str, Any]:
-    html = fetch_page_html(page, profile_url)
+    html = fetch_page_html(page, project_url)
     if not html:
         return {}
 
     if debug:
         links = _extract_links_from_html(html)
-        print(f"[contacts]   debug profile links: {len(links)}")
+        print(f"[contacts]   debug page links: {len(links)}")
         for link in links[:10]:
             print(f"[contacts]   debug link: {link}")
 
-    return extract_contacts_from_profile_html(html)
+    return extract_contacts_from_html(html)
 
 
-def fetch_all_projects() -> list[dict[str, Any]]:
-    """Load Supabase projects whose maker_website is a Kickstarter profile URL."""
+def fetch_all_projects(*, force: bool = False) -> list[dict[str, Any]]:
+    """Load Supabase projects missing maker_sns (all platforms)."""
     url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "").rstrip("/")
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
     if not url or not key:
@@ -221,18 +220,22 @@ def fetch_all_projects() -> list[dict[str, Any]]:
         "apikey": key,
         "Authorization": f"Bearer {key}",
     }
+    params: dict[str, str] = {
+        "select": "id,title,original_url,maker_website,maker_sns,platform",
+        "order": "updated_at.desc",
+    }
+    if not force:
+        params["maker_sns"] = "is.null"
+
     resp = requests.get(
         f"{url}/rest/v1/projects",
         headers=headers,
-        params={
-            "select": "id,title,original_url,maker_website,maker_sns",
-            "maker_website": "ilike.*kickstarter.com/profile*",
-            "order": "updated_at.desc",
-        },
+        params=params,
         timeout=120,
     )
     resp.raise_for_status()
-    return resp.json()
+    projects = resp.json()
+    return [p for p in projects if (p.get("original_url") or "").strip()]
 
 
 def patch_project(project_id: str, updates: dict[str, Any]) -> None:
@@ -257,7 +260,7 @@ def patch_project(project_id: str, updates: dict[str, Any]) -> None:
     resp.raise_for_status()
 
 
-def _build_updates(profile_url: str, extracted: dict[str, Any]) -> dict[str, Any] | None:
+def _build_updates(extracted: dict[str, Any]) -> dict[str, Any] | None:
     maker_sns = extracted.get("maker_sns")
     external_website = extracted.get("external_website")
     if not maker_sns and not external_website:
@@ -268,8 +271,6 @@ def _build_updates(profile_url: str, extracted: dict[str, Any]) -> dict[str, Any
         updates["maker_sns"] = maker_sns
     if external_website:
         updates["maker_website"] = external_website
-    else:
-        updates["maker_website"] = profile_url
     return updates
 
 
@@ -279,18 +280,15 @@ def extract_contacts(
     limit: int = 0,
     headless: bool = True,
 ) -> tuple[int, int]:
-    all_projects = fetch_all_projects()
-    print(f"[contacts] loaded {len(all_projects)} profile projects from Supabase")
+    all_projects = fetch_all_projects(force=force)
+    label = "all projects" if force else "projects with maker_sns null"
+    print(f"[contacts] loaded {len(all_projects)} {label} from Supabase")
 
-    if force:
-        projects = all_projects
-    else:
-        projects = [p for p in all_projects if not p.get("maker_sns")]
-
+    projects = all_projects
     if limit:
         projects = projects[:limit]
 
-    print(f"[contacts] {len(projects)} profile pages to scan")
+    print(f"[contacts] {len(projects)} project pages to scan")
     if not projects:
         return 0, 0
 
@@ -303,18 +301,18 @@ def extract_contacts(
         for index, project in enumerate(projects, start=1):
             project_id = project["id"]
             title = project.get("title") or ""
-            profile_url = (project.get("maker_website") or "").strip()
+            project_url = (project.get("original_url") or "").strip()
 
             print(f"[contacts] {index}/{len(projects)}: {title[:60]}...")
-            print(f"[contacts]   profile: {profile_url}")
+            print(f"[contacts]   page: {project_url}")
 
             try:
-                extracted = extract_contacts_from_profile(
+                extracted = extract_contacts_from_project_page(
                     page,
-                    profile_url,
+                    project_url,
                     debug=(index == 1),
                 )
-                updates = _build_updates(profile_url, extracted)
+                updates = _build_updates(extracted)
                 if not updates:
                     print("[contacts]   skip: no SNS or external website found")
                     continue
@@ -324,9 +322,9 @@ def extract_contacts(
                 parts = []
                 if updates.get("maker_sns"):
                     parts.append(f"sns={updates['maker_sns']}")
-                if updates.get("maker_website") != profile_url:
+                if updates.get("maker_website"):
                     parts.append(f"website={updates['maker_website']}")
-                print(f"[contacts]   saved: {', '.join(parts) or 'profile only'}")
+                print(f"[contacts]   saved: {', '.join(parts)}")
             except Exception as exc:
                 print(f"[contacts]   failed: {exc}", file=sys.stderr)
 
@@ -340,11 +338,11 @@ def enrich_kickstarter_projects(
     *,
     headless: bool = True,
 ) -> int:
-    """Fill maker_sns / external maker_website from Kickstarter profile pages."""
+    """Fill maker_sns / maker_website from project pages (original_url)."""
     targets = [
         p
         for p in projects
-        if is_kickstarter_profile_url((p.get("maker_website") or "").strip())
+        if (p.get("original_url") or "").strip() and not p.get("maker_sns")
     ]
     if not targets:
         return 0
@@ -355,22 +353,21 @@ def enrich_kickstarter_projects(
         page = context.new_page()
 
         for index, project in enumerate(targets, start=1):
-            profile_url = (project.get("maker_website") or "").strip()
+            project_url = (project.get("original_url") or "").strip()
             title = project.get("title") or ""
             print(f"[contacts] {index}/{len(targets)}: {title[:60]}...")
 
             try:
-                extracted = extract_contacts_from_profile(
+                extracted = extract_contacts_from_project_page(
                     page,
-                    profile_url,
+                    project_url,
                     debug=(index == 1),
                 )
                 if extracted.get("maker_sns"):
                     project["maker_sns"] = extracted["maker_sns"]
                 if extracted.get("external_website"):
                     project["maker_website"] = extracted["external_website"]
-                    enriched += 1
-                elif extracted.get("maker_sns"):
+                if extracted.get("maker_sns") or extracted.get("external_website"):
                     enriched += 1
                 else:
                     print("[contacts]   skip: no contacts found")
@@ -384,7 +381,7 @@ def enrich_kickstarter_projects(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Extract SNS and website from Kickstarter profile pages"
+        description="Extract SNS and website from project pages (original_url)"
     )
     parser.add_argument(
         "--force",

@@ -16,6 +16,20 @@ export interface OfferLetterContent {
 const COMPANY = "Blink Japan Co., Ltd.";
 const CONTACT_EMAIL = "kikuya@blinkjapan.co.jp";
 
+const COMPANY_CREDENTIALS = [
+  "TV program production & TV shopping network connections",
+  "Talent collaboration & co-developed product campaigns",
+  "Established crowdfunding platform partnerships in Japan",
+] as const;
+
+function credentialsText(): string {
+  return COMPANY_CREDENTIALS.map((item) => `- ${item}`).join("\n");
+}
+
+function credentialsHtml(): string {
+  return `<ul>${COMPANY_CREDENTIALS.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+
 export function buildOfferLetter(input: OfferLetterInput): OfferLetterContent {
   const subject = `Partnership Opportunity – ${input.productTitle} in Japan`;
   const achievement = `$${input.raisedUsd.toLocaleString("en-US")} from ${input.backers.toLocaleString("en-US")} backers`;
@@ -27,6 +41,9 @@ export function buildOfferLetter(input: OfferLetterInput): OfferLetterContent {
   const text = `Dear Partner,
 
 We are ${COMPANY}, a Japan-based company specializing in bringing successful overseas crowdfunding products to the Japanese market.
+
+Our strengths include:
+${credentialsText()}
 
 We were impressed by your campaign "${input.productTitle}", which raised ${achievement}. We believe this product has strong potential in Japan${input.category ? `, particularly in the ${input.category} category` : ""}.
 
@@ -52,6 +69,8 @@ https://blinkjapan.co.jp`;
     We are <strong>${COMPANY}</strong>, a Japan-based company specializing in bringing
     successful overseas crowdfunding products to the Japanese market.
   </p>
+  <p>Our strengths include:</p>
+  ${credentialsHtml()}
   <p>
     We were impressed by your campaign
     <strong>${escapeHtml(input.productTitle)}</strong>, which raised

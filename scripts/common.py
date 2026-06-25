@@ -362,8 +362,24 @@ def create_browser(playwright, headless: bool = True):
     return browser, context
 
 
+def dismiss_cookie_consent(page, timeout: int = 3000) -> None:
+    """Dismiss cookie consent banners if present (Kickstarter, Indiegogo, etc.)."""
+    selectors = (
+        "button:has-text('Accept all')",
+        "button:has-text('Accept All')",
+        "#onetrust-accept-btn-handler",
+    )
+    for selector in selectors:
+        try:
+            page.click(selector, timeout=timeout)
+            return
+        except Exception:
+            pass
+
+
 def fetch_json_page(page, url: str) -> Optional[Any]:
     response = page.goto(url, wait_until="domcontentloaded", timeout=90000)
+    dismiss_cookie_consent(page)
     if not response or response.status >= 400:
         return None
     body = page.locator("body").inner_text().strip()
