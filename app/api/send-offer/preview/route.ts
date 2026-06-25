@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { translateOfferLetterToJapanese } from "@/lib/claude";
 import { previewOfferLetter } from "@/lib/mailer";
 import { findLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -31,7 +32,9 @@ export async function POST(request: Request) {
       customNote: customNote?.trim() || undefined,
     });
 
-    return NextResponse.json({ letter });
+    const text_ja = await translateOfferLetterToJapanese(letter.text);
+
+    return NextResponse.json({ letter: { ...letter, text_ja } });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "プレビュー生成に失敗しました" },

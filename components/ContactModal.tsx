@@ -31,6 +31,7 @@ interface ContactModalProps {
 interface LetterPreview {
   subject: string;
   text: string;
+  text_ja?: string;
 }
 
 export function ContactModal({ project, open, onOpenChange, onSent }: ContactModalProps) {
@@ -172,11 +173,28 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
           </div>
 
           {showPreview && preview && (
-            <div className="max-h-64 overflow-y-auto rounded-md border border-border bg-card p-4">
-              <p className="mb-2 text-xs font-semibold text-primary">Subject: {preview.subject}</p>
-              <pre className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
-                {preview.text}
-              </pre>
+            <div className="max-h-96 space-y-4 overflow-y-auto rounded-md border border-border bg-card p-4">
+              <div>
+                <p className="mb-2 text-xs font-semibold text-primary">
+                  Subject: {preview.subject}
+                </p>
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                  English（送信文）
+                </p>
+                <pre className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
+                  {preview.text}
+                </pre>
+              </div>
+              {preview.text_ja && (
+                <div className="border-t border-border pt-4">
+                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    日本語訳（参考）
+                  </p>
+                  <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90">
+                    {preview.text_ja}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
 
