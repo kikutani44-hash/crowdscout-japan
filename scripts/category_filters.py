@@ -151,6 +151,10 @@ INDIEGOGO_EXPLORE_URLS = [
     "https://www.indiegogo.com/explore/health-and-fitness",
     "https://www.indiegogo.com/explore/home",
     "https://www.indiegogo.com/explore/product-design",
+    "https://www.indiegogo.com/explore/travel-and-outdoors",
+    "https://www.indiegogo.com/explore/food-and-beverages",
+    "https://www.indiegogo.com/explore/fashion-and-wearables",
+    "https://www.indiegogo.com/explore/transportation",
 ]
 
 # 6 priority groups for demo crawl (CLI slugs)
@@ -193,17 +197,17 @@ INDIEGOGO_SLUG_PATHS: dict[str, str] = {
     "gadgets": "tech-and-innovation",
     "design": "product-design",
     "lifestyle": "product-design",
-    "fashion": "product-design",
-    "food": "home",
-    "kitchen": "home",
+    "fashion": "fashion-and-wearables",
+    "food": "food-and-beverages",
+    "kitchen": "food-and-beverages",
     "health": "health-and-fitness",
     "healthcare": "health-and-fitness",
     "fitness": "health-and-fitness",
-    "outdoor": "home",
+    "outdoor": "travel-and-outdoors",
     "sport": "health-and-fitness",
     "sports": "health-and-fitness",
-    "mobility": "tech-and-innovation",
-    "transport": "tech-and-innovation",
+    "mobility": "transportation",
+    "transport": "transportation",
 }
 
 

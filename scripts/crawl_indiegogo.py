@@ -493,9 +493,10 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
     )
 
 
-def crawl_indiegogo(max_projects: int = 20, category_slugs: list[str] | None = None) -> list[dict[str, Any]]:
+def crawl_indiegogo(max_projects: int = 40, category_slugs: list[str] | None = None) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     explore_urls = resolve_indiegogo_explore_urls(category_slugs)
+    max_links = max(max_projects * 4, len(explore_urls) * 12)
 
     with sync_playwright() as playwright:
         browser, context = create_browser(playwright)
@@ -506,8 +507,8 @@ def crawl_indiegogo(max_projects: int = 20, category_slugs: list[str] | None = N
         dismiss_cookie_consent(page)
         page.wait_for_timeout(4000)
 
-        urls = collect_project_urls(page, explore_urls, max_links=max_projects * 3)
-        print(f"[indiegogo] discovered {len(urls)} candidate URLs")
+        urls = collect_project_urls(page, explore_urls, max_links=max_links)
+        print(f"[indiegogo] discovered {len(urls)} candidate URLs (max_links={max_links})")
 
         for item in urls:
             if len(projects) >= max_projects:
@@ -529,7 +530,7 @@ def crawl_indiegogo(max_projects: int = 20, category_slugs: list[str] | None = N
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Crawl Indiegogo projects")
-    parser.add_argument("--max", type=int, default=20, help="Maximum projects to save")
+    parser.add_argument("--max", type=int, default=40, help="Maximum projects to save")
     parser.add_argument("--no-save", action="store_true", help="Skip writing output files")
     parser.add_argument(
         "--categories",
