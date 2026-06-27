@@ -8,7 +8,7 @@ Uses the public main feed API:
 Filters:
   - isGlobalShippingAvailable == true
   - rate >= 100 (100%+ funded)
-  - Categories: Tech, Sports, Home & Decor, Beauty
+  - Categories: Tech, Sports, Home & Decor, Beauty, Food, Pets, Kids, Automotive
   - Excludes: Books, E-Books & Classes, Games
 """
 
@@ -18,7 +18,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -41,6 +41,10 @@ ALLOWED_MAIN_CATEGORIES = {
     "Sports & Outdoors",  # スポーツ
     "Home & Decor",  # ホームインテリア
     "Beauty",  # ビューティー
+    "Food",  # フード・健康
+    "Pets",  # ペット
+    "Kids",  # キッズ
+    "Automotive",  # 自動車・モビリティ
 }
 
 EXCLUDED_MAIN_CATEGORIES = {
