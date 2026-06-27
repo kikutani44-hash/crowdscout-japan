@@ -12,12 +12,12 @@ export const PLATFORM_FILTER_OPTIONS: PlatformFilterOption[] = [
   { value: "all", label: "すべて" },
   { value: "kickstarter", label: "Kickstarter" },
   { value: "indiegogo", label: "Indiegogo" },
-  { value: "wadiz", label: "Wadiz（韓国）", comingSoon: true },
+  { value: "wadiz", label: "Wadiz（韓国）" },
   { value: "zeczec", label: "Zeczec（台湾）", comingSoon: true },
 ];
 
 export function isComingSoonPlatform(value: PlatformFilterValue): boolean {
-  return value === "wadiz" || value === "zeczec";
+  return value === "zeczec";
 }
 
 export function buildPlatformCounts(

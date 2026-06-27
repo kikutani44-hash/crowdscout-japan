@@ -7,7 +7,7 @@ create table if not exists projects (
   title_ja text,
   subtitle text,
   subtitle_ja text,
-  platform text not null check (platform in ('kickstarter', 'indiegogo')),
+  platform text not null check (platform in ('kickstarter', 'indiegogo', 'wadiz', 'zeczec')),
   original_url text not null,
   image_url text,
   raised_usd integer not null default 0,

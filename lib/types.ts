@@ -1,6 +1,6 @@
 import type { PlatformFilterValue } from "@/lib/platforms";
 
-export type Platform = "kickstarter" | "indiegogo";
+export type Platform = "kickstarter" | "indiegogo" | "wadiz" | "zeczec";
 export type ProjectStatus = "active" | "ended";
 export type OfferStatus = "未接触" | "交渉中" | "獲得済み" | "却下";
 
