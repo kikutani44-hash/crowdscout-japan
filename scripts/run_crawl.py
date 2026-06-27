@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Kickstarter and Indiegogo crawlers and merge output."""
+"""Run Kickstarter, Indiegogo, and Wadiz crawlers and merge output."""
 
 from __future__ import annotations
 
@@ -26,7 +26,11 @@ def run_script(name: str, extra_args: list[str]) -> int:
 
 def merge_outputs(*, translate: bool = True, force_translate: bool = False) -> Path:
     merged: list[dict] = []
-    for filename in ("kickstarter_projects.json", "indiegogo_projects.json"):
+    for filename in (
+        "kickstarter_projects.json",
+        "indiegogo_projects.json",
+        "wadiz_projects.json",
+    ):
         path = DATA_DIR / filename
         if not path.exists():
             continue
@@ -55,6 +59,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run all CrowdScout crawlers")
     parser.add_argument("--ks-pages", type=int, default=5)
     parser.add_argument("--igg-max", type=int, default=30)
+    parser.add_argument("--wadiz-pages", type=int, default=3)
     parser.add_argument(
         "--min",
         type=int,
@@ -99,7 +104,14 @@ def main() -> int:
     if not args.indiegogo_only:
         code = run_script(
             "crawl_kickstarter.py",
-            ["--pages", str(args.ks_pages), "--min", str(args.min), *crawl_common],
+            [
+                "--pages",
+                str(args.ks_pages),
+                "--min",
+                str(args.min),
+                "--no-contacts",
+                *crawl_common,
+            ],
         )
         if code != 0:
             return code
@@ -108,6 +120,14 @@ def main() -> int:
         code = run_script(
             "crawl_indiegogo.py",
             ["--max", str(args.igg_max), *crawl_common],
+        )
+        if code != 0:
+            return code
+
+    if not args.kickstarter_only and not args.indiegogo_only:
+        code = run_script(
+            "crawl_wadiz.py",
+            ["--pages", str(args.wadiz_pages), "--no-supabase"],
         )
         if code != 0:
             return code
