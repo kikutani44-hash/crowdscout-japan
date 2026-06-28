@@ -13,11 +13,11 @@ export const PLATFORM_FILTER_OPTIONS: PlatformFilterOption[] = [
   { value: "kickstarter", label: "Kickstarter" },
   { value: "indiegogo", label: "Indiegogo" },
   { value: "wadiz", label: "Wadiz（韓国）" },
-  { value: "zeczec", label: "Zeczec（台湾）", comingSoon: true },
+  { value: "zeczec", label: "Zeczec（台湾）" },
 ];
 
-export function isComingSoonPlatform(value: PlatformFilterValue): boolean {
-  return value === "zeczec";
+export function isComingSoonPlatform(_value: PlatformFilterValue): boolean {
+  return false;
 }
 
 export function buildPlatformCounts(

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run Kickstarter, Indiegogo, and Wadiz crawlers and merge output."""
+"""Run Kickstarter, Indiegogo, Wadiz, and Zeczec crawlers and merge output."""
 
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ def merge_outputs(*, translate: bool = True, force_translate: bool = False) -> P
         "kickstarter_projects.json",
         "indiegogo_projects.json",
         "wadiz_projects.json",
+        "zeczec_projects.json",
     ):
         path = DATA_DIR / filename
         if not path.exists():
@@ -60,6 +61,7 @@ def main() -> int:
     parser.add_argument("--ks-pages", type=int, default=5)
     parser.add_argument("--igg-max", type=int, default=30)
     parser.add_argument("--wadiz-pages", type=int, default=3)
+    parser.add_argument("--zeczec-max", type=int, default=20)
     parser.add_argument(
         "--min",
         type=int,
@@ -128,6 +130,13 @@ def main() -> int:
         code = run_script(
             "crawl_wadiz.py",
             ["--pages", str(args.wadiz_pages), "--no-supabase"],
+        )
+        if code != 0:
+            return code
+
+        code = run_script(
+            "crawl_zeczec.py",
+            ["--max", str(args.zeczec_max), "--no-supabase", "--no-translate"],
         )
         if code != 0:
             return code
