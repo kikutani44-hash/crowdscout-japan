@@ -59,9 +59,10 @@ def merge_outputs(*, translate: bool = True, force_translate: bool = False) -> P
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run all CrowdScout crawlers")
     parser.add_argument("--ks-pages", type=int, default=5)
-    parser.add_argument("--igg-max", type=int, default=30)
-    parser.add_argument("--wadiz-pages", type=int, default=3)
-    parser.add_argument("--zeczec-max", type=int, default=20)
+    parser.add_argument("--ks-max", type=int, default=300)
+    parser.add_argument("--igg-max", type=int, default=150)
+    parser.add_argument("--wadiz-pages", type=int, default=10)
+    parser.add_argument("--zeczec-max", type=int, default=50)
     parser.add_argument(
         "--min",
         type=int,
@@ -109,6 +110,8 @@ def main() -> int:
             [
                 "--pages",
                 str(args.ks_pages),
+                "--max",
+                str(args.ks_max),
                 "--min",
                 str(args.min),
                 "--no-contacts",
