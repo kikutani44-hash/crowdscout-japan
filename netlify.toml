@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  SENDGRID_API_KEY = "SG.-LgnD4QnQaCTKUVrBEw77w.ETWoYNyA3wMsfCi338xqLSRVDJQoK9W9g871eSFVhi"
 
 # Claude batch translation can take longer than the default 10s
 [functions]
