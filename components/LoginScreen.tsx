@@ -28,8 +28,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0f1a] px-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-card/80 p-8 shadow-xl backdrop-blur">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20 text-primary">
             <Telescope className="h-7 w-7" />
@@ -61,7 +61,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
 
           {error && (
-            <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+            <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600">
               {error}
             </p>
           )}
