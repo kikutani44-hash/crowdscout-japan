@@ -44,6 +44,11 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null
   );
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailSendMessage, setEmailSendMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const loadPreview = useCallback(async () => {
     if (!project) return;
@@ -72,6 +77,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       setEmail(project.maker_email ?? "");
       setCustomNote("");
       setMessage(null);
+      setEmailSendMessage(null);
       setShowPreview(false);
       setPreview(null);
     }
@@ -82,6 +88,35 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const handlePreview = async () => {
     setShowPreview(true);
     await loadPreview();
+  };
+
+  const handleSendEmail = async () => {
+    if (!preview || !email.trim()) return;
+
+    setEmailSending(true);
+    setEmailSendMessage(null);
+    try {
+      const res = await fetch("/api/send-offer-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: email.trim(),
+          subject: preview.subject,
+          body: preview.text,
+          projectTitle: getDisplayTitle(project),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "メール送信に失敗しました");
+      setEmailSendMessage({ type: "success", text: "送信しました！" });
+    } catch (err) {
+      setEmailSendMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "メール送信に失敗しました",
+      });
+    } finally {
+      setEmailSending(false);
+    }
   };
 
   const handleSend = async () => {
@@ -173,29 +208,60 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
           </div>
 
           {showPreview && preview && (
-            <div className="max-h-96 space-y-4 overflow-y-auto rounded-md border border-border bg-card p-4">
-              <div>
-                <p className="mb-2 text-xs font-semibold text-primary">
-                  Subject: {preview.subject}
-                </p>
-                <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                  English（送信文）
-                </p>
-                <pre className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
-                  {preview.text}
-                </pre>
-              </div>
-              {preview.text_ja && (
-                <div className="border-t border-border pt-4">
-                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                    日本語訳（参考）
+            <>
+              <div className="max-h-96 space-y-4 overflow-y-auto rounded-md border border-border bg-card p-4">
+                <div>
+                  <p className="mb-2 text-xs font-semibold text-primary">
+                    Subject: {preview.subject}
                   </p>
-                  <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90">
-                    {preview.text_ja}
+                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    English（送信文）
+                  </p>
+                  <pre className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
+                    {preview.text}
                   </pre>
                 </div>
-              )}
-            </div>
+                {preview.text_ja && (
+                  <div className="border-t border-border pt-4">
+                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      日本語訳（参考）
+                    </p>
+                    <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90">
+                      {preview.text_ja}
+                    </pre>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 rounded-md border border-border bg-secondary/20 p-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">宛先メールアドレス</label>
+                  <Input
+                    type="email"
+                    placeholder="partner@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <Button
+                  onClick={handleSendEmail}
+                  disabled={emailSending || !email.trim()}
+                  className="w-full"
+                >
+                  <Send className="h-4 w-4" />
+                  {emailSending ? "送信中..." : "メールを送信"}
+                </Button>
+                {emailSendMessage && (
+                  <p
+                    className={`text-sm ${
+                      emailSendMessage.type === "success" ? "text-emerald-400" : "text-red-400"
+                    }`}
+                  >
+                    {emailSendMessage.text}
+                  </p>
+                )}
+              </div>
+            </>
           )}
 
           {message && (
