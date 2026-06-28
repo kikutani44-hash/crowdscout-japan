@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "必須パラメータが不足しています" }, { status: 400 });
     }
 
-    const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "SG.-LgnD4QnQaCTKUVrBEw77w.ETWoYNyA3wMsfCi338xqLSRVDJQoK9W9g871eSFVhi";
+    const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
     if (!SENDGRID_API_KEY) {
       return NextResponse.json({ error: "SendGrid APIキーが設定されていません" }, { status: 500 });
     }
