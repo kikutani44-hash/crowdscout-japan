@@ -5,6 +5,8 @@ Extract maker contacts from crowdfunding project pages.
 Opens each project's original_url (Kickstarter / Indiegogo project page) and extracts:
   - maker_sns: Instagram / X / Facebook
   - maker_website: external website (when found on the page)
+  - maker_email: contact email (when found on the page)
+  - maker_contact_form: contact/inquiry form URL (when found on the page)
 
 Supabase target: all projects with maker_sns IS NULL (unless --force).
 """
@@ -13,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from typing import Any, Optional
 from urllib.parse import unquote, urlparse
@@ -180,9 +183,41 @@ def extract_contacts_from_html(html: str) -> dict[str, Any]:
             external_candidates.append(normalized)
 
     external_website = external_candidates[0] if external_candidates else None
+
+    # メールアドレスの抽出
+    email_pattern = re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
+    email_blocklist = ("kickstarter.com", "indiegogo.com", "sentry.io", "example.com", "wixpress.com")
+    emails = []
+    for match in email_pattern.findall(html):
+        if not any(blocked in match for blocked in email_blocklist):
+            emails.append(match)
+    maker_email = emails[0] if emails else None
+
+    # コンタクトフォームURLの抽出
+    contact_form = None
+    contact_keywords = (
+        "contact",
+        "support",
+        "inquiry",
+        "inquire",
+        "help",
+        "reach",
+        "touch",
+        "feedback",
+        "お問い合わせ",
+    )
+    for link in _extract_links_from_html(html):
+        path = urlparse(link).path.lower()
+        if any(kw in path for kw in contact_keywords):
+            if not _is_platform_url(link):
+                contact_form = link
+                break
+
     return {
         "maker_sns": sns or None,
         "external_website": external_website,
+        "maker_email": maker_email,
+        "maker_contact_form": contact_form,
     }
 
 
@@ -263,7 +298,9 @@ def patch_project(project_id: str, updates: dict[str, Any]) -> None:
 def _build_updates(extracted: dict[str, Any]) -> dict[str, Any] | None:
     maker_sns = extracted.get("maker_sns")
     external_website = extracted.get("external_website")
-    if not maker_sns and not external_website:
+    maker_email = extracted.get("maker_email")
+    maker_contact_form = extracted.get("maker_contact_form")
+    if not maker_sns and not external_website and not maker_email and not maker_contact_form:
         return None
 
     updates: dict[str, Any] = {"updated_at": utc_now_iso()}
@@ -271,6 +308,10 @@ def _build_updates(extracted: dict[str, Any]) -> dict[str, Any] | None:
         updates["maker_sns"] = maker_sns
     if external_website:
         updates["maker_website"] = external_website
+    if maker_email:
+        updates["maker_email"] = maker_email
+    if maker_contact_form:
+        updates["maker_contact_form"] = maker_contact_form
     return updates
 
 
@@ -314,7 +355,7 @@ def extract_contacts(
                 )
                 updates = _build_updates(extracted)
                 if not updates:
-                    print("[contacts]   skip: no SNS or external website found")
+                    print("[contacts]   skip: no SNS, website, email, or contact form found")
                     continue
 
                 patch_project(project_id, updates)
@@ -324,6 +365,10 @@ def extract_contacts(
                     parts.append(f"sns={updates['maker_sns']}")
                 if updates.get("maker_website"):
                     parts.append(f"website={updates['maker_website']}")
+                if updates.get("maker_email"):
+                    parts.append(f"email={updates['maker_email']}")
+                if updates.get("maker_contact_form"):
+                    parts.append(f"contact_form={updates['maker_contact_form']}")
                 print(f"[contacts]   saved: {', '.join(parts)}")
             except Exception as exc:
                 print(f"[contacts]   failed: {exc}", file=sys.stderr)
@@ -367,7 +412,16 @@ def enrich_kickstarter_projects(
                     project["maker_sns"] = extracted["maker_sns"]
                 if extracted.get("external_website"):
                     project["maker_website"] = extracted["external_website"]
-                if extracted.get("maker_sns") or extracted.get("external_website"):
+                if extracted.get("maker_email"):
+                    project["maker_email"] = extracted["maker_email"]
+                if extracted.get("maker_contact_form"):
+                    project["maker_contact_form"] = extracted["maker_contact_form"]
+                if (
+                    extracted.get("maker_sns")
+                    or extracted.get("external_website")
+                    or extracted.get("maker_email")
+                    or extracted.get("maker_contact_form")
+                ):
                     enriched += 1
                 else:
                     print("[contacts]   skip: no contacts found")
