@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const error = await response.text();
       console.error("SendGrid error:", error);
-      return NextResponse.json({ error: "メール送信に失敗しました" }, { status: 500 });
+      return NextResponse.json({ error: `SendGrid エラー: ${error}` }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, message: "メールを送信しました" });
