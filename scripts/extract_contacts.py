@@ -23,7 +23,7 @@ from urllib.parse import unquote, urlparse
 from bs4 import BeautifulSoup
 from playwright.sync_api import Page, sync_playwright
 
-from common import create_browser, dismiss_cookie_consent, utc_now_iso
+from common import create_browser, dismiss_cookie_consent, fetch_json_page, utc_now_iso
 
 KICKSTARTER_DOMAINS = ("kickstarter.com", "ksr.io")
 INDIEGOGO_DOMAINS = ("indiegogo.com",)
@@ -82,6 +82,11 @@ def fetch_page_html(page: Page, url: str) -> Optional[str]:
     if not response or response.status >= 400:
         return None
     dismiss_cookie_consent(page)
+    # ページを下までスクロールしてコンテンツを読み込む
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    page.wait_for_timeout(2000)
+    page.evaluate("window.scrollTo(0, 0)")
+    page.wait_for_timeout(1000)
     page.wait_for_timeout(3000)
     html = page.content()
     return html if html else None
@@ -227,15 +232,43 @@ def extract_contacts_from_project_page(
     *,
     debug: bool = False,
 ) -> dict[str, Any]:
-    html = fetch_page_html(page, project_url)
-    if not html:
+    # Kickstarterの場合はJSONエンドポイントを使用
+    if "kickstarter.com" in project_url:
+        json_url = project_url.rstrip("/") + ".json"
+        data = fetch_json_page(page, json_url)
+        if data:
+            # creatorページにHTMLで直接アクセス
+            creator_page_url = project_url.rstrip("/") + "/creator"
+            print(f"[contacts]   debug fetching creator page: {creator_page_url}")
+            creator_html = fetch_page_html(page, creator_page_url)
+            print(f"[contacts]   debug creator_html: {creator_html is not None}")
+
+            combined_html = ""
+            if creator_html:
+                combined_html = creator_html
+
+            # 元のJSONのHTMLも追加
+            content_html = data.get("content", "") or ""
+            card_html = data.get("card", "") or ""
+            running_board_html = data.get("running_board", "") or ""
+            combined_html += content_html + card_html + running_board_html
+
+            result = extract_contacts_from_html(combined_html)
+            print(f"[contacts]   debug KS result: {result}")
+            return result
         return {}
 
-    if debug:
-        links = _extract_links_from_html(html)
-        print(f"[contacts]   debug page links: {len(links)}")
-        for link in links[:10]:
-            print(f"[contacts]   debug link: {link}")
+    # その他のプラットフォーム（既存の処理）
+    html = fetch_page_html(page, project_url)
+    if not html:
+        print(f"[contacts]   debug: fetch_page_html returned None")
+        return {}
+    print(f"[contacts]   debug: html length = {len(html)}")
+
+    links = _extract_links_from_html(html)
+    print(f"[contacts]   debug: {len(links)} links found")
+    for link in links[:20]:
+        print(f"[contacts]   link: {link}")
 
     return extract_contacts_from_html(html)
 

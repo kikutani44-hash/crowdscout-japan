@@ -66,7 +66,12 @@ def scrape_category_page(page, cat_url: str) -> list[dict[str, Any]]:
                 const text = (a.innerText || '').replace(/\\s+/g, ' ').trim();
                 if (!text.includes('NT$')) continue;
 
-                const img = a.querySelector('img')?.src || null;
+                const imgEl = a.querySelector('img');
+                const img = imgEl?.src
+                    || imgEl?.getAttribute('data-src')
+                    || imgEl?.getAttribute('data-lazy')
+                    || imgEl?.getAttribute('data-original')
+                    || null;
                 const lines = (a.innerText || '').split('\\n').map(l => l.trim()).filter(Boolean);
                 const title = lines[0] || '';
 

@@ -368,6 +368,11 @@ def dismiss_cookie_consent(page, timeout: int = 3000) -> None:
         "button:has-text('Accept all')",
         "button:has-text('Accept All')",
         "#onetrust-accept-btn-handler",
+        "button:has-text('Confirm')",
+        "button:has-text('confirm')",
+        "button:has-text('Accept')",
+        "button:has-text('OK')",
+        "button:has-text('同意')",
     )
     for selector in selectors:
         try:
