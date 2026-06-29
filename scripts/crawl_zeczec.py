@@ -165,7 +165,7 @@ def crawl_zeczec(max_projects: int = 20) -> list[dict[str, Any]]:
     seen_urls: set[str] = set()
 
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=False)
+        browser = playwright.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
 
