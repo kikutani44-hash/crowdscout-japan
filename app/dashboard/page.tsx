@@ -49,6 +49,10 @@ export default async function DashboardPage() {
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 8);
 
+  const unconfirmedContactsCount = projects.filter(
+    (p) => p.platform === "kickstarter" && !p.maker_website
+  ).length;
+
   return (
     <div className="min-h-screen">
       <header className="border-b border-border bg-card/40 px-4 py-5">
@@ -107,6 +111,21 @@ export default async function DashboardPage() {
             sub={`平均スコア ${stats.avgScore}`}
           />
         </div>
+
+        <Link
+          href="/dashboard/unconfirmed"
+          className="block rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">メーカー連絡先 未確認リスト</p>
+              <p className="text-xs text-muted-foreground">
+                公式サイト・メールアドレスが未確認のKickstarter案件を確認・手動入力
+              </p>
+            </div>
+            <Badge variant="secondary">{unconfirmedContactsCount}件</Badge>
+          </div>
+        </Link>
 
         {/* オファーパイプライン */}
         <section className="rounded-xl border border-border bg-card p-5">

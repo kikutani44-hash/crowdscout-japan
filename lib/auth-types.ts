@@ -6,6 +6,7 @@ export interface PasswordRecord {
   type: PasswordType;
   created_at: string;
   expires_at: string | null;
+  note: string | null;
 }
 
 export type AuthRole = PasswordType;

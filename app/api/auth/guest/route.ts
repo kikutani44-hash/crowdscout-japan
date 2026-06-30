@@ -27,9 +27,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "管理者認証が必要です" }, { status: 401 });
     }
 
-    const body = (await request.json().catch(() => ({}))) as { expiry?: GuestExpiryOption };
+    const body = (await request.json().catch(() => ({}))) as { expiry?: GuestExpiryOption; note?: string };
     const expiry = body.expiry && VALID_EXPIRY.includes(body.expiry) ? body.expiry : "1week";
-    const password = await createGuestPassword(expiry);
+    const password = await createGuestPassword(expiry, body.note);
     return NextResponse.json({ password });
   } catch (error) {
     return NextResponse.json(

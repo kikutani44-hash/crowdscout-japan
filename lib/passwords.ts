@@ -77,7 +77,8 @@ export async function findGuestPasswordById(id: string): Promise<PasswordRecord 
 }
 
 export async function createGuestPassword(
-  expiry: GuestExpiryOption = "1week"
+  expiry: GuestExpiryOption = "1week",
+  note?: string
 ): Promise<PasswordRecord> {
   if (!isSupabaseConfigured()) {
     throw new Error("Supabase is not configured");
@@ -94,6 +95,7 @@ export async function createGuestPassword(
         code,
         type: "guest",
         expires_at: expiresAt,
+        note: note?.trim() || null,
       })
       .select("*")
       .single();

@@ -59,13 +59,16 @@ export function ProductCard({
   const displayTitle = getDisplayTitle(project);
   const displaySubtitle = getDisplaySubtitle(project);
   const showEnglishTitle = hasValidJapaneseTitle(project) && displayTitle !== project.title;
+  const imageSrc = project.image_url?.includes("zeczec.com")
+    ? `/api/image-proxy?url=${encodeURIComponent(project.image_url)}`
+    : project.image_url;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary/40">
-        {project.image_url ? (
+        {imageSrc ? (
           <Image
-            src={project.image_url}
+            src={imageSrc}
             alt={displayTitle}
             fill
             className="object-cover transition duration-300 group-hover:scale-105"

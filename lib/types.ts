@@ -46,6 +46,7 @@ export interface Project {
   giteki_ok: boolean;
   maker_email: string | null;
   maker_website: string | null;
+  maker_contact_form: string | null;
   created_at: string;
   updated_at: string;
 }

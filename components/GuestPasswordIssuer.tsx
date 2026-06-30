@@ -33,6 +33,7 @@ export function GuestPasswordIssuer() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expiry, setExpiry] = useState<GuestExpiryOption>("1week");
+  const [note, setNote] = useState("");
 
   const authHeaders = useCallback(
     () => ({
@@ -70,11 +71,12 @@ export function GuestPasswordIssuer() {
       const res = await fetch("/api/auth/guest", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ expiry }),
+        body: JSON.stringify({ expiry, note: note.trim() || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "発行に失敗しました");
       setIssued(data.password);
+      setNote("");
       await loadPasswords();
     } catch (err) {
       setError(err instanceof Error ? err.message : "発行に失敗しました");
@@ -127,28 +129,40 @@ export function GuestPasswordIssuer() {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">有効期限</p>
-            <div className="flex flex-wrap gap-2">
-              {GUEST_EXPIRY_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setExpiry(option.value)}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-sm transition",
-                    expiry === option.value
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-secondary/40 text-foreground hover:border-primary/50"
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
+          <div className="space-y-3 flex-1">
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">有効期限</p>
+              <div className="flex flex-wrap gap-2">
+                {GUEST_EXPIRY_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setExpiry(option.value)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-sm transition",
+                      expiry === option.value
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-secondary/40 text-foreground hover:border-primary/50"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">発行先メモ（任意）</p>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="例：田中さん、ABC社"
+                className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+              />
             </div>
           </div>
 
-          <Button onClick={handleIssue} disabled={loading} className="shrink-0">
+          <Button onClick={handleIssue} disabled={loading} className="shrink-0 self-end">
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -207,6 +221,9 @@ export function GuestPasswordIssuer() {
               >
                 <div>
                   <code className="font-medium">{item.code}</code>
+                  {item.note && (
+                    <p className="text-xs font-medium text-foreground/80">{item.note}</p>
+                  )}
                   <p className="text-xs text-muted-foreground">
                     期限: {formatExpiresAt(item.expires_at)}
                   </p>
