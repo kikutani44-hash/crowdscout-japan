@@ -6,7 +6,7 @@ import { fetchProjects } from "@/lib/supabase";
 export default async function UnconfirmedContactsPage() {
   const projects = await fetchProjects();
   const unconfirmed = projects
-    .filter((p) => p.platform === "kickstarter" && !p.maker_website)
+    .filter((p) => !p.maker_website)
     .sort((a, b) => b.score - a.score);
 
   return (
@@ -16,7 +16,7 @@ export default async function UnconfirmedContactsPage() {
           <div>
             <h1 className="text-2xl font-bold">メーカー連絡先 未確認リスト</h1>
             <p className="text-sm text-muted-foreground">
-              公式サイト・メールアドレスが未確認のKickstarter案件（{unconfirmed.length}件）
+              公式サイト・メールアドレスが未確認の案件（{unconfirmed.length}件）
             </p>
           </div>
           <Link
@@ -32,7 +32,7 @@ export default async function UnconfirmedContactsPage() {
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8">
         <section className="rounded-xl border border-border bg-card p-5">
           <p className="mb-4 text-xs text-muted-foreground">
-            案件名をクリックするとKickstarterページが開きます。ページを確認して公式サイトやメールアドレスが見つかったら入力して保存してください。
+            案件名をクリックするとクラファンページが開きます。Google・SNSボタンで連絡先を調べて入力・保存してください。
           </p>
           <UnconfirmedContactsTable projects={unconfirmed} />
         </section>

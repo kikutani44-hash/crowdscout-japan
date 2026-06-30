@@ -23,6 +23,59 @@ function initialRowState(p: Project): RowState {
   };
 }
 
+function extractBrand(title: string): string {
+  return title.split(/[:—–|]/)[0].trim();
+}
+
+const PLATFORM_LABELS: Record<string, string> = {
+  kickstarter: "KS",
+  indiegogo: "IGG",
+  zeczec: "Zeczec",
+  makuake: "Makuake",
+};
+
+function SearchButtons({ title }: { title: string }) {
+  const brand = extractBrand(title);
+  const buttons = [
+    {
+      label: "Google",
+      href: `https://www.google.com/search?q=${encodeURIComponent(brand + " official site contact email")}`,
+      color: "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20",
+    },
+    {
+      label: "Instagram",
+      href: `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(brand)}`,
+      color: "bg-pink-500/10 text-pink-400 hover:bg-pink-500/20",
+    },
+    {
+      label: "X",
+      href: `https://x.com/search?q=${encodeURIComponent(brand)}&f=user`,
+      color: "bg-secondary text-muted-foreground hover:text-foreground",
+    },
+    {
+      label: "LinkedIn",
+      href: `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(brand)}`,
+      color: "bg-sky-500/10 text-sky-400 hover:bg-sky-500/20",
+    },
+  ];
+
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1">
+      {buttons.map((b) => (
+        <a
+          key={b.label}
+          href={b.href}
+          target="_blank"
+          rel="noreferrer"
+          className={`rounded px-2 py-0.5 text-[10px] font-medium transition ${b.color}`}
+        >
+          {b.label}
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) {
   const [rows, setRows] = useState<Record<string, RowState>>(() =>
     Object.fromEntries(projects.map((p) => [p.id, initialRowState(p)]))
@@ -66,7 +119,7 @@ export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) 
   if (projects.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        未確認の案件はありません。すべてのKickstarterプロジェクトでメーカー情報が確認済みです。
+        未確認の案件はありません。全プロジェクトでメーカー情報が確認済みです。
       </p>
     );
   }
@@ -76,7 +129,7 @@ export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) 
       <table className="w-full min-w-[900px] text-sm">
         <thead>
           <tr className="border-b border-border text-left text-xs text-muted-foreground">
-            <th className="py-2 pr-3">案件名</th>
+            <th className="py-2 pr-3 w-[260px]">案件名</th>
             <th className="py-2 pr-3">公式サイト</th>
             <th className="py-2 pr-3">メールアドレス</th>
             <th className="py-2 pr-3">お問い合わせフォーム</th>
@@ -86,19 +139,28 @@ export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) 
         <tbody className="divide-y divide-border">
           {projects.map((p) => {
             const row = rows[p.id];
+            const platformLabel = PLATFORM_LABELS[p.platform] ?? p.platform;
             return (
               <tr key={p.id}>
-                <td className="py-2 pr-3 align-top">
-                  <a
-                    href={p.original_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-medium hover:underline"
-                  >
-                    {p.title.slice(0, 50)}
-                  </a>
+                <td className="py-3 pr-3 align-top">
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {platformLabel}
+                    </span>
+                    <div>
+                      <a
+                        href={p.original_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium hover:underline"
+                      >
+                        {p.title.slice(0, 45)}
+                      </a>
+                      <SearchButtons title={p.title} />
+                    </div>
+                  </div>
                 </td>
-                <td className="py-2 pr-3 align-top">
+                <td className="py-3 pr-3 align-top">
                   <input
                     type="text"
                     value={row.maker_website}
@@ -107,7 +169,7 @@ export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) 
                     className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
                   />
                 </td>
-                <td className="py-2 pr-3 align-top">
+                <td className="py-3 pr-3 align-top">
                   <input
                     type="text"
                     value={row.maker_email}
@@ -116,7 +178,7 @@ export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) 
                     className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
                   />
                 </td>
-                <td className="py-2 pr-3 align-top">
+                <td className="py-3 pr-3 align-top">
                   <input
                     type="text"
                     value={row.maker_contact_form}
@@ -125,7 +187,7 @@ export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) 
                     className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
                   />
                 </td>
-                <td className="py-2 pr-3 align-top">
+                <td className="py-3 pr-3 align-top">
                   <button
                     onClick={() => save(p.id)}
                     disabled={row.saving}

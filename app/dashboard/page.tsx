@@ -49,9 +49,7 @@ export default async function DashboardPage() {
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 8);
 
-  const unconfirmedContactsCount = projects.filter(
-    (p) => p.platform === "kickstarter" && !p.maker_website
-  ).length;
+  const unconfirmedContactsCount = projects.filter((p) => !p.maker_website).length;
 
   return (
     <div className="min-h-screen">
