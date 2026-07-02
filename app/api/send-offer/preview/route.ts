@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { translateOfferLetterToJapanese } from "@/lib/claude";
+import { translateOfferLetter, translateOfferLetterToJapanese } from "@/lib/claude";
+import { detectLanguage } from "@/lib/language-detect";
 import { previewOfferLetter } from "@/lib/mailer";
 import { findLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -32,9 +33,23 @@ export async function POST(request: Request) {
       customNote: customNote?.trim() || undefined,
     });
 
-    const text_ja = await translateOfferLetterToJapanese(letter.text);
+    // メーカーの言語を自動判定
+    const langInfo = detectLanguage({ platform: project.platform, country: project.country });
 
-    return NextResponse.json({ letter: { ...letter, text_ja } });
+    // 英語以外は翻訳、英語の場合は日本語参考訳のみ
+    const [text_translated, text_ja] = await Promise.all([
+      langInfo.code !== "en" ? translateOfferLetter(letter.text, langInfo.code) : Promise.resolve(null),
+      translateOfferLetterToJapanese(letter.text),
+    ]);
+
+    return NextResponse.json({
+      letter: {
+        ...letter,
+        text_translated,   // メーカーへ実際に送る翻訳文（英語以外のみ）
+        text_ja,           // 日本語参考訳
+        lang: langInfo,    // 言語情報
+      },
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "プレビュー生成に失敗しました" },

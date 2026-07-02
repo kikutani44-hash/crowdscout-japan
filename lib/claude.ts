@@ -135,3 +135,48 @@ ${englishText}`,
   }
   return text.trim();
 }
+
+const LANG_NAMES: Record<string, string> = {
+  "zh-TW": "繁體中文（台灣）",
+  ko: "한국어",
+  fr: "français",
+  de: "Deutsch",
+  es: "español",
+  en: "English",
+};
+
+export async function translateOfferLetter(
+  englishText: string,
+  targetLang: string,
+): Promise<string> {
+  if (targetLang === "en") return englishText;
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return `【翻訳デモ (${targetLang}) — ANTHROPIC_API_KEY 未設定】\n\n${englishText}`;
+  }
+
+  const langName = LANG_NAMES[targetLang] ?? targetLang;
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 2048,
+    messages: [
+      {
+        role: "user",
+        content: `Please translate the following business email into ${langName}.
+
+Rules:
+- Keep company names, email addresses, URLs, and product names as-is
+- Use natural, polite business email tone appropriate for ${langName}
+- Return only the translated email body (no explanations)
+
+--- Original English ---
+${englishText}`,
+      },
+    ],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text : "";
+  if (!text.trim()) throw new Error("翻訳結果が空です");
+  return text.trim();
+}

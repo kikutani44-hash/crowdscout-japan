@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatUsd } from "@/lib/utils";
 import { getDisplayTitle } from "@/lib/project-translation";
-import { Mail, Globe, Send } from "lucide-react";
+import { Check, ClipboardCopy, Mail, Globe, Send } from "lucide-react";
 
 const PLATFORM_LABELS: Record<string, string> = {
   kickstarter: "KS",
@@ -20,10 +20,32 @@ export function OutreachQueue({ projects }: { projects: Project[] }) {
   const [selected, setSelected] = useState<Project | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copyLoading, setCopyLoading] = useState<string | null>(null);
 
   function openModal(p: Project) {
     setSelected(p);
     setModalOpen(true);
+  }
+
+  async function copyFormText(p: Project) {
+    setCopyLoading(p.id);
+    try {
+      const res = await fetch("/api/send-offer/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: p.id }),
+      });
+      const data = await res.json();
+      const text = data.letter?.text_translated ?? data.letter?.text ?? "";
+      await navigator.clipboard.writeText(text);
+      setCopiedId(p.id);
+      setTimeout(() => setCopiedId(null), 3000);
+    } catch {
+      // fallback: ignore
+    } finally {
+      setCopyLoading(null);
+    }
   }
 
   function handleSent(projectId: string) {
@@ -100,12 +122,27 @@ export function OutreachQueue({ projects }: { projects: Project[] }) {
                   送信
                 </Button>
               ) : (
-                <a href={p.maker_contact_form!} target="_blank" rel="noreferrer">
-                  <Button size="sm" variant="outline">
-                    <Globe className="h-3.5 w-3.5" />
-                    フォームを開く
+                <div className="flex flex-col gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyFormText(p)}
+                    disabled={copyLoading === p.id}
+                    className="text-xs"
+                  >
+                    {copiedId === p.id ? (
+                      <><Check className="h-3 w-3 text-emerald-400" /> コピー済み</>
+                    ) : (
+                      <><ClipboardCopy className="h-3 w-3" /> 文章をコピー</>
+                    )}
                   </Button>
-                </a>
+                  <a href={p.maker_contact_form!} target="_blank" rel="noreferrer">
+                    <Button size="sm" variant="ghost" className="w-full text-xs">
+                      <Globe className="h-3 w-3" />
+                      フォームを開く
+                    </Button>
+                  </a>
+                </div>
               )}
             </div>
           </div>

@@ -31,7 +31,9 @@ interface ContactModalProps {
 interface LetterPreview {
   subject: string;
   text: string;
+  text_translated?: string | null;
   text_ja?: string;
+  lang?: { code: string; label: string; nativeLabel: string };
 }
 
 interface MarketReport {
@@ -254,15 +256,37 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
             <>
               <div className="max-h-96 space-y-4 overflow-y-auto rounded-md border border-border bg-card p-4">
                 <div>
-                  <p className="mb-2 text-xs font-semibold text-primary">
-                    Subject: {preview.subject}
-                  </p>
-                  <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                    English（送信文）
-                  </p>
-                  <pre className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
-                    {preview.text}
-                  </pre>
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <p className="text-xs font-semibold text-primary">
+                      Subject: {preview.subject}
+                    </p>
+                    {preview.lang && (
+                      <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] text-blue-400">
+                        送信言語: {preview.lang.label}（{preview.lang.nativeLabel}）
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 翻訳文（英語以外のメーカー向け） */}
+                  {preview.text_translated && (
+                    <div className="mb-3">
+                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-emerald-400">
+                        {preview.lang?.nativeLabel ?? "翻訳"}（送信文）
+                      </p>
+                      <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90">
+                        {preview.text_translated}
+                      </pre>
+                    </div>
+                  )}
+
+                  <div className={preview.text_translated ? "border-t border-border pt-3" : ""}>
+                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {preview.text_translated ? "English（原文）" : "English（送信文）"}
+                    </p>
+                    <pre className="whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
+                      {preview.text}
+                    </pre>
+                  </div>
                 </div>
                 {preview.text_ja && (
                   <div className="border-t border-border pt-4">
