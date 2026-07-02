@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { isSendGridConfigured, sendOfferLetter } from "@/lib/mailer";
+import { translateOfferLetter } from "@/lib/claude";
+import { detectLanguage } from "@/lib/language-detect";
+import { buildOfferLetter } from "@/lib/offer-letter";
+import { isSendGridConfigured, sendOfferLetterRaw } from "@/lib/mailer";
 import { findLocalProject, updateLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { isServerlessRuntime } from "@/lib/serverless-runtime";
@@ -36,14 +39,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "メールアドレスの形式が正しくありません" }, { status: 400 });
     }
 
-    const result = await sendOfferLetter({
-      to: recipient,
+    // メーカーの言語を判定して翻訳
+    const langInfo = detectLanguage({ platform: project.platform, country: project.country });
+    const letter = buildOfferLetter({
       productTitle: project.title_ja ?? project.title,
       productUrl: project.original_url,
       raisedUsd: project.raised_usd,
       backers: project.backers,
       category: project.category,
       customNote: customNote?.trim() || undefined,
+    });
+
+    // 英語以外は本文を翻訳して送信
+    const sendText = langInfo.code !== "en"
+      ? await translateOfferLetter(letter.text, langInfo.code)
+      : letter.text;
+
+    const result = await sendOfferLetterRaw({
+      to: recipient,
+      subject: letter.subject,
+      text: sendText,
+      html: langInfo.code !== "en" ? sendText.replace(/\n/g, "<br>") : letter.html,
     });
 
     const now = new Date().toISOString();
@@ -67,14 +83,15 @@ export async function POST(request: Request) {
       configured: isSendGridConfigured(),
       to: result.to,
       subject: result.subject,
+      lang: langInfo.label,
       offer_status: "交渉中",
       persisted: isSupabaseConfigured() || !isServerlessRuntime(),
       message: result.demo
         ? "デモ送信完了（SENDGRID_API_KEY 未設定のため実際のメールは送信されていません）"
-        : "オファーメールを送信しました",
+        : `オファーメールを送信しました（${langInfo.label}）`,
       warning:
         isServerlessRuntime() && !isSupabaseConfigured()
-          ? "Netlify 本番環境では Supabase 未設定のため、オファー状況の保存はこのセッションのみ有効です"
+          ? "本番環境では Supabase 未設定のため、オファー状況の保存はこのセッションのみ有効です"
           : undefined,
     });
   } catch (error) {

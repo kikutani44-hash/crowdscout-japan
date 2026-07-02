@@ -47,3 +47,28 @@ export async function sendOfferLetter(params: OfferLetterParams): Promise<SendOf
 export function previewOfferLetter(params: OfferLetterInput) {
   return buildOfferLetter(params);
 }
+
+// 翻訳済み本文を直接送信する低レベル関数
+export async function sendOfferLetterRaw(params: {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<SendOfferResult> {
+  if (!isSendGridConfigured()) {
+    console.log("[mailer demo raw]", { to: params.to, subject: params.subject });
+    return { demo: true, to: params.to, subject: params.subject };
+  }
+
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+  await sgMail.send({
+    to: params.to,
+    from: { email: fromEmail, name: fromName },
+    subject: params.subject,
+    text: params.text,
+    html: params.html,
+    replyTo: fromEmail,
+  });
+
+  return { demo: false, to: params.to, subject: params.subject };
+}
