@@ -46,10 +46,12 @@ export async function POST(request: Request) {
       customNote: customNote?.trim() || undefined,
     });
 
+    const now = new Date().toISOString();
     const updates = {
       offer_status: "交渉中" as const,
       maker_email: recipient,
-      updated_at: new Date().toISOString(),
+      offer_sent_at: now,
+      updated_at: now,
     };
 
     if (isSupabaseConfigured()) {

@@ -17,6 +17,7 @@ import {
   ArrowLeft,
   Handshake,
   Mail,
+  Send,
   Target,
   TrendingUp,
   Users,
@@ -50,6 +51,10 @@ export default async function DashboardPage() {
     .slice(0, 8);
 
   const unconfirmedContactsCount = projects.filter((p) => !p.maker_website).length;
+  const outreachReadyCount = projects.filter(
+    (p) => p.offer_status === "未接触" && (p.maker_email || p.maker_contact_form)
+  ).length;
+  const followUpCount = projects.filter((p) => p.offer_status === "交渉中").length;
 
   return (
     <div className="min-h-screen">
@@ -110,20 +115,40 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <Link
-          href="/dashboard/unconfirmed"
-          className="block rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">メーカー連絡先 未確認リスト</p>
-              <p className="text-xs text-muted-foreground">
-                公式サイト・メールアドレスが未確認のKickstarter案件を確認・手動入力
-              </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/dashboard/outreach"
+            className="block rounded-xl border border-primary/30 bg-primary/5 p-4 transition hover:border-primary/60"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Send className="h-4 w-4 text-primary" />
+                  オファー管理
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  送信キュー {outreachReadyCount}件 · フォローアップ {followUpCount}件
+                </p>
+              </div>
+              <Badge variant="default">{outreachReadyCount}件送信可</Badge>
             </div>
-            <Badge variant="secondary">{unconfirmedContactsCount}件</Badge>
-          </div>
-        </Link>
+          </Link>
+
+          <Link
+            href="/dashboard/unconfirmed"
+            className="block rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">メーカー連絡先 未確認リスト</p>
+                <p className="text-xs text-muted-foreground">
+                  公式サイト・メールアドレスが未確認の案件を確認・手動入力
+                </p>
+              </div>
+              <Badge variant="secondary">{unconfirmedContactsCount}件</Badge>
+            </div>
+          </Link>
+        </div>
 
         {/* オファーパイプライン */}
         <section className="rounded-xl border border-border bg-card p-5">

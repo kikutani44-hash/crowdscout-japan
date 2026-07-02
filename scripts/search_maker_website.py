@@ -60,10 +60,28 @@ BLOCKED_DOMAINS = (
 # almost never do.
 BLOCKED_SUBSTRINGS = ("backer", "kicktraq", "crowdfund", "kickfeed")
 
+# Known false-match domains confirmed by manual review
+BLOCKED_DOMAINS_CONFIRMED_MISMATCH = (
+    "pennfishing.com",
+    "statetroopers.org",
+    "melimelo.com",
+    "gyro.money",
+    "rayeofficial.com",
+    "sonymusic.com",
+    "rive.app",
+    "basecamp.com",
+    "princeharrymemoir.com",
+    "ocean.org",
+    "breeze.ca.gov",
+    "trooperclothing.com",
+)
+
 
 def _is_blocked_url(url: str) -> bool:
     lowered = url.lower()
     if any(domain in lowered for domain in BLOCKED_DOMAINS):
+        return True
+    if any(domain in lowered for domain in BLOCKED_DOMAINS_CONFIRMED_MISMATCH):
         return True
     return any(substring in lowered for substring in BLOCKED_SUBSTRINGS)
 
