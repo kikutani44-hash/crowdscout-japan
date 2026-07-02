@@ -19,7 +19,7 @@ import {
 } from "@/lib/japan-cf-status";
 import { formatUsd } from "@/lib/utils";
 import { getDisplayTitle } from "@/lib/project-translation";
-import { Eye, Mail, Send } from "lucide-react";
+import { Eye, FileText, Mail, Send } from "lucide-react";
 
 interface ContactModalProps {
   project: Project | null;
@@ -34,6 +34,11 @@ interface LetterPreview {
   text_ja?: string;
 }
 
+interface MarketReport {
+  html: string;
+  text: string;
+}
+
 export function ContactModal({ project, open, onOpenChange, onSent }: ContactModalProps) {
   const [email, setEmail] = useState("");
   const [customNote, setCustomNote] = useState("");
@@ -41,6 +46,9 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [preview, setPreview] = useState<LetterPreview | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [report, setReport] = useState<MarketReport | null>(null);
+  const [showReport, setShowReport] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
     null
   );
@@ -72,6 +80,29 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
     }
   }, [project, customNote]);
 
+  const generateReport = async () => {
+    if (!project) return;
+    setReportLoading(true);
+    try {
+      const res = await fetch("/api/market-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: project.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setReport({ html: data.html, text: data.text });
+      setShowReport(true);
+    } catch (err) {
+      setMessage({
+        type: "error",
+        text: err instanceof Error ? err.message : "レポート生成に失敗しました",
+      });
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (open && project) {
       setEmail(project.maker_email ?? "");
@@ -80,6 +111,8 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       setEmailSendMessage(null);
       setShowPreview(false);
       setPreview(null);
+      setReport(null);
+      setShowReport(false);
     }
   }, [open, project]);
 
@@ -197,15 +230,25 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={handlePreview} disabled={previewLoading}>
               <Eye className="h-4 w-4" />
-              {previewLoading ? "読込中..." : "プレビュー"}
+              {previewLoading ? "読込中..." : "メールプレビュー"}
             </Button>
-            <p className="self-center text-xs text-muted-foreground">
-              SendGrid 経由で英文オファーレターを送信します
-            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateReport}
+              disabled={reportLoading}
+              className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+            >
+              <FileText className="h-4 w-4" />
+              {reportLoading ? "生成中..." : "日本市場レポート生成"}
+            </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            1通目: フックメール（レポートを用意したと伝えて返信を引き出す）→ 2通目でレポートを添付
+          </p>
 
           {showPreview && preview && (
             <>
@@ -262,6 +305,26 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                 )}
               </div>
             </>
+          )}
+
+          {showReport && report && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-blue-400">日本市場展開 提案書（プレビュー）</p>
+                <a
+                  href={`data:text/html;charset=utf-8,${encodeURIComponent(report.html)}`}
+                  download="japan-market-report.html"
+                  className="text-[10px] text-muted-foreground hover:text-foreground underline"
+                >
+                  HTMLダウンロード
+                </a>
+              </div>
+              <div className="max-h-72 overflow-y-auto rounded-md border border-blue-500/20 bg-blue-500/5 p-3">
+                <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground/90">
+                  {report.text}
+                </pre>
+              </div>
+            </div>
           )}
 
           {message && (
