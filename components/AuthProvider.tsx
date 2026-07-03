@@ -48,17 +48,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const verifyStoredToken = useCallback(async (storedToken: string) => {
-    const res = await fetch("/api/auth/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: storedToken }),
-    });
-    const data = await res.json();
-    if (!res.ok || !data.valid) {
+    try {
+      const res = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: storedToken }),
+        signal: AbortSignal.timeout(8000),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        clearSession();
+        return;
+      }
+      applySession(storedToken, data.role, data.expiresAt ?? null);
+    } catch {
       clearSession();
-      return;
     }
-    applySession(storedToken, data.role, data.expiresAt ?? null);
   }, [applySession, clearSession]);
 
   useEffect(() => {
