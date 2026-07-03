@@ -98,6 +98,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [emailSending, setEmailSending] = useState(false);
   const [emailSendMessage, setEmailSendMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [emailType, setEmailType] = useState<"first" | "second">("first");
 
   // SNS DM tab
   const [snsPlatform, setSnsPlatform] = useState<"instagram" | "twitter">("instagram");
@@ -123,7 +124,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       const res = await fetch("/api/send-offer/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: project.id, customNote }),
+        body: JSON.stringify({ projectId: project.id, customNote, emailType }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -230,6 +231,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       setSnsDm(null);
       setJpContent(null);
       setActiveTab("email");
+      setEmailType("first");
       setDmLog(loadDmLog(project.id));
     }
   }, [open, project]);
@@ -252,7 +254,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
         body: JSON.stringify({
           to: email.trim(),
           subject: preview.subject,
-          body: preview.text,
+          body: preview.text_translated ?? preview.text,
           projectTitle: getDisplayTitle(project),
         }),
       });
@@ -273,7 +275,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       const res = await fetch("/api/send-offer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: project.id, to: email.trim(), customNote: customNote.trim() || undefined }),
+        body: JSON.stringify({ projectId: project.id, to: email.trim(), customNote: customNote.trim() || undefined, emailType }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "送信に失敗しました");
@@ -335,6 +337,26 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
         {/* ─── タブ: メール ─── */}
         {activeTab === "email" && (
           <div className="space-y-4">
+            {/* 1通目 / 2通目 トグル */}
+            <div className="flex rounded-md border border-border overflow-hidden">
+              <button
+                onClick={() => { setEmailType("first"); setShowPreview(false); setPreview(null); }}
+                className={`flex-1 py-1.5 text-xs font-medium transition ${emailType === "first" ? "bg-primary text-primary-foreground" : "bg-secondary/30 text-muted-foreground hover:bg-secondary/60"}`}
+              >
+                1通目：フックメール
+              </button>
+              <button
+                onClick={() => { setEmailType("second"); setShowPreview(false); setPreview(null); }}
+                className={`flex-1 py-1.5 text-xs font-medium transition ${emailType === "second" ? "bg-primary text-primary-foreground" : "bg-secondary/30 text-muted-foreground hover:bg-secondary/60"}`}
+              >
+                2通目：提案書メール
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {emailType === "first"
+                ? "🎣 日本市場への関心を引くフックメール。AIが商品に合わせてパーソナライズします。"
+                : "📊 日本市場レポートを提示する具体的な提案メール。返信なしの場合3日後に送信。"}
+            </p>
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">送信先メール</label>
               <Input type="email" placeholder="partner@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -364,7 +386,9 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                 {reportLoading ? "生成中..." : "日本市場レポート生成"}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">1通目: フックメール → 2通目でレポートを添付</p>
+            <p className="text-xs text-muted-foreground">
+              {emailType === "first" ? "✨ AIがこの商品に最適化したフックメールを生成します" : "📎 日本市場データを含む具体的な提案メールを生成します"}
+            </p>
 
             {showPreview && preview && (
               <>

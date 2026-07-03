@@ -105,6 +105,107 @@ export async function generateJapanMarketReport(
   return JSON.parse(jsonMatch[0]) as JapanMarketReportData;
 }
 
+export interface PersonalizedOfferResult {
+  subject: string;
+  text: string;
+}
+
+// Claude APIを使って商品情報をもとにパーソナライズされた1通目オファーメールを生成
+export async function generatePersonalizedOffer(params: {
+  productTitle: string;
+  productUrl: string;
+  raisedUsd: number;
+  backers: number;
+  category?: string;
+  subtitle?: string;
+  description?: string;
+  customNote?: string;
+  targetLang: string;
+}): Promise<PersonalizedOfferResult> {
+  const achievement = `$${params.raisedUsd.toLocaleString("en-US")} from ${params.backers.toLocaleString()} backers`;
+
+  const langInstructions: Record<string, string> = {
+    en: "Write the email in English.",
+    ko: "Write the email in Korean (한국어). Use natural, polite Korean business email style.",
+    "zh-TW": "Write the email in Traditional Chinese (繁體中文). Use natural, polite Taiwanese business email style.",
+  };
+
+  const langInstruction = langInstructions[params.targetLang] ?? "Write the email in English.";
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    // Fallback template when API is not configured
+    const subject = `${params.productTitle} — Japan Launch Opportunity`;
+    const text = `Hi,
+
+I came across your "${params.productTitle}" campaign — raising ${achievement} is a remarkable achievement.
+
+I'm reaching out from Blink Japan Co., Ltd., a Japan-based firm specializing in bringing successful crowdfunding products to the Japanese market through exclusive partnerships on Makuake, CAMPFIRE, and Green Funding.
+
+I've prepared a Japan market analysis for "${params.productTitle}". Would you be open to taking a look?
+
+Best regards,
+Yoshitaka Kikutani
+Blink Japan Co., Ltd.
+cbec@blink-japan.com
+https://blink-japan.com/
+
+Campaign: ${params.productUrl}`;
+    return { subject, text };
+  }
+
+  const productContext = [
+    `Product: ${params.productTitle}`,
+    params.subtitle ? `Description: ${params.subtitle}` : "",
+    params.description ? `Details: ${params.description.slice(0, 500)}` : "",
+    `Category: ${params.category ?? "Consumer product"}`,
+    `Crowdfunding Achievement: ${achievement}`,
+    `Campaign URL: ${params.productUrl}`,
+    params.customNote ? `Additional note to include: ${params.customNote}` : "",
+  ].filter(Boolean).join("\n");
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1024,
+    messages: [
+      {
+        role: "user",
+        content: `You are writing a cold outreach email on behalf of Yoshitaka Kikutani at Blink Japan Co., Ltd. (cbec@blink-japan.com, https://blink-japan.com/).
+
+The purpose is to reach out to a crowdfunding product creator to offer Japan exclusive distribution rights through Japanese crowdfunding platforms (Makuake, CAMPFIRE, Green Funding) and retail channels.
+
+This is the FIRST email (hook email). Keep it SHORT (max 4 paragraphs). The goal is simply to get a reply — mention that you have a Japan market analysis ready for them. Do NOT include the full analysis yet.
+
+Key rules:
+- Personalize based on the specific product details below
+- Mention one specific thing about the product that makes it interesting for Japan
+- Do NOT be generic — avoid clichés like "I hope this email finds you well"
+- Sound genuine and direct, not salesy
+- End with a clear, low-friction call to action ("Would you be open to a quick look?")
+- ${langInstruction}
+- Sender name: Yoshitaka Kikutani, Company: Blink Japan Co., Ltd., Email: cbec@blink-japan.com
+
+Product Information:
+${productContext}
+
+Return JSON with exactly two fields:
+{"subject": "...", "text": "..."}
+The text field should be the full email body (plain text, use \\n for newlines).`,
+      },
+    ],
+  });
+
+  const content = message.content[0].type === "text" ? message.content[0].text : "";
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    // If JSON parsing fails, use fallback
+    const subject = `${params.productTitle} — Japan Launch Opportunity`;
+    return { subject, text: content };
+  }
+
+  const result = JSON.parse(jsonMatch[0]) as PersonalizedOfferResult;
+  return result;
+}
+
 export async function translateOfferLetterToJapanese(englishText: string): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY) {
     return `【翻訳デモ — ANTHROPIC_API_KEY 未設定】\n\n${englishText}`;

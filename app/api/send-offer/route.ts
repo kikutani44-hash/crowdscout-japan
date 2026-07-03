@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { translateOfferLetter } from "@/lib/claude";
 import { detectLanguage } from "@/lib/language-detect";
-import { buildOfferLetter } from "@/lib/offer-letter";
+import { buildOfferLetter, buildFollowUpLetter } from "@/lib/offer-letter";
+import { generatePersonalizedOffer } from "@/lib/claude";
 import { isSendGridConfigured, sendOfferLetterRaw } from "@/lib/mailer";
 import { findLocalProject, updateLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -13,7 +14,7 @@ function isValidEmail(email: string): boolean {
 
 export async function POST(request: Request) {
   try {
-    const { projectId, to, customNote } = await request.json();
+    const { projectId, to, customNote, emailType = "first" } = await request.json();
 
     if (!projectId) {
       return NextResponse.json({ error: "projectId が必要です" }, { status: 400 });
@@ -39,27 +40,53 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "メールアドレスの形式が正しくありません" }, { status: 400 });
     }
 
-    // メーカーの言語を判定して翻訳
+    // メーカーの言語を判定
     const langInfo = detectLanguage({ platform: project.platform, country: project.country });
-    const letter = buildOfferLetter({
-      productTitle: project.title_ja ?? project.title,
-      productUrl: project.original_url,
-      raisedUsd: project.raised_usd,
-      backers: project.backers,
-      category: project.category,
-      customNote: customNote?.trim() || undefined,
-    });
 
-    // 英語以外は本文を翻訳して送信
-    const sendText = langInfo.code !== "en"
-      ? await translateOfferLetter(letter.text, langInfo.code)
-      : letter.text;
+    let sendSubject: string;
+    let sendText: string;
+    let sendHtml: string;
+
+    if (emailType === "second") {
+      // 2通目: フォローアップメール
+      const letter = buildFollowUpLetter({
+        productTitle: project.title_ja ?? project.title,
+        productUrl: project.original_url,
+        raisedUsd: project.raised_usd,
+        backers: project.backers,
+        category: project.category,
+        customNote: customNote?.trim() || undefined,
+      });
+      sendSubject = letter.subject;
+      sendText = langInfo.code !== "en"
+        ? await translateOfferLetter(letter.text, langInfo.code)
+        : letter.text;
+      sendHtml = langInfo.code !== "en" ? sendText.replace(/\n/g, "<br>") : letter.html;
+    } else {
+      // 1通目: Claude APIでパーソナライズ生成
+      const personalized = await generatePersonalizedOffer({
+        productTitle: project.title_ja ?? project.title,
+        productUrl: project.original_url,
+        raisedUsd: project.raised_usd,
+        backers: project.backers,
+        category: project.category,
+        subtitle: project.subtitle_ja ?? project.subtitle ?? undefined,
+        customNote: customNote?.trim() || undefined,
+        targetLang: langInfo.code,
+      });
+      sendSubject = personalized.subject;
+      sendText = personalized.text;
+      sendHtml = personalized.text
+        .split("\n\n")
+        .map((p: string) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+        .join("\n");
+    }
 
     const result = await sendOfferLetterRaw({
       to: recipient,
-      subject: letter.subject,
+      subject: sendSubject,
       text: sendText,
-      html: langInfo.code !== "en" ? sendText.replace(/\n/g, "<br>") : letter.html,
+      html: sendHtml,
     });
 
     const now = new Date().toISOString();
