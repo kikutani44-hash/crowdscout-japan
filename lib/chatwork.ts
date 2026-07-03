@@ -1,10 +1,14 @@
 export async function sendChatworkNotification(message: string): Promise<void> {
-  const webhookUrl = process.env.CHATWORK_WEBHOOK_URL;
-  if (!webhookUrl) return;
+  const apiToken = process.env.CHATWORK_API_TOKEN;
+  const roomId = process.env.CHATWORK_ROOM_ID ?? "441627252";
+  if (!apiToken) return;
 
-  await fetch(webhookUrl, {
+  await fetch(`https://api.chatwork.com/v2/rooms/${roomId}/messages`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "X-ChatWorkToken": apiToken,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
     body: `body=${encodeURIComponent(message)}`,
   });
 }
