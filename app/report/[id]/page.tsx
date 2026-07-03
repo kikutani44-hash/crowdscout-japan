@@ -4,6 +4,7 @@ import { generateJapanMarketReport } from "@/lib/claude";
 import { buildMarketReportHtml } from "@/lib/market-report";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 interface Props {
   params: { id: string };
