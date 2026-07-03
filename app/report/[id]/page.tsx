@@ -41,8 +41,25 @@ export default async function ReportPage({ params }: Props) {
       platform: project.platform,
       reportData,
     });
-  } catch {
-    return <div style={{ padding: 40 }}>レポート生成に失敗しました。APIキーを確認してください。</div>;
+  } catch (err) {
+    const { parseAnthropicError } = await import("@/lib/api-error");
+    const errMsg = parseAnthropicError(err);
+    return (
+      <div style={{ padding: 40, fontFamily: "sans-serif", maxWidth: 600 }}>
+        <h2 style={{ color: "#e53e3e", marginBottom: 12 }}>⚠️ レポート生成に失敗しました</h2>
+        <p style={{ color: "#4a5568", marginBottom: 16 }}>{errMsg}</p>
+        {errMsg.includes("クレジット") && (
+          <a
+            href="https://console.anthropic.com/settings/billing"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: "#3182ce", textDecoration: "underline" }}
+          >
+            → Anthropic Billing ページを開く
+          </a>
+        )}
+      </div>
+    );
   }
 
   // Extract body content from the generated HTML

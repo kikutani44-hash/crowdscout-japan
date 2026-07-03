@@ -122,12 +122,11 @@ export async function POST(request: Request) {
           : undefined,
     });
   } catch (error) {
-    const message =
-      error instanceof Error && "response" in error
-        ? `SendGrid エラー: ${JSON.stringify((error as { response?: { body?: unknown } }).response?.body ?? error.message)}`
-        : error instanceof Error
-          ? error.message
-          : "送信に失敗しました";
+    const { parseAnthropicError } = await import("@/lib/api-error");
+    const isSendGridError = error instanceof Error && "response" in error;
+    const message = isSendGridError
+      ? `メール送信に失敗しました（SendGridエラー）。SENDGRID_API_KEYを確認してください。`
+      : parseAnthropicError(error);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

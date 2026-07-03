@@ -100,9 +100,7 @@ export async function POST(request: Request) {
       giteki: estimateGiteki(category, title),
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "分析に失敗しました" },
-      { status: 500 }
-    );
+    const { parseAnthropicError } = await import("@/lib/api-error");
+    return NextResponse.json({ error: parseAnthropicError(error) }, { status: 500 });
   }
 }

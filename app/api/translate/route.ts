@@ -36,9 +36,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "翻訳に失敗しました" },
-      { status: 500 }
-    );
+    const { parseAnthropicError } = await import("@/lib/api-error");
+    return NextResponse.json({ error: parseAnthropicError(error) }, { status: 500 });
   }
 }

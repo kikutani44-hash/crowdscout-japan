@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, content });
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
+    const { parseAnthropicError } = await import("@/lib/api-error");
+    return NextResponse.json({ error: parseAnthropicError(err) }, { status: 500 });
   }
 }
