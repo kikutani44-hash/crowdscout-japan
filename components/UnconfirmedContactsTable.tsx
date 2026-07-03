@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Project } from "@/lib/types";
+import { ExternalLink } from "lucide-react";
 
 interface RowState {
   maker_website: string;
@@ -9,6 +10,7 @@ interface RowState {
   maker_contact_form: string;
   saving: boolean;
   saved: boolean;
+  skipped: boolean;
   error: string | null;
 }
 
@@ -19,6 +21,7 @@ function initialRowState(p: Project): RowState {
     maker_contact_form: p.maker_contact_form ?? "",
     saving: false,
     saved: false,
+    skipped: false,
     error: null,
   };
 }
@@ -32,6 +35,7 @@ const PLATFORM_LABELS: Record<string, string> = {
   indiegogo: "IGG",
   zeczec: "Zeczec",
   makuake: "Makuake",
+  wadiz: "Wadiz",
 };
 
 function SearchButtons({ title }: { title: string }) {
@@ -76,7 +80,13 @@ function SearchButtons({ title }: { title: string }) {
   );
 }
 
-export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) {
+export function UnconfirmedContactsTable({
+  projects,
+  showSiteButton = false,
+}: {
+  projects: Project[];
+  showSiteButton?: boolean;
+}) {
   const [rows, setRows] = useState<Record<string, RowState>>(() =>
     Object.fromEntries(projects.map((p) => [p.id, initialRowState(p)]))
   );
@@ -116,93 +126,115 @@ export function UnconfirmedContactsTable({ projects }: { projects: Project[] }) 
     }
   }
 
+  function skip(id: string) {
+    setRows((prev) => ({ ...prev, [id]: { ...prev[id], skipped: true } }));
+  }
+
+  const visible = projects.filter((p) => !rows[p.id]?.skipped);
+
   if (projects.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        未確認の案件はありません。全プロジェクトでメーカー情報が確認済みです。
-      </p>
+      <p className="text-sm text-muted-foreground">該当案件はありません。</p>
+    );
+  }
+
+  if (visible.length === 0) {
+    return (
+      <p className="text-sm text-emerald-400">全件スキップ済みです。</p>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[900px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-xs text-muted-foreground">
-            <th className="py-2 pr-3 w-[260px]">案件名</th>
-            <th className="py-2 pr-3">公式サイト</th>
-            <th className="py-2 pr-3">メールアドレス</th>
-            <th className="py-2 pr-3">お問い合わせフォーム</th>
-            <th className="py-2 pr-3"></th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {projects.map((p) => {
-            const row = rows[p.id];
-            const platformLabel = PLATFORM_LABELS[p.platform] ?? p.platform;
-            return (
-              <tr key={p.id}>
-                <td className="py-3 pr-3 align-top">
-                  <div className="flex items-start gap-2">
-                    <span className="mt-0.5 shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                      {platformLabel}
-                    </span>
-                    <div>
-                      <a
-                        href={p.original_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium hover:underline"
-                      >
-                        {p.title.slice(0, 45)}
-                      </a>
-                      <SearchButtons title={p.title} />
-                    </div>
-                  </div>
-                </td>
-                <td className="py-3 pr-3 align-top">
-                  <input
-                    type="text"
-                    value={row.maker_website}
-                    onChange={(e) => updateField(p.id, "maker_website", e.target.value)}
-                    placeholder="https://..."
-                    className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
-                  />
-                </td>
-                <td className="py-3 pr-3 align-top">
-                  <input
-                    type="text"
-                    value={row.maker_email}
-                    onChange={(e) => updateField(p.id, "maker_email", e.target.value)}
-                    placeholder="contact@example.com"
-                    className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
-                  />
-                </td>
-                <td className="py-3 pr-3 align-top">
-                  <input
-                    type="text"
-                    value={row.maker_contact_form}
-                    onChange={(e) => updateField(p.id, "maker_contact_form", e.target.value)}
-                    placeholder="https://..."
-                    className="w-full rounded border border-border bg-background px-2 py-1 text-xs"
-                  />
-                </td>
-                <td className="py-3 pr-3 align-top">
-                  <button
-                    onClick={() => save(p.id)}
-                    disabled={row.saving}
-                    className="rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground disabled:opacity-50"
-                  >
-                    {row.saving ? "保存中..." : "保存"}
-                  </button>
-                  {row.saved && <p className="mt-1 text-xs text-emerald-400">保存しました</p>}
-                  {row.error && <p className="mt-1 text-xs text-red-400">{row.error}</p>}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="space-y-3">
+      {visible.map((p) => {
+        const row = rows[p.id];
+        const platformLabel = PLATFORM_LABELS[p.platform] ?? p.platform;
+        return (
+          <div key={p.id} className="rounded-lg border border-border bg-background p-3">
+            {/* ヘッダー行 */}
+            <div className="flex items-start gap-2 mb-3">
+              <span className="mt-0.5 shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                {platformLabel}
+              </span>
+              <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                {p.score}
+              </span>
+              <div className="min-w-0 flex-1">
+                <a
+                  href={p.original_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm font-medium hover:underline"
+                >
+                  {p.title.slice(0, 60)}
+                </a>
+                <SearchButtons title={p.title} />
+              </div>
+              {/* サイトを開くボタン（🟡エリアのみ） */}
+              {showSiteButton && p.maker_website && (
+                <a
+                  href={p.maker_website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-400 hover:bg-amber-500/20"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  サイトを開く
+                </a>
+              )}
+            </div>
+
+            {/* 入力欄 */}
+            <div className="grid gap-2 sm:grid-cols-3">
+              {!showSiteButton && (
+                <input
+                  type="text"
+                  value={row.maker_website}
+                  onChange={(e) => updateField(p.id, "maker_website", e.target.value)}
+                  placeholder="公式サイト URL"
+                  className="rounded border border-border bg-secondary/30 px-2 py-1 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              )}
+              <input
+                type="text"
+                value={row.maker_email}
+                onChange={(e) => updateField(p.id, "maker_email", e.target.value)}
+                placeholder="メールアドレス"
+                className="rounded border border-border bg-secondary/30 px-2 py-1 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <input
+                type="text"
+                value={row.maker_contact_form}
+                onChange={(e) => updateField(p.id, "maker_contact_form", e.target.value)}
+                placeholder="お問い合わせフォーム URL"
+                className="rounded border border-border bg-secondary/30 px-2 py-1 text-xs placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+
+              {/* 保存・スキップ */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => save(p.id)}
+                  disabled={row.saving}
+                  className="rounded bg-primary px-3 py-1 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                >
+                  {row.saving ? "保存中..." : row.saved ? "✓ 保存済" : "保存"}
+                </button>
+                <button
+                  onClick={() => skip(p.id)}
+                  className="rounded px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  スキップ
+                </button>
+                {row.error && <p className="text-xs text-red-400">{row.error}</p>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      <p className="text-xs text-muted-foreground">
+        残り {visible.length} 件
+      </p>
     </div>
   );
 }

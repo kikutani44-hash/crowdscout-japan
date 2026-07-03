@@ -50,11 +50,16 @@ export default async function DashboardPage() {
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 8);
 
-  const unconfirmedContactsCount = projects.filter((p) => !p.maker_website).length;
   const outreachReadyCount = projects.filter(
     (p) => p.offer_status === "未接触" && (p.maker_email || p.maker_contact_form)
   ).length;
   const followUpCount = projects.filter((p) => p.offer_status === "交渉中").length;
+  const hasSiteOnlyCount = projects.filter(
+    (p) => p.maker_website && !p.maker_email && !p.maker_contact_form
+  ).length;
+  const noContactCount = projects.filter(
+    (p) => !p.maker_website && !p.maker_email && !p.maker_contact_form
+  ).length;
 
   return (
     <div className="min-h-screen">
@@ -140,12 +145,13 @@ export default async function DashboardPage() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">メーカー連絡先 未確認リスト</p>
-                <p className="text-xs text-muted-foreground">
-                  公式サイト・メールアドレスが未確認の案件を確認・手動入力
-                </p>
+                <p className="text-sm font-medium">連絡先 調査リスト</p>
+                <div className="mt-1 flex gap-3 text-xs">
+                  <span className="text-amber-400">🟡 サイト確認 {hasSiteOnlyCount}件</span>
+                  <span className="text-red-400">🔴 要調査 {noContactCount}件</span>
+                </div>
               </div>
-              <Badge variant="secondary">{unconfirmedContactsCount}件</Badge>
+              <Badge variant="secondary">{hasSiteOnlyCount + noContactCount}件</Badge>
             </div>
           </Link>
         </div>
