@@ -15,7 +15,7 @@ export function parseAnthropicError(err: unknown): string {
   }
 
   // Strip raw JSON from error messages like "400 {...}"
-  const jsonMatch = msg.match(/\{.*"message"\s*:\s*"([^"]+)"/s);
+  const jsonMatch = msg.match(/\{[\s\S]*"message"\s*:\s*"([^"]+)"/);
   if (jsonMatch) return jsonMatch[1];
 
   return msg || "エラーが発生しました。再試行してください。";
