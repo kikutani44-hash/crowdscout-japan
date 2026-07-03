@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BarChart3, Loader2, LogOut, RefreshCw, Telescope } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ interface HeaderProps {
 
 export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: HeaderProps) {
   const { role, logout } = useAuth();
+  const router = useRouter();
   const [updating, setUpdating] = useState(false);
 
   const handleDataUpdate = async () => {
@@ -25,9 +27,10 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
       if (!res.ok) {
         throw new Error(data.error ?? "データ更新に失敗しました");
       }
-      window.location.reload();
+      router.refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "データ更新に失敗しました");
+    } finally {
       setUpdating(false);
     }
   };
