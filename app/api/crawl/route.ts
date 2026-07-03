@@ -1,30 +1,26 @@
 import { NextResponse } from "next/server";
-import { runKickstarterCrawl } from "@/lib/kickstarter-crawl";
-import { sendChatworkNotification, formatCrawlCompleteMessage } from "@/lib/chatwork";
-import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
+
+const VPS_WEBHOOK_URL = process.env.VPS_WEBHOOK_URL ?? "http://160.251.182.50/crawl";
+const VPS_WEBHOOK_SECRET = process.env.VPS_WEBHOOK_SECRET ?? "crowdjarvis2026";
 
 export async function POST() {
   try {
-    const count = await runKickstarterCrawl();
+    const res = await fetch(VPS_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ secret: VPS_WEBHOOK_SECRET }),
+      signal: AbortSignal.timeout(10000),
+    });
 
-    // クロール完了をChatworkに通知
-    if (process.env.CHATWORK_WEBHOOK_URL) {
-      let total = count;
-      if (isSupabaseConfigured()) {
-        const supabase = createServerSupabase();
-        const { count: totalCount } = await supabase
-          .from("projects")
-          .select("*", { count: "exact", head: true });
-        total = totalCount ?? count;
-      }
-      const msg = formatCrawlCompleteMessage(total, count);
-      if (msg) await sendChatworkNotification(msg);
+    if (!res.ok) {
+      throw new Error(`VPS応答エラー: ${res.status}`);
     }
 
-    return NextResponse.json({ success: true, count });
+    return NextResponse.json({ success: true, message: "クロールを開始しました（VPS処理中）" });
   } catch (error) {
+    const msg = error instanceof Error ? error.message : "クロールに失敗しました";
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "クロールに失敗しました" },
+      { error: `データ更新に失敗しました: ${msg}` },
       { status: 500 }
     );
   }
