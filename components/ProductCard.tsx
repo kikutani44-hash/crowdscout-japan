@@ -14,6 +14,7 @@ import {
 import { formatCategoryLabel } from "@/lib/categories";
 import type { OfferStatus, Project } from "@/lib/types";
 import { TeamCollabPanel } from "@/components/TeamCollabPanel";
+import { MarketAnalysisModal } from "@/components/MarketAnalysisModal";
 import {
   getJapanCfBadgeLabel,
   getJapanCfBadgeVariant,
@@ -34,7 +35,8 @@ import {
   getDisplayTitle,
   hasValidJapaneseTitle,
 } from "@/lib/project-translation";
-import { ExternalLink, Flame, Globe, Languages, Mail, SearchCheck, Timer, Users } from "lucide-react";
+import { useState } from "react";
+import { BarChart2, ExternalLink, Flame, Globe, Languages, Mail, SearchCheck, Timer, Users } from "lucide-react";
 
 interface ProductCardProps {
   project: Project;
@@ -55,6 +57,7 @@ export function ProductCard({
   loadingAction,
   isTranslating,
 }: ProductCardProps) {
+  const [analysisOpen, setAnalysisOpen] = useState(false);
   const achievement = calcAchievementRate(project.raised_usd, project.goal_usd);
   const japanCfStatus = getJapanCfDisplayStatus(project);
   const displayTitle = getDisplayTitle(project);
@@ -237,6 +240,15 @@ export function ProductCard({
             <SearchCheck className="h-3.5 w-3.5" />
             CF確認
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setAnalysisOpen(true)}
+            className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+          >
+            <BarChart2 className="h-3.5 w-3.5" />
+            市場分析
+          </Button>
           <Button size="sm" onClick={() => onOffer(project)}>
             <Mail className="h-3.5 w-3.5" />
             オファー
@@ -253,6 +265,12 @@ export function ProductCard({
       </div>
 
       <TeamCollabPanel project={project} />
+
+      <MarketAnalysisModal
+        project={project}
+        open={analysisOpen}
+        onOpenChange={setAnalysisOpen}
+      />
     </article>
   );
 }

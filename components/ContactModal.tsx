@@ -385,6 +385,15 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                 <FileText className="h-4 w-4" />
                 {reportLoading ? "生成中..." : "日本市場レポート生成"}
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/report/${project.id}`, "_blank")}
+                className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+              >
+                <FileText className="h-4 w-4" />
+                PDF提案書を開く
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground">
               {emailType === "first" ? "✨ AIがこの商品に最適化したフックメールを生成します" : "📎 日本市場データを含む具体的な提案メールを生成します"}
