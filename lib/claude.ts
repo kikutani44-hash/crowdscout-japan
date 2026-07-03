@@ -180,3 +180,150 @@ ${englishText}`,
   if (!text.trim()) throw new Error("翻訳結果が空です");
   return text.trim();
 }
+
+export interface SnsDmResult {
+  platform: "instagram" | "twitter" | "facebook";
+  text: string;
+  lang: string;
+  charCount: number;
+}
+
+// SNS DM自動生成（Instagram/X向け）
+export async function generateSnsDm(params: {
+  productTitle: string;
+  productSubtitle: string | null;
+  category: string;
+  raisedUsd: number;
+  platform: "instagram" | "twitter" | "facebook";
+  targetLang: string; // "en" | "zh-TW" | "ko" etc.
+}): Promise<SnsDmResult> {
+  const { productTitle, productSubtitle, category, raisedUsd, platform, targetLang } = params;
+
+  const charLimit = platform === "twitter" ? 140 : 500;
+  const platformName = platform === "twitter" ? "X (Twitter)" : platform === "instagram" ? "Instagram" : "Facebook";
+
+  const langName = LANG_NAMES[targetLang] ?? "English";
+
+  const demoText = platform === "twitter"
+    ? `Hi! We're Blink Japan, helping overseas products launch in Japan. Your ${productTitle} looks perfect for the Japanese market! Interested in discussing a Japan launch? 🇯🇵`
+    : `Hi! We're Blink Japan, a company that helps exceptional overseas crowdfunding products enter the Japanese market.\n\nYour ${productTitle} raised $${Math.round(raisedUsd / 1000)}K — it has amazing potential in Japan!\n\nWe'd love to discuss a Japan launch. Would you be open to a quick chat?`;
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return {
+      platform,
+      text: demoText,
+      lang: targetLang,
+      charCount: demoText.length,
+    };
+  }
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1024,
+    messages: [
+      {
+        role: "user",
+        content: `You are writing a ${platformName} DM to a crowdfunding maker to propose a Japan market launch.
+
+Product: ${productTitle}
+Category: ${category}
+Raised: $${Math.round(raisedUsd / 1000)}K
+${productSubtitle ? `Description: ${productSubtitle}` : ""}
+
+Rules:
+- Write in ${langName}
+- Maximum ${charLimit} characters
+- Friendly and genuine, not salesy
+- Mention we're Blink Japan (Japanese crowdfunding launch specialist)
+- Express specific interest in THIS product
+- End with a clear soft CTA (interested? / would love to chat)
+- ${platform === "twitter" ? "Very concise, punchy, use 1-2 emojis max" : "Natural DM tone, 3-4 short paragraphs"}
+- Do NOT use formal email greetings like "Dear Sir/Madam"
+- Return only the DM text, nothing else`,
+      },
+    ],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text.trim() : demoText;
+  return {
+    platform,
+    text,
+    lang: targetLang,
+    charCount: text.length,
+  };
+}
+
+// 日本向けクラファンページテキスト自動生成
+export interface JapanPageContent {
+  catchcopy: string;         // キャッチコピー（30文字以内）
+  intro: string;             // 導入文（200文字）
+  features: string[];        // 特徴3-5個
+  targetDescription: string; // ターゲット説明
+  faq: Array<{ q: string; a: string }>; // よくある質問3個
+  callToAction: string;      // CTA文
+}
+
+export async function generateJapanPageContent(params: {
+  productTitle: string;
+  productSubtitle: string | null;
+  category: string;
+  raisedUsd: number;
+  backers: number;
+  platform: string; // makuake | campfire | greenfunding
+}): Promise<JapanPageContent> {
+  const { productTitle, productSubtitle, category, raisedUsd, backers, platform } = params;
+
+  const platformName = platform === "makuake" ? "Makuake" : platform === "campfire" ? "CAMPFIRE" : "Green Funding";
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return {
+      catchcopy: `海外で${Math.round(raisedUsd / 1000)}万円を集めた${productTitle}`,
+      intro: `海外クラウドファンディングで${backers.toLocaleString()}人が支援した${productTitle}が、ついに日本上陸。`,
+      features: ["特徴1", "特徴2", "特徴3"],
+      targetDescription: "ガジェット好きの30-40代男性・働き盛りのビジネスパーソン",
+      faq: [
+        { q: "日本語サポートはありますか？", a: "はい、日本語でのサポートに対応しています。" },
+        { q: "保証はありますか？", a: "1年間の製品保証がつきます。" },
+        { q: "配送はいつですか？", a: "支援終了後、約3ヶ月でお届けします。" },
+      ],
+      callToAction: "今すぐ支援して、日本最速でお届けを受け取ろう",
+    };
+  }
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 2048,
+    messages: [
+      {
+        role: "user",
+        content: `あなたは日本のクラウドファンディングの優秀なコピーライターです。
+海外クラファン商品の${platformName}向け日本語ページコンテンツを生成してください。
+
+商品名: ${productTitle}
+カテゴリ: ${category}
+海外での調達額: $${Math.round(raisedUsd / 1000)}K (約${Math.round(raisedUsd * 150 / 10000)}万円)
+支援者数: ${backers.toLocaleString()}人
+${productSubtitle ? `商品説明: ${productSubtitle}` : ""}
+
+以下のJSON形式で返してください：
+{
+  "catchcopy": "30文字以内のキャッチコピー（数字・実績を入れる）",
+  "intro": "200文字程度の導入文（海外実績→日本上陸の流れ）",
+  "features": ["特徴1（簡潔に）", "特徴2", "特徴3", "特徴4", "特徴5"],
+  "targetDescription": "ターゲット層の説明（具体的に）",
+  "faq": [
+    {"q": "質問1", "a": "回答1"},
+    {"q": "質問2", "a": "回答2"},
+    {"q": "質問3", "a": "回答3"}
+  ],
+  "callToAction": "支援を促すCTA文（20文字以内）"
+}`,
+      },
+    ],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text : "";
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("ページコンテンツの生成に失敗しました");
+  return JSON.parse(jsonMatch[0]) as JapanPageContent;
+}

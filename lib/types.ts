@@ -47,6 +47,10 @@ export interface Project {
   maker_email: string | null;
   maker_website: string | null;
   maker_contact_form: string | null;
+  maker_instagram: string | null;
+  maker_twitter: string | null;
+  maker_facebook: string | null;
+  maker_linkedin: string | null;
   offer_sent_at: string | null;
   offer_note: string | null;
   created_at: string;

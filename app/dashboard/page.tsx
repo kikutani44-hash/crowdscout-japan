@@ -16,6 +16,7 @@ import { formatJpy, formatUsd, usdToJpy } from "@/lib/utils";
 import {
   ArrowLeft,
   Handshake,
+  Inbox,
   Mail,
   Send,
   Target,
@@ -120,7 +121,24 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Link
+            href="/dashboard/inbox"
+            className="block rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 transition hover:border-emerald-500/60"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium flex items-center gap-2">
+                  <Inbox className="h-4 w-4 text-emerald-400" />
+                  返信受信ボックス
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Gmail連携 · メーカー返信を自動検出
+                </p>
+              </div>
+            </div>
+          </Link>
+
           <Link
             href="/dashboard/outreach"
             className="block rounded-xl border border-primary/30 bg-primary/5 p-4 transition hover:border-primary/60"
@@ -141,7 +159,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/dashboard/unconfirmed"
-            className="block rounded-xl border border-border bg-card p-4 transition hover:border-primary/40"
+            className="block rounded-xl border border-border bg-card p-4 transition hover:border-primary/40 sm:col-start-3"
           >
             <div className="flex items-center justify-between">
               <div>
