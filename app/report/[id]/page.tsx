@@ -1,129 +1,88 @@
-import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import { findLocalProject } from "@/lib/project-store";
-import { generateJapanMarketReport } from "@/lib/claude";
-import { buildMarketReportHtml } from "@/lib/market-report";
+"use client";
 
-export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 
-interface Props {
-  params: { id: string };
-}
+export default function ReportPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const [html, setHtml] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function ReportPage({ params }: Props) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let project: any = await findLocalProject(params.id);
-  if (isSupabaseConfigured()) {
-    const supabase = createServerSupabase();
-    const { data } = await supabase.from("projects").select("*").eq("id", params.id).single();
-    if (data) project = data;
-  }
+  useEffect(() => {
+    fetch("/api/market-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId: id }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.error) setError(data.error);
+        else setHtml(data.html);
+      })
+      .catch(() => setError("レポートの生成に失敗しました。再試行してください。"));
+  }, [id]);
 
-  if (!project) {
-    return <div style={{ padding: 40 }}>案件が見つかりません</div>;
-  }
-
-  let reportHtml = "";
-  try {
-    const reportData = await generateJapanMarketReport(
-      project.title_ja ?? project.title,
-      project.subtitle_ja ?? project.subtitle ?? "",
-      project.category ?? "",
-      project.raised_usd,
-      project.backers,
-      project.platform,
-    );
-
-    reportHtml = buildMarketReportHtml({
-      productTitle: project.title_ja ?? project.title,
-      productUrl: project.original_url,
-      raisedUsd: project.raised_usd,
-      backers: project.backers,
-      platform: project.platform,
-      reportData,
-    });
-  } catch (err) {
-    const { parseAnthropicError } = await import("@/lib/api-error");
-    const errMsg = parseAnthropicError(err);
+  if (error) {
     return (
       <div style={{ padding: 40, fontFamily: "sans-serif", maxWidth: 600 }}>
-        <h2 style={{ color: "#e53e3e", marginBottom: 12 }}>⚠️ レポート生成に失敗しました</h2>
-        <p style={{ color: "#4a5568", marginBottom: 16 }}>{errMsg}</p>
-        {errMsg.includes("クレジット") && (
-          <a
-            href="https://console.anthropic.com/settings/billing"
-            target="_blank"
-            rel="noreferrer"
-            style={{ color: "#3182ce", textDecoration: "underline" }}
-          >
-            → Anthropic Billing ページを開く
-          </a>
-        )}
+        <h2 style={{ color: "#e53e3e" }}>⚠️ レポート生成に失敗しました</h2>
+        <p style={{ color: "#4a5568" }}>{error}</p>
       </div>
     );
   }
 
-  // Extract body content from the generated HTML
-  const bodyMatch = reportHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-  const bodyContent = bodyMatch ? bodyMatch[1] : reportHtml;
+  if (!html) {
+    return (
+      <div style={{
+        display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", minHeight: "100vh", fontFamily: "sans-serif",
+        background: "#f8fafc", gap: 16,
+      }}>
+        <div style={{
+          width: 48, height: 48,
+          border: "4px solid #e2e8f0", borderTop: "4px solid #3b82f6",
+          borderRadius: "50%", animation: "spin 1s linear infinite",
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ color: "#64748b", fontSize: 16 }}>📄 日本市場展開レポートを生成中...</p>
+        <p style={{ color: "#94a3b8", fontSize: 13 }}>AIが分析中です。15秒ほどお待ちください。</p>
+      </div>
+    );
+  }
 
-  // Extract styles
-  const styleMatch = reportHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  // Extract body content and styles from the generated HTML
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const bodyContent = bodyMatch ? bodyMatch[1] : html;
+  const styleMatch = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
   const styles = styleMatch ? styleMatch[1] : "";
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          body { background: #fff !important; }
-          .container { max-width: 100% !important; }
-        }
+        @media print { .no-print { display: none !important; } body { background: #fff !important; } }
         .print-bar {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          background: #0f172a;
-          color: #fff;
-          padding: 12px 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          z-index: 1000;
-          font-family: sans-serif;
-          font-size: 14px;
+          position: fixed; top: 0; left: 0; right: 0;
+          background: #0f172a; color: #fff;
+          padding: 12px 24px; display: flex; align-items: center;
+          justify-content: space-between; z-index: 1000;
+          font-family: sans-serif; font-size: 14px;
         }
         .print-btn {
-          background: #3b82f6;
-          color: #fff;
-          border: none;
-          padding: 8px 20px;
-          border-radius: 6px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
+          background: #3b82f6; color: #fff; border: none;
+          padding: 8px 20px; border-radius: 6px;
+          font-size: 13px; font-weight: 600; cursor: pointer;
         }
         .print-btn:hover { background: #2563eb; }
         body { margin-top: 52px; }
         @media print { body { margin-top: 0; } }
       `}</style>
       <div className="no-print print-bar">
-        <span>📄 日本市場展開提案書 — {project.title_ja ?? project.title}</span>
-        <button className="print-btn" onClick={() => window.print()}>
-          PDFとして保存
-        </button>
+        <span>📄 日本市場展開提案書</span>
+        <button className="print-btn" onClick={() => window.print()}>PDFとして保存</button>
       </div>
       <div dangerouslySetInnerHTML={{ __html: bodyContent }} />
-      <script dangerouslySetInnerHTML={{
-        __html: `
-          // Auto-show print hint
-          document.querySelector('.print-btn').addEventListener('click', function() {
-            window.print();
-          });
-        `
-      }} />
     </>
   );
 }
