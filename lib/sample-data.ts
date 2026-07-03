@@ -47,7 +47,7 @@ export const sampleProjects: Project[] = [
     created_at: "2026-06-01T00:00:00Z",
     updated_at: "2026-06-01T00:00:00Z",
     offer_sent_at: null,
-    offer_note: null,
+    offer_note: null, assignee: null, negotiation_status: null, memo: null, followup_at: null,
   },
   {
     id: "2",
@@ -95,7 +95,7 @@ export const sampleProjects: Project[] = [
     created_at: "2026-05-28T00:00:00Z",
     updated_at: "2026-06-02T00:00:00Z",
     offer_sent_at: null,
-    offer_note: null,
+    offer_note: null, assignee: null, negotiation_status: null, memo: null, followup_at: null,
   },
   {
     id: "3",
@@ -134,7 +134,7 @@ export const sampleProjects: Project[] = [
     created_at: "2026-05-20T00:00:00Z",
     updated_at: "2026-05-20T00:00:00Z",
     offer_sent_at: null,
-    offer_note: null,
+    offer_note: null, assignee: null, negotiation_status: null, memo: null, followup_at: null,
   },
   {
     id: "4",
@@ -182,7 +182,7 @@ export const sampleProjects: Project[] = [
     created_at: "2026-05-10T00:00:00Z",
     updated_at: "2026-06-01T00:00:00Z",
     offer_sent_at: null,
-    offer_note: null,
+    offer_note: null, assignee: null, negotiation_status: null, memo: null, followup_at: null,
   },
 ];
 

@@ -53,6 +53,11 @@ export interface Project {
   maker_linkedin: string | null;
   offer_sent_at: string | null;
   offer_note: string | null;
+  // チームコラボ
+  assignee: string | null;
+  negotiation_status: string | null;
+  memo: string | null;
+  followup_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { formatCategoryLabel } from "@/lib/categories";
 import type { OfferStatus, Project } from "@/lib/types";
+import { TeamCollabPanel } from "@/components/TeamCollabPanel";
 import {
   getJapanCfBadgeLabel,
   getJapanCfBadgeVariant,
@@ -250,6 +251,8 @@ export function ProductCard({
           元ページを見る →
         </Link>
       </div>
+
+      <TeamCollabPanel project={project} />
     </article>
   );
 }
