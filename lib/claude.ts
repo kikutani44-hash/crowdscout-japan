@@ -42,11 +42,20 @@ subtitle: ${subtitle}`,
 }
 
 export interface JapanMarketReportData {
-  whySellsInJapan: string;      // 日本で売れる理由（箇条書き複数行）
-  marketOverview: string;        // 日本市場概況
-  targetAudience: string;        // ターゲット層
-  salesStrategy: string;         // 販売戦略・チャネル提案
-  competitiveEdge: string;       // 競合優位性
+  headlineJa: string;
+  headlineEn: string;
+  whySellsInJapan: string;
+  whySellsInJapanEn: string;
+  marketOverview: string;
+  marketOverviewEn: string;
+  targetAudience: string;
+  targetAudienceEn: string;
+  salesStrategy: string;
+  salesStrategyEn: string;
+  competitiveEdge: string;
+  competitiveEdgeEn: string;
+  marketSizeJpy: string;
+  growthRate: string;
 }
 
 export async function generateJapanMarketReport(
@@ -59,43 +68,53 @@ export async function generateJapanMarketReport(
 ): Promise<JapanMarketReportData> {
   if (!process.env.ANTHROPIC_API_KEY) {
     return {
-      whySellsInJapan:
-        "・日本市場では革新的なガジェットへの需要が高く、早期採用者層が厚い\n・クラウドファンディング文化が根付いており（Makuake・CAMPFIRE）、支援者のリテラシーが高い\n・品質と独自性を重視する消費者が多く、海外発の製品に対する信頼性も高い",
-      marketOverview:
-        "日本のクラウドファンディング市場は年間1,000億円規模に成長しており、Makuakeを中心に海外製品の日本初上陸案件が人気を集めています。",
-      targetAudience:
-        "30〜50代の男性を中心に、ガジェット好き・アーリーアダプター層。SNS・YouTubeで情報収集する層が主なターゲットです。",
-      salesStrategy:
-        "Makuake・CAMPFIRE・GREEN FUNDINGでのクラウドファンディング展開を軸に、テレビショッピング・Amazon Japan・ヤマダ電機等への展開も視野に入れます。",
-      competitiveEdge:
-        "類似製品が日本市場に存在しないため、先行者優位を確立できます。独占販売契約により参入障壁を構築します。",
+      headlineJa: `一緒に、${productTitle}を日本市場へ届けましょう`,
+      headlineEn: `Together, let's bring ${productTitle} to Japan`,
+      whySellsInJapan: "・日本市場では革新的なガジェットへの需要が高く、早期採用者層が厚い\n・Makuake・CAMPFIREでのクラウドファンディング文化が根付いており支援者リテラシーが高い\n・品質と独自性を重視する消費者が多く、海外発製品への信頼性も高い",
+      whySellsInJapanEn: "• Strong demand for innovative gadgets with a thick early adopter base\n• Established crowdfunding culture on Makuake & CAMPFIRE with high-literacy backers\n• Quality-conscious consumers with strong trust in overseas products",
+      marketOverview: "日本のクラウドファンディング市場は年間1,000億円規模に成長しており、Makuakeを中心に海外製品の日本初上陸案件が人気を集めています。",
+      marketOverviewEn: "Japan's crowdfunding market has grown to ¥100B annually, with Makuake leading demand for overseas products making their Japan debut.",
+      targetAudience: "30〜50代のガジェット好き・アーリーアダプター層。SNS・YouTubeで情報収集し、品質に投資する消費者が主なターゲットです。",
+      targetAudienceEn: "Gadget enthusiasts and early adopters aged 30–50 who research via SNS and YouTube and invest in quality products.",
+      salesStrategy: "まずMakuake・CAMPFIREでクラウドファンディング展開し、成功実績を基にAmazon Japan・ヤマダ電機・テレビショッピングへ展開します。",
+      salesStrategyEn: "Launch via Makuake & CAMPFIRE crowdfunding, then expand to Amazon Japan, Yamada Denki, and TV shopping based on proven results.",
+      competitiveEdge: "類似製品が日本市場に存在しないため先行者優位を確立でき、独占販売契約により参入障壁を構築できます。",
+      competitiveEdgeEn: "No comparable products exist in Japan, enabling first-mover advantage and exclusive distribution rights as a market barrier.",
+      marketSizeJpy: "1,000億円",
+      growthRate: "8.5%",
     };
   }
 
-  const prompt = `あなたは海外クラウドファンディング製品の日本市場参入を専門とするアナリストです。
-以下の海外クラウドファンディング製品について、日本市場展開の提案書に使う各セクションの文章を生成してください。
+  const prompt = `You are a Japan market analyst specializing in overseas crowdfunding products. Generate a CONCISE bilingual (Japanese + English) market proposal JSON for the product below. Keep each field SHORT (2-3 sentences or 3-4 bullets max).
 
-製品情報:
-- タイトル: ${productTitle}
-- サブタイトル/説明: ${productSubtitle || "（なし）"}
-- カテゴリ: ${category || "未分類"}
-- プラットフォーム: ${platform}
-- 調達額: $${raisedUsd.toLocaleString("en-US")}
-- 支援者数: ${backers.toLocaleString()}人
+Product:
+- Title: ${productTitle}
+- Description: ${productSubtitle || "N/A"}
+- Category: ${category || "Consumer"}
+- Platform: ${platform}
+- Raised: $${raisedUsd.toLocaleString("en-US")} from ${backers.toLocaleString()} backers
 
-以下のJSONフォーマットで返してください。各フィールドは日本語で記述し、具体的・説得力のある内容にしてください。
-
+Return ONLY valid JSON:
 {
-  "whySellsInJapan": "この製品が日本で売れる理由を3〜5点、「・」始まりの箇条書きで（製品の具体的な特徴と日本市場の需要を結びつけること）",
-  "marketOverview": "日本における関連市場の概況（市場規模・成長率・トレンド）を2〜3文で",
-  "targetAudience": "日本でのメインターゲット層（年齢・性別・ライフスタイル・購買動機）を2〜3文で",
-  "salesStrategy": "日本での販売戦略（クラウドファンディング→小売展開のロードマップ）を3〜4文で",
-  "competitiveEdge": "日本市場での競合優位性と独占販売の意義を2〜3文で"
+  "headlineJa": "emotional Japanese headline about bringing this product to Japan (1 sentence)",
+  "headlineEn": "same in English",
+  "whySellsInJapan": "3-4 bullet points in Japanese starting with ・",
+  "whySellsInJapanEn": "same 3-4 bullets in English starting with •",
+  "marketOverview": "1-2 sentences in Japanese about relevant Japan market size/trends",
+  "marketOverviewEn": "same in English",
+  "targetAudience": "1-2 sentences in Japanese about primary Japanese target customers",
+  "targetAudienceEn": "same in English",
+  "salesStrategy": "2 sentences in Japanese: crowdfunding → retail roadmap",
+  "salesStrategyEn": "same in English",
+  "competitiveEdge": "1-2 sentences in Japanese about competitive advantage",
+  "competitiveEdgeEn": "same in English",
+  "marketSizeJpy": "estimated Japan market size in 億円 format e.g. '2,500億円'",
+  "growthRate": "estimated annual growth rate e.g. '7.2%'"
 }`;
 
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1024,
+    max_tokens: 1500,
     messages: [{ role: "user", content: prompt }],
   });
 
