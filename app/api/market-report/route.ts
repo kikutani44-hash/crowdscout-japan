@@ -37,6 +37,7 @@ export async function POST(request: Request) {
       raisedUsd: project.raised_usd,
       backers: project.backers,
       platform: project.platform,
+      imageUrl: project.image_url ?? null,
       reportData,
     });
 
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
       raisedUsd: project.raised_usd,
       backers: project.backers,
       platform: project.platform,
+      imageUrl: project.image_url ?? null,
       reportData,
     });
 

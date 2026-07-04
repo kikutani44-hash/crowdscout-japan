@@ -10,11 +10,12 @@ export interface MarketReportInput {
   raisedUsd: number;
   backers: number;
   platform: string;
+  imageUrl: string | null;
   reportData: JapanMarketReportData;
 }
 
 export function buildMarketReportHtml(input: MarketReportInput): string {
-  const { productTitle, productUrl, raisedUsd, backers, platform, reportData } = input;
+  const { productTitle, productUrl, raisedUsd, backers, platform, imageUrl, reportData } = input;
   const platformLabel = platform === "kickstarter" ? "Kickstarter" : platform === "indiegogo" ? "Indiegogo" : platform;
   const raisedFmt = `$${raisedUsd.toLocaleString("en-US")}`;
   const today = new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric" });
@@ -86,6 +87,11 @@ export function buildMarketReportHtml(input: MarketReportInput): string {
     content: ""; position: absolute; inset: 0;
     background: radial-gradient(ellipse at 70% 50%, rgba(124,58,237,.18) 0%, transparent 60%);
   }
+  .hero-inner { display: flex; align-items: center; gap: 48px; position: relative; }
+  .hero-text { flex: 1; min-width: 0; }
+  .hero-img { flex-shrink: 0; width: 260px; height: 200px; border-radius: 16px; overflow: hidden; border: 2px solid rgba(124,58,237,.4); box-shadow: 0 8px 40px rgba(0,0,0,.4); }
+  .hero-img img { width: 100%; height: 100%; object-fit: cover; }
+  @media (max-width: 700px) { .hero-inner { flex-direction: column; } .hero-img { width: 100%; height: 180px; } }
   .hero-badge {
     display: inline-block; background: rgba(124,58,237,.3); border: 1px solid rgba(124,58,237,.5);
     color: #c4b5fd; font-size: 11px; font-weight: 700; letter-spacing: .1em;
@@ -189,10 +195,15 @@ export function buildMarketReportHtml(input: MarketReportInput): string {
 <!-- Hero -->
 <div class="hero">
   <div class="hero-badge">Confidential Market Proposal · ${esc(COMPANY)}</div>
-  <h1 data-lang="ja">${esc(reportData.headlineJa)}</h1>
-  <h1 data-lang="en">${esc(reportData.headlineEn)}</h1>
-  <p class="hero-sub" data-lang="ja">${esc(productTitle)} は ${platformLabel} にて ${raisedFmt}（支援者 ${backers.toLocaleString()} 人）を達成した革新的製品です。${esc(COMPANY)} は日本市場での独占販売展開をご提案します。</p>
-  <p class="hero-sub" data-lang="en">${esc(productTitle)} achieved ${raisedFmt} from ${backers.toLocaleString()} backers on ${platformLabel}. ${esc(COMPANY)} proposes an exclusive Japan market launch partnership.</p>
+  <div class="hero-inner">
+    <div class="hero-text">
+      <h1 data-lang="ja">${esc(reportData.headlineJa)}</h1>
+      <h1 data-lang="en">${esc(reportData.headlineEn)}</h1>
+      <p class="hero-sub" data-lang="ja">${esc(productTitle)} は ${platformLabel} にて ${raisedFmt}（支援者 ${backers.toLocaleString()} 人）を達成した革新的製品です。${esc(COMPANY)} は日本市場での独占販売展開をご提案します。</p>
+      <p class="hero-sub" data-lang="en">${esc(productTitle)} achieved ${raisedFmt} from ${backers.toLocaleString()} backers on ${platformLabel}. ${esc(COMPANY)} proposes an exclusive Japan market launch partnership.</p>
+    </div>
+    ${imageUrl ? `<div class="hero-img"><img src="${esc(imageUrl)}" alt="${esc(productTitle)}" /></div>` : ""}
+  </div>
 </div>
 
 <!-- Stats -->
