@@ -85,7 +85,7 @@ export async function generateJapanMarketReport(
     };
   }
 
-  const prompt = `You are a Japan market analyst specializing in overseas crowdfunding products. Generate a CONCISE bilingual (Japanese + English) market proposal JSON for the product below. Keep each field SHORT (2-3 sentences or 3-4 bullets max).
+  const prompt = `You are a senior Japan market consultant specializing in bringing overseas crowdfunding products to Japan. Write a compelling, detailed bilingual market proposal JSON. Be specific, use concrete data, and write persuasively to convince the maker to partner with Blink Japan.
 
 Product:
 - Title: ${productTitle}
@@ -94,27 +94,27 @@ Product:
 - Platform: ${platform}
 - Raised: $${raisedUsd.toLocaleString("en-US")} from ${backers.toLocaleString()} backers
 
-Return ONLY valid JSON:
+Return ONLY valid JSON with these fields (write richly — each field should be substantive):
 {
-  "headlineJa": "emotional Japanese headline about bringing this product to Japan (1 sentence)",
+  "headlineJa": "compelling emotional Japanese headline (1 powerful sentence that creates urgency/excitement)",
   "headlineEn": "same in English",
-  "whySellsInJapan": "3-4 bullet points in Japanese starting with ・",
-  "whySellsInJapanEn": "same 3-4 bullets in English starting with •",
-  "marketOverview": "1-2 sentences in Japanese about relevant Japan market size/trends",
+  "whySellsInJapan": "5-6 bullet points in Japanese starting with ・, each with a specific reason tied to Japanese culture/market with 1-2 supporting sentences per point",
+  "whySellsInJapanEn": "same 5-6 bullets in English starting with •",
+  "marketOverview": "3-4 sentences in Japanese: include specific market size data, growth trends, relevant consumer behavior insights, and why NOW is the right timing",
   "marketOverviewEn": "same in English",
-  "targetAudience": "1-2 sentences in Japanese about primary Japanese target customers",
+  "targetAudience": "3-4 sentences in Japanese: describe primary AND secondary Japanese target segments with demographics, psychographics, buying triggers, and media habits",
   "targetAudienceEn": "same in English",
-  "salesStrategy": "2 sentences in Japanese: crowdfunding → retail roadmap",
+  "salesStrategy": "4-5 sentences in Japanese: detailed roadmap — Phase 1 crowdfunding (Makuake/CAMPFIRE) with timeline and targets, Phase 2 retail expansion (Amazon Japan/specialty stores), Phase 3 mass market (TV shopping/major chains)",
   "salesStrategyEn": "same in English",
-  "competitiveEdge": "1-2 sentences in Japanese about competitive advantage",
+  "competitiveEdge": "3-4 sentences in Japanese: explain the exclusive partnership value, first-mover advantage, Blink Japan's network, and specific risk mitigation for the maker",
   "competitiveEdgeEn": "same in English",
-  "marketSizeJpy": "estimated Japan market size in 億円 format e.g. '2,500億円'",
-  "growthRate": "estimated annual growth rate e.g. '7.2%'"
+  "marketSizeJpy": "estimated Japan market size in 億円 format (research-based estimate)",
+  "growthRate": "estimated annual growth rate e.g. '12.3%'"
 }`;
 
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 1500,
+    max_tokens: 3000,
     messages: [{ role: "user", content: prompt }],
   });
 

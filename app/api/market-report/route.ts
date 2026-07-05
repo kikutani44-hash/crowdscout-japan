@@ -4,6 +4,8 @@ import { buildMarketReportHtml, buildMarketReportText } from "@/lib/market-repor
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { findLocalProject } from "@/lib/project-store";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const { projectId } = await request.json();

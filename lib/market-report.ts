@@ -137,6 +137,8 @@ export function buildMarketReportHtml(input: MarketReportInput): string {
 
   /* ── Text sections ── */
   .text-block { font-size: 15px; line-height: 1.9; color: #374151; max-width: 680px; }
+  .text-block p { margin-bottom: 12px; }
+  .text-block p:last-child { margin-bottom: 0; }
   .section-dark .text-block { color: #94a3b8; }
 
   /* ── Channels ── */
