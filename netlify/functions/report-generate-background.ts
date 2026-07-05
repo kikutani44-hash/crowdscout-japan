@@ -1,5 +1,6 @@
 // Netlify Background Function — runs up to 15 minutes
-// All imports are dynamic to avoid esbuild bundling issues
+import { createClient } from "@supabase/supabase-js";
+import Anthropic from "@anthropic-ai/sdk";
 
 export const handler = async (event: { body: string | null }) => {
   let projectId = "";
@@ -12,7 +13,6 @@ export const handler = async (event: { body: string | null }) => {
 
   if (!projectId) return;
 
-  const { createClient } = await import("@supabase/supabase-js");
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -43,7 +43,6 @@ export const handler = async (event: { body: string | null }) => {
       return;
     }
 
-    const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY ?? "",
     });
