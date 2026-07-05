@@ -1,11 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { NextResponse } from "next/server";
 import { buildMarketReportHtml, buildMarketReportText } from "@/lib/market-report";
-import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import { findLocalProject } from "@/lib/project-store";
+import { parseAnthropicError } from "@/lib/api-error";
+import { createClient } from "@supabase/supabase-js";
 import type { JapanMarketReportData } from "@/lib/claude";
 
-export const maxDuration = 60;
+// Edge Runtime: no hard timeout, streaming keeps connection alive
+export const runtime = "edge";
 
 function buildPrompt(
   productTitle: string,
@@ -44,126 +44,114 @@ Return ONLY valid JSON with these fields (write richly — each field should be 
 }
 
 export async function POST(request: Request) {
-  try {
-    const { projectId } = await request.json();
-    if (!projectId) {
-      return NextResponse.json({ error: "projectId が必要です" }, { status: 400 });
-    }
+  const encoder = new TextEncoder();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let project: any = await findLocalProject(projectId);
-    if (isSupabaseConfigured()) {
-      const supabase = createServerSupabase();
-      const { data } = await supabase.from("projects").select("*").eq("id", projectId).single();
-      if (data) project = data;
-    }
-    if (!project) {
-      return NextResponse.json({ error: "案件が見つかりません" }, { status: 404 });
-    }
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      // Use fallback without API
-      const { generateJapanMarketReport } = await import("@/lib/claude");
-      const reportData = await generateJapanMarketReport(
-        project.title_ja ?? project.title,
-        project.subtitle_ja ?? project.subtitle ?? "",
-        project.category ?? "",
-        project.raised_usd,
-        project.backers,
-        project.platform,
-      );
-      const html = buildMarketReportHtml({
-        productTitle: project.title_ja ?? project.title,
-        productUrl: project.original_url,
-        raisedUsd: project.raised_usd,
-        backers: project.backers,
-        platform: project.platform,
-        imageUrl: project.image_url ?? null,
-        reportData,
-      });
-      const text = buildMarketReportText({
-        productTitle: project.title_ja ?? project.title,
-        productUrl: project.original_url,
-        raisedUsd: project.raised_usd,
-        backers: project.backers,
-        platform: project.platform,
-        imageUrl: project.image_url ?? null,
-        reportData,
-      });
-      return NextResponse.json({ reportData, html, text });
-    }
-
-    // Stream from Anthropic to keep connection alive and avoid Netlify timeout
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const prompt = buildPrompt(
-      project.title_ja ?? project.title,
-      project.subtitle_ja ?? project.subtitle ?? "",
-      project.category ?? "",
-      project.raised_usd,
-      project.backers,
-      project.platform,
-    );
-
-    const projectSnapshot = {
-      productTitle: project.title_ja ?? project.title,
-      productUrl: project.original_url,
-      raisedUsd: project.raised_usd,
-      backers: project.backers,
-      platform: project.platform,
-      imageUrl: project.image_url ?? null,
-    };
-
-    const encoder = new TextEncoder();
-    const readable = new ReadableStream({
-      async start(controller) {
-        let fullText = "";
-        try {
-          const stream = client.messages.stream({
-            model: "claude-sonnet-4-6",
-            max_tokens: 2048,
-            messages: [{ role: "user", content: prompt }],
-          });
-
-          for await (const chunk of stream) {
-            if (
-              chunk.type === "content_block_delta" &&
-              chunk.delta.type === "text_delta"
-            ) {
-              fullText += chunk.delta.text;
-              // Send progress heartbeat every ~200 chars to keep connection alive
-              if (fullText.length % 200 < 10) {
-                controller.enqueue(encoder.encode(" "));
-              }
-            }
-          }
-
-          const jsonMatch = fullText.match(/\{[\s\S]*\}/);
-          if (!jsonMatch) throw new Error("レポート生成結果の解析に失敗しました");
-          const reportData = JSON.parse(jsonMatch[0]) as JapanMarketReportData;
-
-          const html = buildMarketReportHtml({ ...projectSnapshot, reportData });
-          const text = buildMarketReportText({ ...projectSnapshot, reportData });
-
-          const payload = JSON.stringify({ reportData, html, text });
-          controller.enqueue(encoder.encode(`\n__RESULT__${payload}__END__`));
-          controller.close();
-        } catch (err) {
-          const { parseAnthropicError } = await import("@/lib/api-error");
-          const errPayload = JSON.stringify({ error: parseAnthropicError(err) });
-          controller.enqueue(encoder.encode(`\n__ERROR__${errPayload}__END__`));
-          controller.close();
-        }
-      },
+  function errorResponse(msg: string): Response {
+    const payload = JSON.stringify({ error: msg });
+    return new Response(`\n__ERROR__${payload}__END__`, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
-
-    return new Response(readable, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
-  } catch (error) {
-    const { parseAnthropicError } = await import("@/lib/api-error");
-    return NextResponse.json({ error: parseAnthropicError(error) }, { status: 500 });
   }
+
+  let projectId: string;
+  try {
+    const body = await request.json() as { projectId?: string };
+    projectId = body.projectId ?? "";
+  } catch {
+    return errorResponse("リクエストの解析に失敗しました");
+  }
+
+  if (!projectId) {
+    return errorResponse("projectId が必要です");
+  }
+
+  // Fetch project from Supabase (Edge-compatible)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+  if (!supabaseUrl || !supabaseKey) {
+    return errorResponse("データベース設定が見つかりません");
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const { data: project, error: dbError } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("id", projectId)
+    .single();
+
+  if (dbError || !project) {
+    return errorResponse("案件が見つかりません");
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY ?? "";
+  if (!apiKey) {
+    return errorResponse("ANTHROPIC_API_KEY が設定されていません");
+  }
+
+  const prompt = buildPrompt(
+    project.title_ja ?? project.title,
+    project.subtitle_ja ?? project.subtitle ?? "",
+    project.category ?? "",
+    project.raised_usd,
+    project.backers,
+    project.platform,
+  );
+
+  const projectSnapshot = {
+    productTitle: project.title_ja ?? project.title,
+    productUrl: project.original_url,
+    raisedUsd: project.raised_usd,
+    backers: project.backers,
+    platform: project.platform,
+    imageUrl: project.image_url ?? null,
+  };
+
+  const client = new Anthropic({ apiKey });
+
+  const readable = new ReadableStream({
+    async start(controller) {
+      let fullText = "";
+      try {
+        const stream = client.messages.stream({
+          model: "claude-sonnet-4-6",
+          max_tokens: 3000,
+          messages: [{ role: "user", content: prompt }],
+        });
+
+        for await (const chunk of stream) {
+          if (
+            chunk.type === "content_block_delta" &&
+            chunk.delta.type === "text_delta"
+          ) {
+            fullText += chunk.delta.text;
+            // Send raw token chunks to keep the stream alive
+            controller.enqueue(encoder.encode(chunk.delta.text));
+          }
+        }
+
+        const jsonMatch = fullText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("JSON parse failed: no object found");
+
+        const reportData = JSON.parse(jsonMatch[0]) as JapanMarketReportData;
+        const html = buildMarketReportHtml({ ...projectSnapshot, reportData });
+        const text = buildMarketReportText({ ...projectSnapshot, reportData });
+
+        const payload = JSON.stringify({ reportData, html, text });
+        controller.enqueue(encoder.encode(`\n__RESULT__${payload}__END__`));
+        controller.close();
+      } catch (err) {
+        const errPayload = JSON.stringify({ error: parseAnthropicError(err) });
+        controller.enqueue(encoder.encode(`\n__ERROR__${errPayload}__END__`));
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }
