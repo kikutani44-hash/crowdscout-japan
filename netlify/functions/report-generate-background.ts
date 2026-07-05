@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
-import { buildMarketReportHtml, buildMarketReportText } from "../../lib/market-report.js";
-import type { JapanMarketReportData } from "../../lib/claude.js";
+import { buildMarketReportHtml } from "../../lib/market-report";
+import type { JapanMarketReportData } from "../../lib/claude";
 
 function buildPrompt(
   productTitle: string,
@@ -39,7 +39,8 @@ Return ONLY valid JSON with these fields (write richly — each field should be 
 }`;
 }
 
-export default async function handler(req: Request): Promise<void> {
+// Netlify Background Function (v1 format) — runs up to 15 minutes
+export const handler = async (event: { body: string | null }) => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const supabaseKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
@@ -49,7 +50,7 @@ export default async function handler(req: Request): Promise<void> {
 
   let projectId = "";
   try {
-    const body = await req.json() as { projectId?: string };
+    const body = JSON.parse(event.body ?? "{}") as { projectId?: string };
     projectId = body.projectId ?? "";
   } catch {
     return;
@@ -58,7 +59,6 @@ export default async function handler(req: Request): Promise<void> {
   if (!projectId) return;
 
   try {
-    // Get project
     const { data: project } = await supabase
       .from("projects")
       .select("*")
@@ -105,21 +105,11 @@ export default async function handler(req: Request): Promise<void> {
     const text =
       message.content[0].type === "text" ? message.content[0].text : "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("JSON parse failed: no object found");
+    if (!jsonMatch) throw new Error("JSON parse failed");
 
     const reportData = JSON.parse(jsonMatch[0]) as JapanMarketReportData;
 
     const html = buildMarketReportHtml({
-      productTitle: project.title_ja ?? project.title,
-      productUrl: project.original_url,
-      raisedUsd: project.raised_usd,
-      backers: project.backers,
-      platform: project.platform,
-      imageUrl: project.image_url ?? null,
-      reportData,
-    });
-
-    buildMarketReportText({
       productTitle: project.title_ja ?? project.title,
       productUrl: project.original_url,
       raisedUsd: project.raised_usd,
@@ -145,4 +135,4 @@ export default async function handler(req: Request): Promise<void> {
       updated_at: new Date().toISOString(),
     });
   }
-}
+};

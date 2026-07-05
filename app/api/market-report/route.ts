@@ -32,7 +32,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "ready", html: report.html });
     }
     if (report?.status === "generating") {
-      return NextResponse.json({ status: "generating" });
+      // If stuck generating for >5 minutes, reset and retry
+      const updatedAt = new Date(report.updated_at ?? report.created_at ?? 0).getTime();
+      const staleMs = Date.now() - updatedAt;
+      if (staleMs < 5 * 60 * 1000) {
+        return NextResponse.json({ status: "generating" });
+      }
+      // Stale — fall through to re-trigger
+      await supabase.from("reports").delete().eq("project_id", projectId);
     }
     if (report?.status === "error") {
       // Reset so user can retry
