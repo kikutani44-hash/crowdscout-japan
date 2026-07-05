@@ -47,24 +47,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "error", error: report.error });
     }
 
-    // No record yet — create pending and trigger background function
-    await supabase.from("reports").upsert({
-      project_id: projectId,
-      status: "generating",
-      updated_at: new Date().toISOString(),
-    });
-
-    const siteUrl = process.env.URL ?? process.env.DEPLOY_URL ?? "";
-    if (siteUrl) {
-      // Fire and forget — background function handles generation
-      fetch(`${siteUrl}/.netlify/functions/report-generate-background`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId }),
-      }).catch(() => {});
-    }
-
-    return NextResponse.json({ status: "generating" });
+    // No record yet — tell client to trigger the background function directly
+    return NextResponse.json({ status: "not_started" });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "エラーが発生しました";
     return NextResponse.json({ error: msg }, { status: 500 });

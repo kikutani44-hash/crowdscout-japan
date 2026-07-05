@@ -10,6 +10,22 @@ export default function ReportPage() {
   const [error, setError] = useState<string | null>(null);
   const [dots, setDots] = useState(0);
 
+  const triggerBackground = useCallback(async () => {
+    // Create generating record in Supabase first via API
+    await fetch("/api/market-report/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId: id }),
+    }).catch(() => {});
+
+    // Directly call background function from browser (avoids server env var issues)
+    fetch("/.netlify/functions/report-generate-background", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId: id }),
+    }).catch(() => {}); // Returns 202 immediately, generation happens async
+  }, [id]);
+
   const poll = useCallback(async () => {
     try {
       const res = await fetch("/api/market-report", {
@@ -27,12 +43,15 @@ export default function ReportPage() {
         setHtml(data.html);
       } else if (data.status === "error") {
         setError(data.error ?? "生成に失敗しました。再試行してください。");
+      } else if (data.status === "not_started") {
+        // Trigger background function directly from browser
+        triggerBackground();
       }
-      // "generating" → keep polling (handled by interval below)
+      // "generating" → keep polling
     } catch {
       // Network error — keep polling
     }
-  }, [id]);
+  }, [id, triggerBackground]);
 
   useEffect(() => {
     // Initial call
