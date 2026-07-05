@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 
 export default function ReportPage() {
@@ -8,97 +8,52 @@ export default function ReportPage() {
   const id = params.id as string;
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [dots, setDots] = useState(0);
+
+  const poll = useCallback(async () => {
+    try {
+      const res = await fetch("/api/market-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: id }),
+      });
+      const data = await res.json() as {
+        status?: string;
+        html?: string;
+        error?: string;
+      };
+
+      if (data.status === "ready" && data.html) {
+        setHtml(data.html);
+      } else if (data.status === "error") {
+        setError(data.error ?? "生成に失敗しました。再試行してください。");
+      }
+      // "generating" → keep polling (handled by interval below)
+    } catch {
+      // Network error — keep polling
+    }
+  }, [id]);
 
   useEffect(() => {
-    let cancelled = false;
+    // Initial call
+    poll();
 
-    async function generate() {
-      // 90秒でクライアント側タイムアウト
-      const timeoutId = setTimeout(() => {
-        if (!cancelled) setError("生成に時間がかかりすぎています。再試行してください。");
-        cancelled = true;
-      }, 90000);
+    // Poll every 4 seconds
+    const interval = setInterval(poll, 4000);
 
-      try {
-        const res = await fetch("/api/market-report", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectId: id }),
-        });
+    // Animate dots
+    const dotTimer = setInterval(() => setDots((d) => (d + 1) % 4), 600);
 
-        if (!res.ok || !res.body) {
-          clearTimeout(timeoutId);
-          setError("レポートの生成に失敗しました。再試行してください。");
-          return;
-        }
+    return () => {
+      clearInterval(interval);
+      clearInterval(dotTimer);
+    };
+  }, [poll]);
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        let tick = 0;
-        const timer = setInterval(() => {
-          tick++;
-          setProgress(Math.min(90, tick * 3));
-        }, 800);
-
-        while (!cancelled) {
-          const { done, value } = await reader.read();
-          if (done) {
-            // Stream ended without markers — generation failed or timed out
-            clearInterval(timer);
-            clearTimeout(timeoutId);
-            if (!cancelled) setError("生成中にタイムアウトが発生しました。再試行してください。");
-            return;
-          }
-          buffer += decoder.decode(value, { stream: true });
-
-          const resultIdx = buffer.indexOf("__RESULT__");
-          if (resultIdx !== -1) {
-            const endIdx = buffer.indexOf("__END__", resultIdx);
-            if (endIdx !== -1) {
-              const payload = buffer.slice(resultIdx + 10, endIdx);
-              clearInterval(timer);
-              clearTimeout(timeoutId);
-              try {
-                const data = JSON.parse(payload) as { html: string };
-                setProgress(100);
-                if (!cancelled) setHtml(data.html);
-              } catch {
-                if (!cancelled) setError("レポートの解析に失敗しました。");
-              }
-              return;
-            }
-          }
-
-          const errIdx = buffer.indexOf("__ERROR__");
-          if (errIdx !== -1) {
-            const endIdx = buffer.indexOf("__END__", errIdx);
-            if (endIdx !== -1) {
-              const payload = buffer.slice(errIdx + 9, endIdx);
-              clearInterval(timer);
-              clearTimeout(timeoutId);
-              try {
-                const data = JSON.parse(payload) as { error: string };
-                if (!cancelled) setError(data.error);
-              } catch {
-                if (!cancelled) setError("レポートの生成に失敗しました。");
-              }
-              return;
-            }
-          }
-        }
-        clearInterval(timer);
-        clearTimeout(timeoutId);
-      } catch {
-        if (!cancelled) setError("レポートの生成に失敗しました。再試行してください。");
-      }
-    }
-
-    generate();
-    return () => { cancelled = true; };
-  }, [id]);
+  // Stop polling when done or errored
+  useEffect(() => {
+    if (html || error) return;
+  }, [html, error]);
 
   if (error) {
     return (
@@ -106,7 +61,7 @@ export default function ReportPage() {
         <h2 style={{ color: "#e53e3e" }}>⚠️ レポート生成に失敗しました</h2>
         <p style={{ color: "#4a5568" }}>{error}</p>
         <button
-          onClick={() => { setError(null); setProgress(0); window.location.reload(); }}
+          onClick={() => { setError(null); poll(); }}
           style={{
             marginTop: 16, padding: "10px 24px", background: "#3b82f6",
             color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14,
@@ -119,33 +74,34 @@ export default function ReportPage() {
   }
 
   if (!html) {
+    const dotStr = ".".repeat(dots + 1);
     return (
       <div style={{
         display: "flex", flexDirection: "column", alignItems: "center",
         justifyContent: "center", minHeight: "100vh", fontFamily: "sans-serif",
-        background: "#f8fafc", gap: 16,
+        background: "#f8fafc", gap: 20,
       }}>
         <div style={{
-          width: 48, height: 48,
-          border: "4px solid #e2e8f0", borderTop: "4px solid #3b82f6",
+          width: 56, height: 56,
+          border: "5px solid #e2e8f0", borderTop: "5px solid #3b82f6",
           borderRadius: "50%", animation: "spin 1s linear infinite",
         }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <p style={{ color: "#64748b", fontSize: 16 }}>📄 日本市場展開レポートを生成中...</p>
-        <p style={{ color: "#94a3b8", fontSize: 13 }}>AIが分析中です。30〜45秒ほどお待ちください。</p>
-        {progress > 0 && (
-          <div style={{ width: 280, background: "#e2e8f0", borderRadius: 4, height: 6 }}>
-            <div style={{
-              width: `${progress}%`, background: "#3b82f6",
-              height: "100%", borderRadius: 4, transition: "width 0.8s ease",
-            }} />
-          </div>
-        )}
+        <div style={{ textAlign: "center" }}>
+          <p style={{ color: "#1e293b", fontSize: 17, fontWeight: 600, margin: 0 }}>
+            📄 日本市場展開レポートを生成中{dotStr}
+          </p>
+          <p style={{ color: "#64748b", fontSize: 13, marginTop: 8 }}>
+            AIが分析中です。通常30〜60秒かかります。
+          </p>
+          <p style={{ color: "#94a3b8", fontSize: 12, marginTop: 4 }}>
+            このページを閉じずにお待ちください
+          </p>
+        </div>
       </div>
     );
   }
 
-  // Extract body content and styles from the generated HTML
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
   const bodyContent = bodyMatch ? bodyMatch[1] : html;
   const styleMatch = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
