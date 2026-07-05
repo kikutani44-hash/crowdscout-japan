@@ -6,12 +6,10 @@ export const handler = async (event: { body: string | null }) => {
   let projectId = "";
   try {
     const body = JSON.parse(event.body ?? "{}") as { projectId?: string };
-    projectId = body.projectId ?? "";
+    projectId = body.projectId ?? "test-ping";
   } catch {
-    return;
+    projectId = "test-ping";
   }
-
-  if (!projectId) return;
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
@@ -20,11 +18,15 @@ export const handler = async (event: { body: string | null }) => {
       "",
   );
 
-  // Mark that the function actually started (debug)
-  await supabase.from("reports").update({
+  // Always write — even for GET requests with no body (to confirm function runs)
+  await supabase.from("reports").upsert({
+    project_id: projectId,
+    status: "generating",
     error: "started:" + new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  }).eq("project_id", projectId);
+  });
+
+  if (!projectId || projectId === "test-ping") return;
 
   try {
     const { data: project } = await supabase
