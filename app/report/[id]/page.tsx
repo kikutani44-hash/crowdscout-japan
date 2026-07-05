@@ -8,19 +8,83 @@ export default function ReportPage() {
   const id = params.id as string;
   const [html, setHtml] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    fetch("/api/market-report", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId: id }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) setError(data.error);
-        else setHtml(data.html);
-      })
-      .catch(() => setError("レポートの生成に失敗しました。再試行してください。"));
+    let cancelled = false;
+
+    async function generate() {
+      try {
+        const res = await fetch("/api/market-report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId: id }),
+        });
+
+        if (!res.ok || !res.body) {
+          setError("レポートの生成に失敗しました。再試行してください。");
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        // Animate progress while streaming
+        let tick = 0;
+        const timer = setInterval(() => {
+          tick++;
+          setProgress(Math.min(90, tick * 3));
+        }, 800);
+
+        while (!cancelled) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // Check for result marker
+          const resultIdx = buffer.indexOf("__RESULT__");
+          if (resultIdx !== -1) {
+            const endIdx = buffer.indexOf("__END__", resultIdx);
+            if (endIdx !== -1) {
+              const payload = buffer.slice(resultIdx + 10, endIdx);
+              try {
+                const data = JSON.parse(payload) as { html: string };
+                clearInterval(timer);
+                setProgress(100);
+                if (!cancelled) setHtml(data.html);
+              } catch {
+                if (!cancelled) setError("レポートの解析に失敗しました。");
+              }
+              return;
+            }
+          }
+
+          // Check for error marker
+          const errIdx = buffer.indexOf("__ERROR__");
+          if (errIdx !== -1) {
+            const endIdx = buffer.indexOf("__END__", errIdx);
+            if (endIdx !== -1) {
+              const payload = buffer.slice(errIdx + 9, endIdx);
+              try {
+                const data = JSON.parse(payload) as { error: string };
+                clearInterval(timer);
+                if (!cancelled) setError(data.error);
+              } catch {
+                if (!cancelled) setError("レポートの生成に失敗しました。");
+              }
+              return;
+            }
+          }
+        }
+        clearInterval(timer);
+      } catch {
+        if (!cancelled) setError("レポートの生成に失敗しました。再試行してください。");
+      }
+    }
+
+    generate();
+    return () => { cancelled = true; };
   }, [id]);
 
   if (error) {
@@ -28,6 +92,15 @@ export default function ReportPage() {
       <div style={{ padding: 40, fontFamily: "sans-serif", maxWidth: 600 }}>
         <h2 style={{ color: "#e53e3e" }}>⚠️ レポート生成に失敗しました</h2>
         <p style={{ color: "#4a5568" }}>{error}</p>
+        <button
+          onClick={() => { setError(null); setProgress(0); window.location.reload(); }}
+          style={{
+            marginTop: 16, padding: "10px 24px", background: "#3b82f6",
+            color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14,
+          }}
+        >
+          再試行
+        </button>
       </div>
     );
   }
@@ -46,7 +119,15 @@ export default function ReportPage() {
         }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         <p style={{ color: "#64748b", fontSize: 16 }}>📄 日本市場展開レポートを生成中...</p>
-        <p style={{ color: "#94a3b8", fontSize: 13 }}>AIが分析中です。15秒ほどお待ちください。</p>
+        <p style={{ color: "#94a3b8", fontSize: 13 }}>AIが分析中です。30〜45秒ほどお待ちください。</p>
+        {progress > 0 && (
+          <div style={{ width: 280, background: "#e2e8f0", borderRadius: 4, height: 6 }}>
+            <div style={{
+              width: `${progress}%`, background: "#3b82f6",
+              height: "100%", borderRadius: 4, transition: "width 0.8s ease",
+            }} />
+          </div>
+        )}
       </div>
     );
   }
