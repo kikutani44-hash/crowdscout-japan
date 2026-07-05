@@ -14,6 +14,12 @@ export default function ReportPage() {
     let cancelled = false;
 
     async function generate() {
+      // 90秒でクライアント側タイムアウト
+      const timeoutId = setTimeout(() => {
+        if (!cancelled) setError("生成に時間がかかりすぎています。再試行してください。");
+        cancelled = true;
+      }, 90000);
+
       try {
         const res = await fetch("/api/market-report", {
           method: "POST",
@@ -22,6 +28,7 @@ export default function ReportPage() {
         });
 
         if (!res.ok || !res.body) {
+          clearTimeout(timeoutId);
           setError("レポートの生成に失敗しました。再試行してください。");
           return;
         }
@@ -30,7 +37,6 @@ export default function ReportPage() {
         const decoder = new TextDecoder();
         let buffer = "";
 
-        // Animate progress while streaming
         let tick = 0;
         const timer = setInterval(() => {
           tick++;
@@ -39,18 +45,24 @@ export default function ReportPage() {
 
         while (!cancelled) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            // Stream ended without markers — generation failed or timed out
+            clearInterval(timer);
+            clearTimeout(timeoutId);
+            if (!cancelled) setError("生成中にタイムアウトが発生しました。再試行してください。");
+            return;
+          }
           buffer += decoder.decode(value, { stream: true });
 
-          // Check for result marker
           const resultIdx = buffer.indexOf("__RESULT__");
           if (resultIdx !== -1) {
             const endIdx = buffer.indexOf("__END__", resultIdx);
             if (endIdx !== -1) {
               const payload = buffer.slice(resultIdx + 10, endIdx);
+              clearInterval(timer);
+              clearTimeout(timeoutId);
               try {
                 const data = JSON.parse(payload) as { html: string };
-                clearInterval(timer);
                 setProgress(100);
                 if (!cancelled) setHtml(data.html);
               } catch {
@@ -60,15 +72,15 @@ export default function ReportPage() {
             }
           }
 
-          // Check for error marker
           const errIdx = buffer.indexOf("__ERROR__");
           if (errIdx !== -1) {
             const endIdx = buffer.indexOf("__END__", errIdx);
             if (endIdx !== -1) {
               const payload = buffer.slice(errIdx + 9, endIdx);
+              clearInterval(timer);
+              clearTimeout(timeoutId);
               try {
                 const data = JSON.parse(payload) as { error: string };
-                clearInterval(timer);
                 if (!cancelled) setError(data.error);
               } catch {
                 if (!cancelled) setError("レポートの生成に失敗しました。");
@@ -78,6 +90,7 @@ export default function ReportPage() {
           }
         }
         clearInterval(timer);
+        clearTimeout(timeoutId);
       } catch {
         if (!cancelled) setError("レポートの生成に失敗しました。再試行してください。");
       }
