@@ -92,9 +92,6 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [preview, setPreview] = useState<LetterPreview | null>(null);
-  const [reportLoading, setReportLoading] = useState(false);
-  const [report, setReport] = useState<MarketReport | null>(null);
-  const [showReport, setShowReport] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [emailSending, setEmailSending] = useState(false);
   const [emailSendMessage, setEmailSendMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -136,25 +133,6 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
     }
   }, [project, customNote]);
 
-  const generateReport = async () => {
-    if (!project) return;
-    setReportLoading(true);
-    try {
-      const res = await fetch("/api/market-report", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: project.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setReport({ html: data.html, text: data.text });
-      setShowReport(true);
-    } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "レポート生成に失敗しました" });
-    } finally {
-      setReportLoading(false);
-    }
-  };
 
   const generateSnsDm = async () => {
     if (!project) return;
@@ -226,8 +204,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       setEmailSendMessage(null);
       setShowPreview(false);
       setPreview(null);
-      setReport(null);
-      setShowReport(false);
+
       setSnsDm(null);
       setJpContent(null);
       setActiveTab("email");
@@ -378,21 +355,11 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
               <Button
                 variant="outline"
                 size="sm"
-                onClick={generateReport}
-                disabled={reportLoading}
+                onClick={() => window.open(`/report/${project.id}`, "_blank")}
                 className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
               >
                 <FileText className="h-4 w-4" />
-                {reportLoading ? "生成中..." : "日本市場レポート生成"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(`/report/${project.id}`, "_blank")}
-                className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
-              >
-                <FileText className="h-4 w-4" />
-                PDF提案書を開く
+                日本市場レポートを開く
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -446,23 +413,6 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
               </>
             )}
 
-            {showReport && report && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-blue-400">日本市場展開 提案書</p>
-                  <a
-                    href={`data:text/html;charset=utf-8,${encodeURIComponent(report.html)}`}
-                    download="japan-market-report.html"
-                    className="text-[10px] text-muted-foreground hover:text-foreground underline"
-                  >
-                    HTMLダウンロード
-                  </a>
-                </div>
-                <div className="max-h-64 overflow-y-auto rounded-md border border-blue-500/20 bg-blue-500/5 p-3">
-                  <pre className="whitespace-pre-wrap text-xs leading-relaxed">{report.text}</pre>
-                </div>
-              </div>
-            )}
 
             {message && (
               <p className={`text-sm ${message.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
