@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { translateOfferLetter } from "@/lib/claude";
+import { translateOfferLetter, generateFirstEmailVariables, generateSecondEmailVariables } from "@/lib/claude";
 import { detectLanguage } from "@/lib/language-detect";
 import { buildOfferLetter, buildFollowUpLetter } from "@/lib/offer-letter";
-import { generatePersonalizedOffer } from "@/lib/claude";
 import { isSendGridConfigured, sendOfferLetterRaw } from "@/lib/mailer";
 import { findLocalProject, updateLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -47,15 +46,29 @@ export async function POST(request: Request) {
     let sendText: string;
     let sendHtml: string;
 
+    const productTitle = project.title_ja ?? project.title;
+    const sharedParams = {
+      productTitle,
+      subtitle: project.subtitle_ja ?? project.subtitle ?? undefined,
+      category: project.category,
+      raisedUsd: project.raised_usd,
+      backers: project.backers,
+      platform: project.platform,
+    };
+
     if (emailType === "second") {
-      // 2通目: フォローアップメール
+      const vars = await generateSecondEmailVariables(sharedParams);
       const letter = buildFollowUpLetter({
-        productTitle: project.title_ja ?? project.title,
+        productTitle,
         productUrl: project.original_url,
         raisedUsd: project.raised_usd,
         backers: project.backers,
         category: project.category,
         customNote: customNote?.trim() || undefined,
+        japanReasons: vars.japanReasons,
+        japanMarketOverview: vars.japanMarketOverview,
+        targetAudience: vars.targetAudience,
+        crowdfundingTarget: vars.crowdfundingTarget,
       });
       sendSubject = letter.subject;
       sendText = langInfo.code !== "en"
@@ -63,23 +76,23 @@ export async function POST(request: Request) {
         : letter.text;
       sendHtml = langInfo.code !== "en" ? sendText.replace(/\n/g, "<br>") : letter.html;
     } else {
-      // 1通目: Claude APIでパーソナライズ生成
-      const personalized = await generatePersonalizedOffer({
-        productTitle: project.title_ja ?? project.title,
+      const vars = await generateFirstEmailVariables(sharedParams);
+      const letter = buildOfferLetter({
+        productTitle,
         productUrl: project.original_url,
+        platform: project.platform,
         raisedUsd: project.raised_usd,
         backers: project.backers,
         category: project.category,
-        subtitle: project.subtitle_ja ?? project.subtitle ?? undefined,
         customNote: customNote?.trim() || undefined,
-        targetLang: langInfo.code,
+        productDescriptionOneLine: vars.productDescriptionOneLine,
+        japanAppealPoint: vars.japanAppealPoint,
       });
-      sendSubject = personalized.subject;
-      sendText = personalized.text;
-      sendHtml = personalized.text
-        .split("\n\n")
-        .map((p: string) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
-        .join("\n");
+      sendSubject = letter.subject;
+      sendText = langInfo.code !== "en"
+        ? await translateOfferLetter(letter.text, langInfo.code)
+        : letter.text;
+      sendHtml = langInfo.code !== "en" ? sendText.replace(/\n/g, "<br>") : letter.html;
     }
 
     const result = await sendOfferLetterRaw({

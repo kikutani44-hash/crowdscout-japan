@@ -1,12 +1,14 @@
 export interface OfferLetterInput {
   productTitle: string;
   productUrl: string;
+  platform: string;
   raisedUsd: number;
   backers: number;
   category?: string;
   customNote?: string;
-  subtitle?: string;
-  description?: string;
+  // AI-generated variables
+  productDescriptionOneLine: string;
+  japanAppealPoint: string;
 }
 
 export interface FollowUpLetterInput {
@@ -16,10 +18,11 @@ export interface FollowUpLetterInput {
   backers: number;
   category?: string;
   customNote?: string;
-  // Japan market report data to include
-  whySellsInJapan?: string;
-  marketOverview?: string;
-  salesStrategy?: string;
+  // AI-generated variables
+  japanReasons: string;
+  japanMarketOverview: string;
+  targetAudience: string;
+  crowdfundingTarget: string;
 }
 
 export interface OfferLetterContent {
@@ -31,145 +34,115 @@ export interface OfferLetterContent {
 const COMPANY = "Blink Japan Co., Ltd.";
 const CONTACT_EMAIL = "cbec@blink-japan.com";
 const COMPANY_URL = "https://blink-japan.com/";
+const SENDER = "Yoshitaka Kikutani";
 
-// 1通目: 返信を引き出すための短いフックメール
-// 「日本市場レポートを用意した」というフックで返信を引き出し、
-// 返信後または未返信の2通目にて提案書(market-report)を送付する
+function platformDisplayName(platform: string): string {
+  const map: Record<string, string> = {
+    kickstarter: "Kickstarter",
+    indiegogo: "Indiegogo",
+    wadiz: "Wadiz",
+    zeczec: "Zeczec",
+  };
+  return map[platform?.toLowerCase()] ?? platform ?? "Kickstarter";
+}
+
+// 1通目：フックメール
 export function buildOfferLetter(input: OfferLetterInput): OfferLetterContent {
-  const subject = `${input.productTitle} — Japan Launch Opportunity`;
-  const achievement = `$${input.raisedUsd.toLocaleString("en-US")} from ${input.backers.toLocaleString()} backers`;
-
+  const subject = `${input.productTitle} — Japan Market Launch Opportunity`;
+  const raised = `$${input.raisedUsd.toLocaleString("en-US")}`;
+  const backers = input.backers.toLocaleString();
+  const platform = platformDisplayName(input.platform);
   const customBlock = input.customNote ? `\n${input.customNote}\n` : "";
 
-  const text = `Hi,
+  const text = `Dear ${input.productTitle} Team,
 
-I came across your "${input.productTitle}" campaign${input.category ? ` in the ${input.category} category` : ""} — raising ${achievement} is a remarkable achievement, and the product genuinely caught my attention.
+I came across your campaign for ${input.productTitle} on ${platform} — congratulations on raising over ${raised} from ${backers} backers. ${input.productDescriptionOneLine}
 
-I'm reaching out from ${COMPANY}, a Japan-based firm that specializes in bringing successful crowdfunding products to the Japanese market through exclusive partnerships on platforms like Makuake, CAMPFIRE, and Green Funding, as well as retail channels.
+My name is ${SENDER}, and I represent Blink Japan, a company with deep roots in Japanese media, marketing, and consumer distribution.
 
-Japan has a strong appetite for innovative products like yours, and I've put together a brief market analysis showing how "${input.productTitle}" could perform here. Would you be open to taking a look?
+I believe ${input.productTitle} has exceptional potential in Japan, where ${input.japanAppealPoint} resonates deeply with consumers.
+
+What sets us apart from other distributors:
+
+・TV & Media Network — 40+ years in the Japanese television industry, with direct connections to home shopping networks, major broadcasters, and production companies
+
+・Digital Marketing — Certified agency for Yahoo! Japan and Google, having managed over ¥12 billion in advertising, consistently delivering top-tier results in performance marketing
+
+・Market Access — Through our extensive network in Japan's digital business community, we maintain strong relationships with leading e-commerce platforms and online marketing channels, including connections to Japan's top crowdfunding platforms, Makuake and CAMPFIRE.
+
+We have prepared a Japan Market Analysis Report for ${input.productTitle}, covering market size, target demographics, and a step-by-step launch roadmap.
+
+Would you be open to receiving it?
 ${customBlock}
-Best regards,
-[Your Name]
+We would love to hear your thoughts — even a brief reply would mean a great deal to us.
+
+Warm regards,
+
+${SENDER}
 ${COMPANY}
 ${CONTACT_EMAIL}
-${COMPANY_URL}
+${COMPANY_URL}`;
 
-Campaign: ${input.productUrl}`;
-
-  const html = `<!DOCTYPE html>
-<html>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a; line-height: 1.7; max-width: 600px; margin: 0 auto;">
-  <p>Hi,</p>
-  <p>
-    I came across your <strong>${escapeHtml(input.productTitle)}</strong> campaign${input.category ? ` in the ${escapeHtml(input.category)} category` : ""} —
-    raising <strong>${escapeHtml(achievement)}</strong> is a remarkable achievement, and the product genuinely caught my attention.
-  </p>
-  <p>
-    I'm reaching out from <strong>${COMPANY}</strong>, a Japan-based firm that specializes in bringing successful
-    crowdfunding products to the Japanese market through exclusive partnerships on platforms like
-    Makuake, CAMPFIRE, and Green Funding, as well as retail channels.
-  </p>
-  <p>
-    Japan has a strong appetite for innovative products like yours, and I've put together a brief
-    market analysis showing how <strong>${escapeHtml(input.productTitle)}</strong> could perform here.
-    Would you be open to taking a look?
-  </p>
-  ${input.customNote ? `<p>${escapeHtml(input.customNote).replace(/\n/g, "<br>")}</p>` : ""}
-  <p>
-    Best regards,<br>
-    [Your Name]<br>
-    <strong>${COMPANY}</strong><br>
-    <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a><br>
-    <a href="${escapeHtml(COMPANY_URL)}">${escapeHtml(COMPANY_URL)}</a>
-  </p>
-  <p style="color:#9ca3af;font-size:12px;">
-    Campaign: <a href="${escapeHtml(input.productUrl)}" style="color:#6b7280;">${escapeHtml(input.productUrl)}</a>
-  </p>
-</body>
-</html>`;
-
+  const html = buildHtml(text);
   return { subject, text, html };
 }
 
-// 2通目: 日本市場レポートを提示するフォローアップメール
+// 2通目：レポート送付メール
 export function buildFollowUpLetter(input: FollowUpLetterInput): OfferLetterContent {
-  const subject = `Re: ${input.productTitle} — Japan Market Analysis Inside`;
-  const achievement = `$${input.raisedUsd.toLocaleString("en-US")} from ${input.backers.toLocaleString()} backers`;
-
+  const subject = `[Japan Market Report] ${input.productTitle} — Please Find Attached`;
   const customBlock = input.customNote ? `\n${input.customNote}\n` : "";
 
-  const reportSection = input.whySellsInJapan
-    ? `\n--- Japan Market Highlights for ${input.productTitle} ---\n\n${input.whySellsInJapan}${input.marketOverview ? "\n\nMarket Overview:\n" + input.marketOverview : ""}${input.salesStrategy ? "\n\nProposed Strategy:\n" + input.salesStrategy : ""}\n---\n`
-    : "";
+  const text = `Dear ${input.productTitle} Team,
 
-  const text = `Hi,
+Thank you for your time. As promised, please find below our Japan Market Analysis Report for ${input.productTitle}.
 
-I wanted to follow up on my previous message about bringing "${input.productTitle}" to the Japanese market.
+— REPORT SUMMARY —
 
-With ${achievement}, this campaign has demonstrated exceptional market validation. I genuinely believe Japan represents your next major growth opportunity.
+■ Why ${input.productTitle} Will Succeed in Japan
+${input.japanReasons}
 
-To give you a concrete sense of the potential, I've prepared a brief Japan market analysis specifically for ${input.productTitle}:
-${reportSection}
-Here's what we can offer:
-- Exclusive Japan distribution rights (Makuake, CAMPFIRE, and Green Funding launch)
-- Full localization and Japanese customer support
-- Retail channel introduction (major electronics stores, lifestyle retailers)
-- Zero upfront cost to you — we handle all Japan-side logistics
+■ Japan Market Overview
+${input.japanMarketOverview}
+
+■ Target Audience
+${input.targetAudience}
+
+■ Sales Strategy & Roadmap
+① Crowdfunding launch on Makuake / CAMPFIRE
+　（Target: ¥${input.crowdfundingTarget}）
+② PR through media and influencer partnerships
+③ Retail expansion on Amazon Japan and sports/specialty stores
+④ B2B sales to relevant facilities and organizations
+
+■ What We Offer
+・Exclusive distribution rights management in Japan
+・Support for Japanese regulatory compliance（PSE, technical standards）
+・TV shopping and talent collaboration network
+・Direct partnerships with Makuake and CAMPFIRE
 ${customBlock}
-Would you have 20 minutes for a quick call this week? I'd love to walk you through the analysis and explore whether this could be a great fit.
+We would love to discuss this further at your convenience.
+Please let us know a time that works for you.
 
-Best regards,
-Yoshitaka Kikutani
+Warm regards,
+
+${SENDER}
 ${COMPANY}
 ${CONTACT_EMAIL}
-${COMPANY_URL}
+${COMPANY_URL}`;
 
-Campaign: ${input.productUrl}`;
-
-  const html = `<!DOCTYPE html>
-<html>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a; line-height: 1.7; max-width: 600px; margin: 0 auto;">
-  <p>Hi,</p>
-  <p>I wanted to follow up on my previous message about bringing <strong>${escapeHtml(input.productTitle)}</strong> to the Japanese market.</p>
-  <p>With <strong>${escapeHtml(achievement)}</strong>, this campaign has demonstrated exceptional market validation. I genuinely believe Japan represents your next major growth opportunity.</p>
-  <p>To give you a concrete sense of the potential, I've prepared a brief Japan market analysis specifically for <strong>${escapeHtml(input.productTitle)}</strong>:</p>
-  ${input.whySellsInJapan ? `
-  <div style="background:#f8f9fa;border-left:4px solid #3b82f6;padding:16px;margin:16px 0;border-radius:4px;">
-    <p style="font-weight:bold;margin-top:0;">🇯🇵 Japan Market Analysis</p>
-    ${input.whySellsInJapan ? `<p><strong>Why it will sell in Japan:</strong><br>${escapeHtml(input.whySellsInJapan).replace(/\n/g, "<br>")}</p>` : ""}
-    ${input.marketOverview ? `<p><strong>Market Overview:</strong><br>${escapeHtml(input.marketOverview).replace(/\n/g, "<br>")}</p>` : ""}
-    ${input.salesStrategy ? `<p><strong>Proposed Strategy:</strong><br>${escapeHtml(input.salesStrategy).replace(/\n/g, "<br>")}</p>` : ""}
-  </div>` : ""}
-  <p><strong>Here's what we can offer:</strong></p>
-  <ul>
-    <li>Exclusive Japan distribution rights (Makuake, CAMPFIRE, and Green Funding launch)</li>
-    <li>Full localization and Japanese customer support</li>
-    <li>Retail channel introduction (major electronics stores, lifestyle retailers)</li>
-    <li>Zero upfront cost to you — we handle all Japan-side logistics</li>
-  </ul>
-  ${input.customNote ? `<p>${escapeHtml(input.customNote).replace(/\n/g, "<br>")}</p>` : ""}
-  <p>Would you have 20 minutes for a quick call this week? I'd love to walk you through the analysis and explore whether this could be a great fit.</p>
-  <p>
-    Best regards,<br>
-    Yoshitaka Kikutani<br>
-    <strong>${COMPANY}</strong><br>
-    <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a><br>
-    <a href="${escapeHtml(COMPANY_URL)}">${escapeHtml(COMPANY_URL)}</a>
-  </p>
-  <p style="color:#9ca3af;font-size:12px;">
-    Campaign: <a href="${escapeHtml(input.productUrl)}" style="color:#6b7280;">${escapeHtml(input.productUrl)}</a>
-  </p>
-</body>
-</html>`;
-
+  const html = buildHtml(text);
   return { subject, text, html };
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+function buildHtml(text: string): string {
+  const body = text
+    .split("\n\n")
+    .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
+    .join("\n");
+  return `<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; color: #1a1a1a; line-height: 1.7; max-width: 600px; margin: 0 auto;">
+${body}
+</body>
+</html>`;
 }

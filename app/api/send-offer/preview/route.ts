@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { generatePersonalizedOffer, translateOfferLetterToJapanese } from "@/lib/claude";
+import { generateFirstEmailVariables, generateSecondEmailVariables, translateOfferLetterToJapanese } from "@/lib/claude";
 import { detectLanguage } from "@/lib/language-detect";
 import { buildOfferLetter, buildFollowUpLetter } from "@/lib/offer-letter";
 import { findLocalProject } from "@/lib/project-store";
@@ -25,82 +25,63 @@ export async function POST(request: Request) {
     }
 
     const langInfo = detectLanguage({ platform: project.platform, country: project.country });
+    const productTitle = project.title_ja ?? project.title;
+    const sharedParams = {
+      productTitle,
+      subtitle: project.subtitle_ja ?? project.subtitle ?? undefined,
+      category: project.category,
+      raisedUsd: project.raised_usd,
+      backers: project.backers,
+      platform: project.platform,
+    };
 
     if (emailType === "second") {
-      // 2通目: 日本市場レポート付きフォローアップ
+      const vars = await generateSecondEmailVariables(sharedParams);
       const letter = buildFollowUpLetter({
-        productTitle: project.title_ja ?? project.title,
+        productTitle,
         productUrl: project.original_url,
         raisedUsd: project.raised_usd,
         backers: project.backers,
         category: project.category,
         customNote: customNote?.trim() || undefined,
+        japanReasons: vars.japanReasons,
+        japanMarketOverview: vars.japanMarketOverview,
+        targetAudience: vars.targetAudience,
+        crowdfundingTarget: vars.crowdfundingTarget,
       });
 
-      const [text_translated, text_ja] = await Promise.all([
-        langInfo.code !== "en"
-          ? import("@/lib/claude").then((m) => m.translateOfferLetter(letter.text, langInfo.code))
-          : Promise.resolve(null),
-        translateOfferLetterToJapanese(letter.text),
-      ]);
+      const text_translated = langInfo.code !== "en"
+        ? await import("@/lib/claude").then((m) => m.translateOfferLetter(letter.text, langInfo.code))
+        : null;
+      const text_ja = await translateOfferLetterToJapanese(letter.text);
 
       return NextResponse.json({
-        letter: {
-          ...letter,
-          text_translated,
-          text_ja,
-          lang: langInfo,
-          emailType: "second",
-        },
+        letter: { ...letter, text_translated, text_ja, lang: langInfo, emailType: "second" },
       });
     }
 
-    // 1通目: Claude APIでパーソナライズ生成
-    const personalized = await generatePersonalizedOffer({
-      productTitle: project.title_ja ?? project.title,
+    // 1通目
+    const vars = await generateFirstEmailVariables(sharedParams);
+    const letter = buildOfferLetter({
+      productTitle,
       productUrl: project.original_url,
+      platform: project.platform,
       raisedUsd: project.raised_usd,
       backers: project.backers,
       category: project.category,
-      subtitle: project.subtitle_ja ?? project.subtitle ?? undefined,
       customNote: customNote?.trim() || undefined,
-      targetLang: langInfo.code,
+      productDescriptionOneLine: vars.productDescriptionOneLine,
+      japanAppealPoint: vars.japanAppealPoint,
     });
 
-    // For non-English, if generated in English (fallback), also translate
-    // For Japanese reference
-    const text_ja = await translateOfferLetterToJapanese(personalized.text);
-
-    // Build HTML version from the text
-    const htmlBody = personalized.text
-      .split("\n\n")
-      .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
-      .join("\n");
-
-    const html = `<!DOCTYPE html>
-<html>
-<body style="font-family: Arial, sans-serif; color: #1a1a1a; line-height: 1.7; max-width: 600px; margin: 0 auto;">
-${htmlBody}
-</body>
-</html>`;
-
-    // If generated in target language, no separate translation needed
-    const text_translated = langInfo.code !== "en" ? personalized.text : null;
-    const text_en = langInfo.code !== "en"
-      ? buildOfferLetter({
-          productTitle: project.title_ja ?? project.title,
-          productUrl: project.original_url,
-          raisedUsd: project.raised_usd,
-          backers: project.backers,
-          category: project.category,
-        }).text
-      : personalized.text;
+    const text_translated = langInfo.code !== "en"
+      ? await import("@/lib/claude").then((m) => m.translateOfferLetter(letter.text, langInfo.code))
+      : null;
+    const text_ja = await translateOfferLetterToJapanese(letter.text);
 
     return NextResponse.json({
       letter: {
-        subject: personalized.subject,
-        text: text_en,
-        html,
+        ...letter,
         text_translated,
         text_ja,
         lang: langInfo,

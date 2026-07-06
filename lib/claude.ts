@@ -301,6 +301,120 @@ ${englishText}`,
   return text.trim();
 }
 
+// ===== 新メールテンプレート用AI変数生成 =====
+
+export interface FirstEmailVariables {
+  productDescriptionOneLine: string;
+  japanAppealPoint: string;
+}
+
+export interface SecondEmailVariables {
+  japanReasons: string;
+  japanMarketOverview: string;
+  targetAudience: string;
+  crowdfundingTarget: string;
+}
+
+export async function generateFirstEmailVariables(params: {
+  productTitle: string;
+  subtitle?: string;
+  category?: string;
+  raisedUsd: number;
+  backers: number;
+  platform: string;
+}): Promise<FirstEmailVariables> {
+  const fallback: FirstEmailVariables = {
+    productDescriptionOneLine: `A highly successful ${params.category ?? "consumer product"} that raised $${params.raisedUsd.toLocaleString("en-US")} from ${params.backers.toLocaleString()} backers.`,
+    japanAppealPoint: "its innovative design and functionality",
+  };
+
+  if (!process.env.ANTHROPIC_API_KEY) return fallback;
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 512,
+    messages: [
+      {
+        role: "user",
+        content: `You are writing variables for a Japan business outreach email. Generate two concise English phrases for the product below.
+
+Product: ${params.productTitle}
+Category: ${params.category ?? "Consumer product"}
+${params.subtitle ? `Description: ${params.subtitle}` : ""}
+Raised: $${params.raisedUsd.toLocaleString("en-US")} from ${params.backers.toLocaleString()} backers
+Platform: ${params.platform}
+
+Return ONLY valid JSON (no markdown):
+{
+  "productDescriptionOneLine": "One sentence (max 20 words) describing what this product does",
+  "japanAppealPoint": "A short phrase (5–12 words) explaining what specifically resonates with Japanese consumers about this product"
+}`,
+      },
+    ],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text : "";
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) return fallback;
+  try {
+    return JSON.parse(match[0]) as FirstEmailVariables;
+  } catch {
+    return fallback;
+  }
+}
+
+export async function generateSecondEmailVariables(params: {
+  productTitle: string;
+  subtitle?: string;
+  category?: string;
+  raisedUsd: number;
+  backers: number;
+  platform: string;
+}): Promise<SecondEmailVariables> {
+  const fallback: SecondEmailVariables = {
+    japanReasons: `・Proven global demand with $${params.raisedUsd.toLocaleString("en-US")} raised\n・Strong fit with Japanese consumer preferences\n・No competing product currently in the Japan market`,
+    japanMarketOverview: `Japan is the world's third-largest consumer market with strong appetite for innovative ${params.category ?? "consumer"} products. The market size for this category exceeds ¥500 billion annually.`,
+    targetAudience: `Primarily urban Japanese professionals aged 30–45 who value quality and innovation. Secondary audience includes tech-savvy younger consumers and gift buyers.`,
+    crowdfundingTarget: "3,000,000〜5,000,000",
+  };
+
+  if (!process.env.ANTHROPIC_API_KEY) return fallback;
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1024,
+    messages: [
+      {
+        role: "user",
+        content: `You are a Japan market analyst. Generate report summary variables in English for a business email about launching this product in Japan.
+
+Product: ${params.productTitle}
+Category: ${params.category ?? "Consumer product"}
+${params.subtitle ? `Description: ${params.subtitle}` : ""}
+Raised: $${params.raisedUsd.toLocaleString("en-US")} from ${params.backers.toLocaleString()} backers
+Platform: ${params.platform}
+
+Return ONLY valid JSON (no markdown):
+{
+  "japanReasons": "3–4 bullet points (one per line, starting with ・) explaining why this product will succeed in Japan",
+  "japanMarketOverview": "2–3 sentences on Japan market size and opportunity for this product category",
+  "targetAudience": "2–3 sentences describing the primary Japanese target audience segments",
+  "crowdfundingTarget": "Realistic JPY target range for Makuake/CAMPFIRE crowdfunding (e.g. '3,000,000〜5,000,000')"
+}`,
+      },
+    ],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text : "";
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) return fallback;
+  try {
+    return JSON.parse(match[0]) as SecondEmailVariables;
+  } catch {
+    return fallback;
+  }
+}
+
 export interface SnsDmResult {
   platform: "instagram" | "twitter" | "facebook";
   text: string;
