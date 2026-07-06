@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     // Check cache
     const { data: report } = await supabase
       .from("reports")
-      .select("status, html, error")
+      .select("status, html, error, updated_at, created_at")
       .eq("project_id", projectId)
       .single();
 
