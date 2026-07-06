@@ -1,30 +1,36 @@
 // Netlify Background Function — runs up to 15 minutes
-import { createClient } from "@supabase/supabase-js";
-import Anthropic from "@anthropic-ai/sdk";
+// Written as CommonJS (.js) to avoid ESM/CJS bundling issues
 
-export const handler = async (event: { body: string | null }) => {
+const { createClient } = require("@supabase/supabase-js");
+const Anthropic = require("@anthropic-ai/sdk");
+
+exports.handler = async (event) => {
   let projectId = "";
   try {
-    const body = JSON.parse(event.body ?? "{}") as { projectId?: string };
-    projectId = body.projectId ?? "test-ping";
-  } catch {
+    const body = JSON.parse(event.body || "{}");
+    projectId = body.projectId || "test-ping";
+  } catch (_) {
     projectId = "test-ping";
   }
 
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      "",
+      ""
   );
 
-  // Always write — even for GET requests with no body (to confirm function runs)
-  await supabase.from("reports").upsert({
+  // Always write — even for test-ping (to confirm function runs)
+  const { error: upsertErr } = await supabase.from("reports").upsert({
     project_id: projectId,
     status: "generating",
     error: "started:" + new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
+
+  if (upsertErr) {
+    console.error("Supabase upsert error:", JSON.stringify(upsertErr));
+  }
 
   if (!projectId || projectId === "test-ping") return;
 
@@ -46,14 +52,14 @@ export const handler = async (event: { body: string | null }) => {
     }
 
     const client = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY ?? "",
+      apiKey: process.env.ANTHROPIC_API_KEY || "",
     });
 
-    const productTitle = project.title_ja ?? project.title;
+    const productTitle = project.title_ja || project.title;
     const prompt = `You are a senior Japan market consultant. Write a compelling bilingual market proposal JSON for this product:
 - Title: ${productTitle}
-- Description: ${project.subtitle_ja ?? project.subtitle ?? "N/A"}
-- Category: ${project.category ?? "Consumer"}
+- Description: ${project.subtitle_ja || project.subtitle || "N/A"}
+- Category: ${project.category || "Consumer"}
 - Platform: ${project.platform}
 - Raised: $${Number(project.raised_usd).toLocaleString("en-US")} from ${Number(project.backers).toLocaleString()} backers
 
@@ -87,8 +93,6 @@ Return ONLY valid JSON:
     if (!jsonMatch) throw new Error("JSON not found in response");
 
     const reportData = JSON.parse(jsonMatch[0]);
-
-    // Build HTML inline (simplified premium template)
     const html = buildHtml(productTitle, project, reportData);
 
     await supabase.from("reports").upsert({
@@ -100,6 +104,7 @@ Return ONLY valid JSON:
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    console.error("Report generation error:", msg);
     await supabase.from("reports").upsert({
       project_id: projectId,
       status: "error",
@@ -109,24 +114,23 @@ Return ONLY valid JSON:
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildHtml(productTitle: string, project: any, r: any): string {
+function buildHtml(productTitle, project, r) {
   const raised = `$${Number(project.raised_usd).toLocaleString("en-US")}`;
   const today = new Date().toLocaleDateString("ja-JP", {
     year: "numeric", month: "long", day: "numeric",
   });
-  const whyJa = String(r.whySellsInJapan ?? "").split("\n").filter(Boolean);
-  const whyEn = String(r.whySellsInJapanEn ?? "").split("\n").filter(Boolean);
+  const whyJa = String(r.whySellsInJapan || "").split("\n").filter(Boolean);
+  const whyEn = String(r.whySellsInJapanEn || "").split("\n").filter(Boolean);
 
   const imgHtml = project.image_url
     ? `<img src="${project.image_url}" alt="${productTitle}" style="max-width:320px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);">`
     : "";
 
-  const whyCards = whyJa.slice(0, 4).map((item: string, i: number) => `
+  const whyCards = whyJa.slice(0, 4).map((item, i) => `
     <div class="why-card">
       <div class="why-num">0${i + 1}</div>
       <p class="why-ja">${item.replace(/^[・\-•]\s*/, "")}</p>
-      <p class="why-en">${(whyEn[i] ?? "").replace(/^[•\-・]\s*/, "")}</p>
+      <p class="why-en">${(whyEn[i] || "").replace(/^[•\-・]\s*/, "")}</p>
     </div>`).join("");
 
   return `<!DOCTYPE html>
@@ -178,14 +182,14 @@ section{padding:80px 40px;max-width:1200px;margin:0 auto}
   <div class="hero-inner">
     <div class="hero-text">
       <div class="hero-badge">Japan Market Proposal · ${today}</div>
-      <h1 class="hero-title ja-content">${r.headlineJa ?? productTitle}</h1>
-      <h1 class="hero-title en-content" style="display:none">${r.headlineEn ?? productTitle}</h1>
+      <h1 class="hero-title ja-content">${r.headlineJa || productTitle}</h1>
+      <h1 class="hero-title en-content" style="display:none">${r.headlineEn || productTitle}</h1>
       <p class="hero-subtitle">${productTitle}</p>
       <div class="stats">
         <div class="stat"><div class="stat-val">${raised}</div><div class="stat-lbl">Raised</div></div>
         <div class="stat"><div class="stat-val">${Number(project.backers).toLocaleString()}</div><div class="stat-lbl">Backers</div></div>
-        <div class="stat"><div class="stat-val">${r.marketSizeJpy ?? "—"}</div><div class="stat-lbl">JP Market</div></div>
-        <div class="stat"><div class="stat-val">${r.growthRate ?? "—"}</div><div class="stat-lbl">Growth</div></div>
+        <div class="stat"><div class="stat-val">${r.marketSizeJpy || "—"}</div><div class="stat-lbl">JP Market</div></div>
+        <div class="stat"><div class="stat-val">${r.growthRate || "—"}</div><div class="stat-lbl">Growth</div></div>
       </div>
     </div>
     ${imgHtml ? `<div class="hero-image">${imgHtml}</div>` : ""}
@@ -206,8 +210,8 @@ section{padding:80px 40px;max-width:1200px;margin:0 auto}
   <h2 class="section-title ja-content">市場概況</h2>
   <h2 class="section-title en-content" style="display:none">Market Overview</h2>
   <div class="text-block">
-    <p class="text-ja ja-content">${r.marketOverview ?? ""}</p>
-    <p class="text-ja en-content" style="display:none">${r.marketOverviewEn ?? ""}</p>
+    <p class="text-ja ja-content">${r.marketOverview || ""}</p>
+    <p class="text-ja en-content" style="display:none">${r.marketOverviewEn || ""}</p>
   </div>
 </section>
 
@@ -217,8 +221,8 @@ section{padding:80px 40px;max-width:1200px;margin:0 auto}
   <h2 class="section-title ja-content">ターゲット層</h2>
   <h2 class="section-title en-content" style="display:none">Target Audience</h2>
   <div class="text-block">
-    <p class="text-ja ja-content">${r.targetAudience ?? ""}</p>
-    <p class="text-ja en-content" style="display:none">${r.targetAudienceEn ?? ""}</p>
+    <p class="text-ja ja-content">${r.targetAudience || ""}</p>
+    <p class="text-ja en-content" style="display:none">${r.targetAudienceEn || ""}</p>
   </div>
 </div>
 </section>
@@ -228,8 +232,8 @@ section{padding:80px 40px;max-width:1200px;margin:0 auto}
   <h2 class="section-title ja-content">販売戦略</h2>
   <h2 class="section-title en-content" style="display:none">Sales Strategy</h2>
   <div class="text-block">
-    <p class="text-ja ja-content">${r.salesStrategy ?? ""}</p>
-    <p class="text-ja en-content" style="display:none">${r.salesStrategyEn ?? ""}</p>
+    <p class="text-ja ja-content">${r.salesStrategy || ""}</p>
+    <p class="text-ja en-content" style="display:none">${r.salesStrategyEn || ""}</p>
   </div>
 </section>
 
@@ -239,8 +243,8 @@ section{padding:80px 40px;max-width:1200px;margin:0 auto}
   <h2 class="section-title ja-content">Blink Japanと組む理由</h2>
   <h2 class="section-title en-content" style="display:none">Why Partner with Blink Japan</h2>
   <div class="text-block">
-    <p class="text-ja ja-content">${r.competitiveEdge ?? ""}</p>
-    <p class="text-ja en-content" style="display:none">${r.competitiveEdgeEn ?? ""}</p>
+    <p class="text-ja ja-content">${r.competitiveEdge || ""}</p>
+    <p class="text-ja en-content" style="display:none">${r.competitiveEdgeEn || ""}</p>
   </div>
 </div>
 </section>
