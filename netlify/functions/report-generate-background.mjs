@@ -248,6 +248,44 @@ section{padding:80px 40px;max-width:1200px;margin:0 auto}
     <p class="text-ja ja-content">${r.competitiveEdge || ""}</p>
     <p class="text-ja en-content" style="display:none">${r.competitiveEdgeEn || ""}</p>
   </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:40px">
+    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:16px;padding:32px">
+      <div style="font-size:28px;margin-bottom:16px">📺</div>
+      <div class="ja-content">
+        <h3 style="font-size:16px;font-weight:700;color:#a5b4fc;margin-bottom:12px">TV・メディアネットワーク</h3>
+        <p style="font-size:14px;line-height:1.8;color:#cbd5e1">日本のテレビ業界に40年以上の実績を持ち、テレビショッピングネットワーク、主要放送局、制作会社と直接の人脈を保有。メディア露出で商品認知を一気に拡大します。</p>
+      </div>
+      <div class="en-content" style="display:none">
+        <h3 style="font-size:16px;font-weight:700;color:#a5b4fc;margin-bottom:12px">TV & Media Network</h3>
+        <p style="font-size:14px;line-height:1.8;color:#cbd5e1">40+ years in the Japanese television industry, with direct connections to home shopping networks, major broadcasters, and production companies. Unmatched reach for product awareness.</p>
+      </div>
+    </div>
+
+    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:16px;padding:32px">
+      <div style="font-size:28px;margin-bottom:16px">📊</div>
+      <div class="ja-content">
+        <h3 style="font-size:16px;font-weight:700;color:#a5b4fc;margin-bottom:12px">デジタルマーケティング</h3>
+        <p style="font-size:14px;line-height:1.8;color:#cbd5e1">Yahoo! JapanおよびGoogle認定代理店として、累計1,200億円以上の広告運用実績を持ち、パフォーマンスマーケティングで最高水準の成果を継続的に提供しています。</p>
+      </div>
+      <div class="en-content" style="display:none">
+        <h3 style="font-size:16px;font-weight:700;color:#a5b4fc;margin-bottom:12px">Digital Marketing</h3>
+        <p style="font-size:14px;line-height:1.8;color:#cbd5e1">Certified agency for Yahoo! Japan and Google, having managed over ¥12 billion in advertising. Consistently delivering top-tier results in performance marketing.</p>
+      </div>
+    </div>
+
+    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:16px;padding:32px">
+      <div style="font-size:28px;margin-bottom:16px">🛍️</div>
+      <div class="ja-content">
+        <h3 style="font-size:16px;font-weight:700;color:#a5b4fc;margin-bottom:12px">マーケットアクセス</h3>
+        <p style="font-size:14px;line-height:1.8;color:#cbd5e1">日本のデジタルビジネスコミュニティに広大なネットワークを持ち、大手ECプラットフォームや、国内最大のクラウドファンディングサイト「Makuake」「CAMPFIRE」との強固なパートナーシップを保有しています。</p>
+      </div>
+      <div class="en-content" style="display:none">
+        <h3 style="font-size:16px;font-weight:700;color:#a5b4fc;margin-bottom:12px">Market Access</h3>
+        <p style="font-size:14px;line-height:1.8;color:#cbd5e1">Extensive network across Japan's digital business community with strong relationships on leading e-commerce platforms and direct partnerships with Japan's top crowdfunding platforms, Makuake and CAMPFIRE.</p>
+      </div>
+    </div>
+  </div>
 </div>
 </section>
 
