@@ -266,7 +266,7 @@ section{padding:80px 40px;max-width:1200px;margin:0 auto}
       <div style="font-size:28px;margin-bottom:16px">📊</div>
       <div class="ja-content">
         <h3 style="font-size:16px;font-weight:700;color:#a5b4fc;margin-bottom:12px">デジタルマーケティング</h3>
-        <p style="font-size:14px;line-height:1.8;color:#cbd5e1">Yahoo! JapanおよびGoogle認定代理店として、累計1,200億円以上の広告運用実績を持ち、パフォーマンスマーケティングで最高水準の成果を継続的に提供しています。</p>
+        <p style="font-size:14px;line-height:1.8;color:#cbd5e1">Yahoo! JapanおよびGoogle認定代理店として、累計120億円以上の広告運用実績を持ち、パフォーマンスマーケティングで最高水準の成果を継続的に提供しています。</p>
       </div>
       <div class="en-content" style="display:none">
         <h3 style="font-size:16px;font-weight:700;color:#a5b4fc;margin-bottom:12px">Digital Marketing</h3>
