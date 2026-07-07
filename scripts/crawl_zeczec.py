@@ -46,12 +46,21 @@ def parse_ntd(text: str) -> int:
 def scrape_category_page(page, cat_url: str) -> list[dict[str, Any]]:
     print(f"[zeczec] loading: {cat_url}")
     page.goto(cat_url, wait_until="domcontentloaded", timeout=60000)
-    page.wait_for_timeout(5000)
+    page.wait_for_timeout(4000)
 
-    # Scroll to load more
-    for _ in range(3):
-        page.mouse.wheel(0, 2000)
-        page.wait_for_timeout(1500)
+    # Scroll slowly to trigger lazy loading on all cards
+    for _ in range(8):
+        page.mouse.wheel(0, 1200)
+        page.wait_for_timeout(800)
+
+    # Scroll back to top then down again to ensure all images are loaded
+    page.evaluate("window.scrollTo(0, 0)")
+    page.wait_for_timeout(1000)
+    for _ in range(8):
+        page.mouse.wheel(0, 1200)
+        page.wait_for_timeout(600)
+
+    page.wait_for_timeout(2000)
 
     projects_data = page.evaluate("""
         () => {
@@ -66,12 +75,30 @@ def scrape_category_page(page, cat_url: str) -> list[dict[str, Any]]:
                 const text = (a.innerText || '').replace(/\\s+/g, ' ').trim();
                 if (!text.includes('NT$')) continue;
 
+                // Try all possible image attribute patterns for lazy-loaded images
                 const imgEl = a.querySelector('img');
-                const img = imgEl?.src
-                    || imgEl?.getAttribute('data-src')
-                    || imgEl?.getAttribute('data-lazy')
-                    || imgEl?.getAttribute('data-original')
-                    || null;
+                let img = null;
+                if (imgEl) {
+                    img = imgEl.getAttribute('src') || null;
+                    // Skip placeholder/base64/blank images
+                    if (!img || img.startsWith('data:') || img.includes('placeholder') || img.length < 20) {
+                        img = imgEl.getAttribute('data-src')
+                            || imgEl.getAttribute('data-lazy-src')
+                            || imgEl.getAttribute('data-original')
+                            || imgEl.getAttribute('data-lazy')
+                            || imgEl.getAttribute('data-srcset')?.split(' ')[0]
+                            || imgEl.getAttribute('srcset')?.split(' ')[0]
+                            || null;
+                    }
+                    // Also check background-image style on the anchor or its children
+                    if (!img) {
+                        const bgEl = a.querySelector('[style*="background-image"]') || a;
+                        const style = bgEl.getAttribute('style') || '';
+                        const bgMatch = style.match(/url\\(['""]?(https?[^'"")]+)/);
+                        if (bgMatch) img = bgMatch[1];
+                    }
+                }
+
                 const lines = (a.innerText || '').split('\\n').map(l => l.trim()).filter(Boolean);
                 const title = lines[0] || '';
 
