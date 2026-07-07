@@ -164,19 +164,41 @@ def parse_card_data(card: dict[str, Any]) -> dict[str, Any] | None:
     })
 
 
+def fetch_og_image(page, project_url: str) -> str | None:
+    """プロジェクトページからog:imageを取得する"""
+    try:
+        page.goto(project_url, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(4000)
+        og = page.evaluate("""() => {
+            const og = document.querySelector('meta[property="og:image"]');
+            return og?.content || null;
+        }""")
+        if og:
+            print(f"[zeczec] og:image found: {og[:60]}...")
+        else:
+            print(f"[zeczec] og:image not found for {project_url}")
+        return og
+    except Exception as e:
+        print(f"[zeczec] og:image fetch error: {e}")
+        return None
+
+
 def crawl_zeczec(max_projects: int = 20) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
-        context = browser.new_context()
-        page = context.new_page()
+        context = browser.new_context(extra_http_headers={
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        })
+        list_page = context.new_page()
+        detail_page = context.new_page()
 
         for cat_url in CATEGORY_URLS:
             if len(projects) >= max_projects:
                 break
-            cards = scrape_category_page(page, cat_url)
+            cards = scrape_category_page(list_page, cat_url)
             print(f"[zeczec] found {len(cards)} cards on {cat_url}")
             for card in cards:
                 if len(projects) >= max_projects:
@@ -188,6 +210,10 @@ def crawl_zeczec(max_projects: int = 20) -> list[dict[str, Any]]:
                 try:
                     result = parse_card_data(card)
                     if result:
+                        # og:imageを個別ページから取得
+                        og_img = fetch_og_image(detail_page, url)
+                        if og_img:
+                            result["image_url"] = og_img
                         projects.append(result)
                 except Exception as e:
                     print(f"[zeczec] error: {e}")

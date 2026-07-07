@@ -64,22 +64,32 @@ export function ProductCard({
   const displaySubtitle = getDisplaySubtitle(project);
   const showEnglishTitle = hasValidJapaneseTitle(project) && displayTitle !== project.title;
   const isZeczec = project.platform === "zeczec";
-  const imageSrc = (!isZeczec && project.image_url) ? project.image_url : null;
+  const imageSrc = project.image_url ?? null;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary/40">
         {imageSrc ? (
-          <Image
-            src={imageSrc}
-            alt={displayTitle}
-            fill
-            className="object-cover transition duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 33vw"
-          />
+          isZeczec ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageSrc}
+              alt={displayTitle}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            <Image
+              src={imageSrc}
+              alt={displayTitle}
+              fill
+              className="object-cover transition duration-300 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, 33vw"
+            />
+          )
         ) : (
           <div className="flex h-full items-center justify-center p-4 text-center text-sm font-medium text-muted-foreground">
-            {isZeczec ? displayTitle : "No Image"}
+            No Image
           </div>
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
