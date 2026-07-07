@@ -64,7 +64,10 @@ export function ProductCard({
   const displaySubtitle = getDisplaySubtitle(project);
   const showEnglishTitle = hasValidJapaneseTitle(project) && displayTitle !== project.title;
   const isZeczec = project.platform === "zeczec";
-  const imageSrc = project.image_url ?? null;
+  const rawImageSrc = project.image_url ?? null;
+  const imageSrc = isZeczec && rawImageSrc
+    ? `/api/image-proxy?url=${encodeURIComponent(rawImageSrc)}`
+    : rawImageSrc;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
