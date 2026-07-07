@@ -9,13 +9,12 @@ export async function POST(request: NextRequest) {
   }
 
   const pat = process.env.GITHUB_PAT;
-  const repo = process.env.GITHUB_REPO;
-  if (!pat || !repo) {
-    return NextResponse.json({ error: "GITHUB_PAT or GITHUB_REPO not configured" }, { status: 500 });
+  if (!pat) {
+    return NextResponse.json({ error: "GITHUB_PAT not configured" }, { status: 500 });
   }
 
   const res = await fetch(
-    `https://api.github.com/repos/${repo}/actions/workflows/crawl-zeczec.yml/dispatches`,
+    `https://api.github.com/repos/kikutani44-hash/crowdscout-japan/actions/workflows/crawl-zeczec.yml/dispatches`,
     {
       method: "POST",
       headers: {
