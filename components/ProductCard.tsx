@@ -70,7 +70,7 @@ export function ProductCard({
     <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary/40">
         {imageSrc ? (
-          isZeczec ? (
+          isZeczec && !imageSrc.includes("supabase.co") ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={imageSrc}

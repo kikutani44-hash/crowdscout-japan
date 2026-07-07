@@ -8,12 +8,15 @@ Currency: NTD -> USD (1 USD ≈ 32 NTD)
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import os
 import re
 import sys
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import requests as _requests
 from playwright.sync_api import sync_playwright
 
 from common import (
@@ -23,6 +26,39 @@ from common import (
     save_to_supabase,
     utc_now_iso,
 )
+
+SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+BUCKET = "zeczec-images"
+
+
+def ensure_bucket() -> bool:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return False
+    r = _requests.post(
+        f"{SUPABASE_URL}/storage/v1/bucket",
+        headers={"Authorization": f"Bearer {SUPABASE_KEY}", "Content-Type": "application/json"},
+        json={"id": BUCKET, "name": BUCKET, "public": True},
+    )
+    return r.ok or r.status_code == 409  # 409 = already exists
+
+
+def upload_image_bytes(img_bytes: bytes, filename: str, content_type: str = "image/jpeg") -> str | None:
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    r = _requests.put(
+        f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}",
+        headers={
+            "Authorization": f"Bearer {SUPABASE_KEY}",
+            "Content-Type": content_type,
+            "x-upsert": "true",
+        },
+        data=img_bytes,
+    )
+    if r.ok:
+        return f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{filename}"
+    print(f"[zeczec] storage upload failed: {r.status_code} {r.text[:100]}")
+    return None
 
 NTD_TO_USD = 1 / 32.0
 
@@ -43,9 +79,23 @@ def parse_ntd(text: str) -> int:
     return 0
 
 
-def scrape_category_page(page, cat_url: str) -> list[dict[str, Any]]:
+def scrape_category_page(page, cat_url: str, captured_images: dict[str, bytes] | None = None) -> list[dict[str, Any]]:
     print(f"[zeczec] loading: {cat_url}")
     page.set_extra_http_headers({"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
+
+    # ブラウザが画像をロードする際にレスポンスをインターセプト
+    if captured_images is not None:
+        def on_response(response):
+            url = response.url
+            if "assets.zeczec.com" in url and ("image_big" in url or "image_original" in url):
+                try:
+                    body = response.body()
+                    if body:
+                        captured_images[url.split("?")[0]] = body
+                except Exception:
+                    pass
+        page.on("response", on_response)
+
     page.goto(cat_url, wait_until="networkidle", timeout=90000)
     page.wait_for_timeout(5000)
 
@@ -86,6 +136,8 @@ def scrape_category_page(page, cat_url: str) -> list[dict[str, Any]]:
             return results;
         }
     """)
+    for d in projects_data[:5]:
+        print(f"[zeczec] img url: {(d.get('img') or 'None')[:80]}")
     return projects_data
 
 
@@ -193,13 +245,16 @@ def crawl_zeczec(max_projects: int = 20) -> list[dict[str, Any]]:
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         })
         list_page = context.new_page()
-        detail_page = context.new_page()
+        captured_images: dict[str, bytes] = {}
+        use_storage = bool(SUPABASE_URL and SUPABASE_KEY and ensure_bucket())
+        if use_storage:
+            print("[zeczec] Supabase Storage ready — will upload images")
 
         for cat_url in CATEGORY_URLS:
             if len(projects) >= max_projects:
                 break
-            cards = scrape_category_page(list_page, cat_url)
-            print(f"[zeczec] found {len(cards)} cards on {cat_url}")
+            cards = scrape_category_page(list_page, cat_url, captured_images)
+            print(f"[zeczec] found {len(cards)} cards, captured {len(captured_images)} images")
             for card in cards:
                 if len(projects) >= max_projects:
                     break
@@ -209,11 +264,19 @@ def crawl_zeczec(max_projects: int = 20) -> list[dict[str, Any]]:
                 seen_urls.add(url)
                 try:
                     result = parse_card_data(card)
+                    if result and use_storage:
+                        raw_img = result.get("image_url") or ""
+                        img_key = raw_img.split("?")[0]
+                        img_bytes = captured_images.get(img_key)
+                        if img_bytes:
+                            ext = img_key.rsplit(".", 1)[-1] if "." in img_key else "jpg"
+                            fname = img_key.rsplit("/", 1)[-1]
+                            ctype = f"image/{ext}" if ext in ("jpg", "jpeg", "png", "webp") else "image/jpeg"
+                            public_url = upload_image_bytes(img_bytes, fname, ctype)
+                            if public_url:
+                                result["image_url"] = public_url
+                                print(f"[zeczec] uploaded image: {fname}")
                     if result:
-                        # og:imageを個別ページから取得
-                        og_img = fetch_og_image(detail_page, url)
-                        if og_img:
-                            result["image_url"] = og_img
                         projects.append(result)
                 except Exception as e:
                     print(f"[zeczec] error: {e}")
