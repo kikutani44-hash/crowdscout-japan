@@ -63,7 +63,9 @@ export function ProductCard({
   const displayTitle = getDisplayTitle(project);
   const displaySubtitle = getDisplaySubtitle(project);
   const showEnglishTitle = hasValidJapaneseTitle(project) && displayTitle !== project.title;
-  const imageSrc = project.image_url ?? null;
+  const imageSrc = project.image_url
+    ? `/api/image-proxy?url=${encodeURIComponent(project.image_url)}`
+    : null;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
