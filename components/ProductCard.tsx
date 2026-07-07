@@ -64,10 +64,7 @@ export function ProductCard({
   const displaySubtitle = getDisplaySubtitle(project);
   const showEnglishTitle = hasValidJapaneseTitle(project) && displayTitle !== project.title;
   const isZeczec = project.platform === "zeczec";
-  const rawImageSrc = project.image_url ?? null;
-  const imageSrc = isZeczec && rawImageSrc
-    ? `/api/image-proxy?url=${encodeURIComponent(rawImageSrc)}`
-    : rawImageSrc;
+  const imageSrc = project.image_url ?? null;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
@@ -78,6 +75,7 @@ export function ProductCard({
             <img
               src={imageSrc}
               alt={displayTitle}
+              referrerPolicy="no-referrer"
               className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
