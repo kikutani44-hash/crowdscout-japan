@@ -45,18 +45,18 @@ from common import (
 )
 
 DISCOVER_BASE = "https://www.kickstarter.com/discover/advanced.json"
-DISCOVER_SORT = "magic"
 BLOCKED_CATEGORY_IDS = {12}  # Games — never crawl
 DEFAULT_CATEGORIES = KICKSTARTER_DEMO_SLUGS
+MIN_RAISED_USD_NEWEST = 1_000  # relaxed filter for newest sort
 
 
-def build_discover_url(page_num: int, category_id: int | None = None) -> str:
-    """Build discover JSON URL matching Kickstarter advanced discover (sort=magic)."""
+def build_discover_url(page_num: int, category_id: int | None = None, sort: str = "magic") -> str:
+    """Build discover JSON URL matching Kickstarter advanced discover."""
     if category_id in BLOCKED_CATEGORY_IDS:
         raise ValueError(f"category_id={category_id} is blocked (Games)")
 
     params: dict[str, Any] = {
-        "sort": DISCOVER_SORT,
+        "sort": sort,
         "page": page_num,
     }
     if category_id:
@@ -72,22 +72,23 @@ def within_days_since_end(deadline_ts: int, max_days: int) -> bool:
     return 0 <= delta.days <= max_days
 
 
-def map_kickstarter_project(item: dict[str, Any]) -> dict[str, Any] | None:
+def map_kickstarter_project(item: dict[str, Any], min_raised: int = MIN_RAISED_USD, newest_mode: bool = False) -> dict[str, Any] | None:
     pledged = int(float(item.get("usd_pledged") or item.get("pledged") or 0))
     goal = int(float(item.get("goal") or 0))
     state = str(item.get("state") or "")
 
-    if pledged < MIN_RAISED_USD:
+    if pledged < min_raised:
         return None
 
     if state == "successful":
+        if newest_mode:
+            return None  # newest sort targets live campaigns only
         if goal > 0 and pledged < goal:
             return None
         if not within_days_since_end(int(item.get("deadline") or 0), MAX_DAYS_SINCE_END):
             return None
         status = "ended"
     elif state == "live":
-        # sort=magic surfaces active campaigns — keep those with strong funding
         status = "active"
     else:
         return None
@@ -144,12 +145,17 @@ def crawl_kickstarter(
     max_projects: int | None = None,
     min_projects: int | None = None,
     skip_contacts: bool = False,
+    sort: str = "magic",
 ) -> list[dict[str, Any]]:
+    newest_mode = sort == "newest"
+    min_raised = MIN_RAISED_USD_NEWEST if newest_mode else MIN_RAISED_USD
     projects: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
     categories = resolve_kickstarter_categories(category_slugs)
     pages_per_category = max(1, max_pages)
     limit = max_projects if max_projects and max_projects > 0 else None
+
+    print(f"[kickstarter] sort={sort}, min_raised=${min_raised:,}, newest_mode={newest_mode}")
 
     with sync_playwright() as playwright:
         browser, context = create_browser(playwright)
@@ -165,7 +171,7 @@ def crawl_kickstarter(
             for page_num in range(1, pages_per_category + 1):
                 if limit and len(projects) >= limit:
                     break
-                url = build_discover_url(page_num, category_id)
+                url = build_discover_url(page_num, category_id, sort=sort)
                 print(f"[kickstarter] fetching page {page_num}: {url}")
                 data = fetch_json_page(page, url)
                 if not data:
@@ -182,7 +188,7 @@ def crawl_kickstarter(
                 for item in batch:
                     if limit and len(projects) >= limit:
                         break
-                    mapped = map_kickstarter_project(item)
+                    mapped = map_kickstarter_project(item, min_raised=min_raised, newest_mode=newest_mode)
                     if not mapped:
                         continue
                     if not is_allowed_category(mapped["category"]):
@@ -202,8 +208,8 @@ def crawl_kickstarter(
 
         browser.close()
 
-    # Extra pages on Technology if below minimum target
-    if min_projects and len(projects) < min_projects:
+    # Extra pages on Technology if below minimum target (magic sort only)
+    if not newest_mode and min_projects and len(projects) < min_projects:
         tech_cats = [(cid, label) for cid, label in categories if cid == 16]
         if tech_cats:
             extra_start = pages_per_category + 1
@@ -219,14 +225,14 @@ def crawl_kickstarter(
                     for page_num in range(extra_start, extra_end + 1):
                         if len(projects) >= min_projects:
                             break
-                        url = build_discover_url(page_num, category_id)
+                        url = build_discover_url(page_num, category_id, sort=sort)
                         data = fetch_json_page(page, url)
                         if not data:
                             break
                         for item in data.get("projects") or []:
                             if len(projects) >= min_projects:
                                 break
-                            mapped = map_kickstarter_project(item)
+                            mapped = map_kickstarter_project(item, min_raised=min_raised)
                             if not mapped or not is_allowed_category(mapped["category"]):
                                 continue
                             key = mapped["original_url"]
@@ -275,6 +281,13 @@ def main() -> int:
         default=50,
         help="Minimum projects to collect (extra Technology pages if needed)",
     )
+    parser.add_argument(
+        "--sort",
+        type=str,
+        default="magic",
+        choices=["magic", "newest"],
+        help="Kickstarter discover sort order: magic (popular) or newest",
+    )
     parser.add_argument("--no-save", action="store_true", help="Skip writing output files")
     parser.add_argument(
         "--categories",
@@ -312,6 +325,7 @@ def main() -> int:
         max_projects=args.max,
         min_projects=args.min,
         skip_contacts=args.no_contacts,
+        sort=args.sort,
     )
     print(f"[kickstarter] total matched: {len(projects)}")
     if args.min and len(projects) < args.min:

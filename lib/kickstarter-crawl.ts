@@ -48,12 +48,12 @@ function computeMetrics(
   };
 }
 
-function mapProject(item: Record<string, unknown>) {
+function mapProject(item: Record<string, unknown>, minRaised: number = MIN_RAISED_USD) {
   const pledged = parseInt(String(item.usd_pledged ?? item.pledged ?? 0));
   const goal = parseInt(String(item.goal ?? 0));
   const state = String(item.state ?? "");
 
-  if (pledged < MIN_RAISED_USD) return null;
+  if (pledged < minRaised) return null;
 
   let status: string;
   if (state === "successful") {
@@ -122,33 +122,54 @@ function mapProject(item: Record<string, unknown>) {
   };
 }
 
+async function fetchCategoryPages(
+  categoryId: number,
+  sort: "magic" | "newest",
+  maxPages: number,
+  seenUrls: Set<string>,
+  minRaised: number = MIN_RAISED_USD,
+): Promise<Record<string, unknown>[]> {
+  const results: Record<string, unknown>[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const url = `${DISCOVER_BASE}?sort=${sort}&page=${page}&category_id=${categoryId}`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) break;
+    const data = await res.json();
+    const batch: Record<string, unknown>[] = data.projects ?? [];
+    if (!batch.length) break;
+
+    for (const item of batch) {
+      const mapped = mapProject(item, minRaised);
+      if (!mapped || seenUrls.has(mapped.original_url)) continue;
+      // newest: live only
+      if (sort === "newest" && mapped.status !== "active") continue;
+      seenUrls.add(mapped.original_url);
+      results.push(mapped);
+    }
+  }
+  return results;
+}
+
 export async function runKickstarterCrawl(): Promise<number> {
   const supabase = createServerSupabase();
   const projects: Record<string, unknown>[] = [];
   const seenUrls = new Set<string>();
 
+  // popular (magic) — 20 pages per category
   for (const categoryId of CATEGORY_IDS) {
-    for (let page = 1; page <= 10; page++) {
-      const url = `${DISCOVER_BASE}?sort=magic&page=${page}&category_id=${categoryId}`;
-      const res = await fetch(url, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-          Accept: "application/json",
-        },
-      });
-      if (!res.ok) break;
-      const data = await res.json();
-      const batch = data.projects ?? [];
-      if (!batch.length) break;
+    const batch = await fetchCategoryPages(categoryId, "magic", 20, seenUrls);
+    projects.push(...batch);
+  }
 
-      for (const item of batch) {
-        const mapped = mapProject(item);
-        if (!mapped || seenUrls.has(mapped.original_url)) continue;
-        seenUrls.add(mapped.original_url);
-        projects.push(mapped);
-      }
-    }
+  // newest — 10 pages per category, relaxed $1,000 minimum
+  for (const categoryId of CATEGORY_IDS) {
+    const batch = await fetchCategoryPages(categoryId, "newest", 10, seenUrls, 1_000);
+    projects.push(...batch);
   }
 
   if (projects.length === 0) {
