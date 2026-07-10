@@ -149,7 +149,24 @@ export default function ReportPage() {
       `}</style>
       <div className="no-print print-bar">
         <span>📄 日本市場展開提案書</span>
-        <button className="print-btn" onClick={() => window.print()}>PDFとして保存</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            className="print-btn"
+            style={{ background: "#374151", fontSize: 12 }}
+            onClick={async () => {
+              if (!confirm("レポートを再生成しますか？")) return;
+              await fetch("/api/market-report/reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ projectId: id }),
+              });
+              window.location.reload();
+            }}
+          >
+            🔄 再生成
+          </button>
+          <button className="print-btn" onClick={() => window.print()}>PDFとして保存</button>
+        </div>
       </div>
       <div dangerouslySetInnerHTML={{ __html: bodyContent }} />
     </>
