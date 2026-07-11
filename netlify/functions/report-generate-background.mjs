@@ -227,7 +227,7 @@ a{color:inherit;text-decoration:none}
 
 <div class="topbar">
   <div class="topbar-left">
-    <button class="back-btn" onclick="window.location.href='/'">← ダッシュボードへ</button>
+    <button class="back-btn" onclick="history.back()">← 戻る</button>
     <span class="topbar-title">日本市場展開提案書</span>
   </div>
   <div class="topbar-right">
