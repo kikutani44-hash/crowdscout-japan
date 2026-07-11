@@ -130,43 +130,34 @@ export default function ReportPage() {
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <style>{`
-        @media print { .no-print { display: none !important; } body { background: #fff !important; } }
-        .print-bar {
-          position: fixed; top: 0; left: 0; right: 0;
-          background: #0f172a; color: #fff;
-          padding: 12px 24px; display: flex; align-items: center;
-          justify-content: space-between; z-index: 1000;
-          font-family: sans-serif; font-size: 14px;
+        @media print { .no-print { display: none !important; } }
+        .regen-bar {
+          position: fixed; bottom: 16px; right: 16px; z-index: 9999;
         }
-        .print-btn {
-          background: #3b82f6; color: #fff; border: none;
-          padding: 8px 20px; border-radius: 6px;
-          font-size: 13px; font-weight: 600; cursor: pointer;
+        .regen-btn {
+          background: #374151; color: #fff; border: none;
+          padding: 8px 14px; border-radius: 8px;
+          font-size: 12px; font-weight: 600; cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          opacity: 0.7;
         }
-        .print-btn:hover { background: #2563eb; }
-        body { margin-top: 52px; }
-        @media print { body { margin-top: 0; } }
+        .regen-btn:hover { opacity: 1; }
       `}</style>
-      <div className="no-print print-bar">
-        <span>📄 日本市場展開提案書</span>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button
-            className="print-btn"
-            style={{ background: "#374151", fontSize: 12 }}
-            onClick={async () => {
-              if (!confirm("レポートを再生成しますか？")) return;
-              await fetch("/api/market-report/reset", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ projectId: id }),
-              });
-              window.location.reload();
-            }}
-          >
-            🔄 再生成
-          </button>
-          <button className="print-btn" onClick={() => window.print()}>PDFとして保存</button>
-        </div>
+      <div className="no-print regen-bar">
+        <button
+          className="regen-btn"
+          onClick={async () => {
+            if (!confirm("レポートを再生成しますか？")) return;
+            await fetch("/api/market-report/reset", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ projectId: id }),
+            });
+            window.location.reload();
+          }}
+        >
+          🔄 再生成
+        </button>
       </div>
       <div dangerouslySetInnerHTML={{ __html: bodyContent }} />
     </>
