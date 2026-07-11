@@ -80,8 +80,8 @@ Return ONLY valid JSON:
   "salesStrategyEn": "same in English",
   "competitiveEdge": "3 sentences in Japanese about partnership value and first-mover advantage",
   "competitiveEdgeEn": "same in English",
-  "marketSizeJpy": "estimated market size in 億円",
-  "growthRate": "e.g. '12.3%'"
+  "marketSizeJpy": "short number only, e.g. '約1,200億円' — max 8 chars, NO explanation",
+  "growthRate": "short number only, e.g. '12.3%' — max 6 chars, NO explanation"
 }`;
 
     const message = await client.messages.create({
@@ -166,11 +166,10 @@ a{color:inherit;text-decoration:none}
 .hero-badge{display:inline-block;background:#ebf5ff;color:#1a56db;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px}
 .hero-title{font-size:clamp(22px,3.5vw,36px);font-weight:800;line-height:1.25;color:#1a202c;margin-bottom:10px}
 .hero-product{font-size:14px;color:#718096;margin-bottom:24px}
-.stats{display:flex;gap:0;border:1px solid #e8ecf0;border-radius:12px;overflow:hidden;flex-wrap:wrap}
-.stat{flex:1;min-width:100px;padding:16px 12px;text-align:center;border-right:1px solid #e8ecf0}
-.stat:last-child{border-right:none}
-.stat-val{font-size:20px;font-weight:800;color:#1a56db}
-.stat-lbl{font-size:10px;color:#a0aec0;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px}
+.stat{background:#f7f8fa;border:1px solid #e8ecf0;border-radius:10px;padding:12px 16px;text-align:center;min-width:0}
+.stat-val{font-size:16px;font-weight:800;color:#1a56db;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-lbl{font-size:10px;color:#a0aec0;text-transform:uppercase;letter-spacing:1px;margin-top:2px;white-space:nowrap}
 .hero-image{flex:0 0 auto}
 
 /* SECTIONS */
