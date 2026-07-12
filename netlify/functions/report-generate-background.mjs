@@ -59,7 +59,21 @@ export const handler = async (event) => {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "" });
 
     const productTitle = project.title_ja || project.title;
-    const prompt = `You are a senior Japan market consultant. Write a compelling bilingual market proposal JSON for this product:
+
+    // Detect local language based on platform
+    const platform = (project.platform || "").toLowerCase();
+    const localLang = platform === "wadiz" ? "ko" : platform === "zeczec" ? "zh" : null;
+    const localLangName = localLang === "ko" ? "Korean" : localLang === "zh" ? "Traditional Chinese (繁體中文)" : null;
+
+    const localFields = localLang && localLangName ? `
+  "headlineLocal": "same headline in ${localLangName}",
+  "whySellsInJapanLocal": "same 5 bullets in ${localLangName}",
+  "marketOverviewLocal": "same in ${localLangName}",
+  "targetAudienceLocal": "same in ${localLangName}",
+  "salesStrategyLocal": "same in ${localLangName}",
+  "competitiveEdgeLocal": "same in ${localLangName}",` : "";
+
+    const prompt = `You are a senior Japan market consultant. Write a compelling market proposal JSON for this product:
 - Title: ${productTitle}
 - Description: ${project.subtitle_ja || project.subtitle || "N/A"}
 - Category: ${project.category || "Consumer"}
@@ -69,7 +83,7 @@ export const handler = async (event) => {
 Return ONLY valid JSON:
 {
   "headlineJa": "compelling Japanese headline",
-  "headlineEn": "same in English",
+  "headlineEn": "same in English",${localFields}
   "whySellsInJapan": "5 bullet points in Japanese starting with ・ explaining why this sells in Japan",
   "whySellsInJapanEn": "same 5 bullets in English starting with •",
   "marketOverview": "3 sentences in Japanese about Japan market size and opportunity",
@@ -95,7 +109,7 @@ Return ONLY valid JSON:
     if (!jsonMatch) throw new Error("JSON not found in response");
 
     const reportData = JSON.parse(jsonMatch[0]);
-    const html = buildHtml(productTitle, project, reportData);
+    const html = buildHtml(productTitle, project, reportData, localLang);
 
     await supabase.from("reports").upsert({
       project_id: projectId,
@@ -116,7 +130,7 @@ Return ONLY valid JSON:
   }
 };
 
-function buildHtml(productTitle, project, r) {
+function buildHtml(productTitle, project, r, localLang) {
   const raised = `$${Number(project.raised_usd).toLocaleString("en-US")}`;
   const raisedJpy = `¥${Math.round(Number(project.raised_usd) * 155).toLocaleString("ja-JP")}`;
   const today = new Date().toLocaleDateString("ja-JP", {
@@ -124,6 +138,11 @@ function buildHtml(productTitle, project, r) {
   });
   const whyJa = String(r.whySellsInJapan || "").split("\n").filter(Boolean);
   const whyEn = String(r.whySellsInJapanEn || "").split("\n").filter(Boolean);
+  const whyLocal = localLang ? String(r.whySellsInJapanLocal || "").split("\n").filter(Boolean) : [];
+
+  // Local language meta
+  const localBtnLabel = localLang === "ko" ? "한국어" : localLang === "zh" ? "繁體中文" : null;
+  const localContentClass = localLang ? `${localLang}-content` : null;
 
   const imgHtml = project.image_url
     ? `<img src="${project.image_url}" alt="${productTitle}" style="width:100%;max-width:380px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.12);">`
@@ -132,8 +151,9 @@ function buildHtml(productTitle, project, r) {
   const whyCards = whyJa.slice(0, 5).map((item, i) => `
     <div class="why-card">
       <div class="why-num">${String(i + 1).padStart(2, "0")}</div>
-      <p class="why-ja">${item.replace(/^[・\-•]\s*/, "")}</p>
-      <p class="why-en">${(whyEn[i] || "").replace(/^[•\-・]\s*/, "")}</p>
+      <p class="ja-content">${item.replace(/^[・\-•]\s*/, "")}</p>
+      <p class="en-content" style="display:none">${(whyEn[i] || "").replace(/^[•\-・]\s*/, "")}</p>
+      ${localContentClass && whyLocal[i] ? `<p class="${localContentClass}" style="display:none">${whyLocal[i].replace(/^[•\-・]\s*/, "")}</p>` : ""}
     </div>`).join("");
 
   return `<!DOCTYPE html>
@@ -233,6 +253,7 @@ a{color:inherit;text-decoration:none}
   <div class="topbar-right">
     <button class="lang-btn active" onclick="setLang('ja')">日本語</button>
     <button class="lang-btn" onclick="setLang('en')">English</button>
+    ${localBtnLabel ? `<button class="lang-btn" onclick="setLang('${localLang}')">${localBtnLabel}</button>` : ""}
     <button class="pdf-btn" onclick="window.print()">PDF保存</button>
   </div>
 </div>
@@ -243,6 +264,7 @@ a{color:inherit;text-decoration:none}
       <div class="hero-badge">Japan Market Proposal · ${today}</div>
       <h1 class="hero-title ja-content">${r.headlineJa || productTitle}</h1>
       <h1 class="hero-title en-content" style="display:none">${r.headlineEn || productTitle}</h1>
+      ${localContentClass ? `<h1 class="hero-title ${localContentClass}" style="display:none">${r.headlineLocal || productTitle}</h1>` : ""}
       <p class="hero-product">${productTitle}</p>
       <div class="stats">
         <div class="stat"><div class="stat-val">${raised}</div><div class="stat-lbl">Raised</div></div>
@@ -263,6 +285,7 @@ a{color:inherit;text-decoration:none}
     <div class="section-label">Why Japan</div>
     <h2 class="section-title ja-content">日本で売れる理由</h2>
     <h2 class="section-title en-content" style="display:none">Why It Sells in Japan</h2>
+    ${localContentClass ? `<h2 class="section-title ${localContentClass}" style="display:none">Why It Sells in Japan</h2>` : ""}
     <div class="why-grid">${whyCards}</div>
   </div>
 </div>
@@ -273,9 +296,11 @@ a{color:inherit;text-decoration:none}
   <div class="section-label">Market Overview</div>
   <h2 class="section-title ja-content">市場概況</h2>
   <h2 class="section-title en-content" style="display:none">Market Overview</h2>
+  ${localContentClass ? `<h2 class="section-title ${localContentClass}" style="display:none">Market Overview</h2>` : ""}
   <div class="text-block">
     <p class="text-ja ja-content">${r.marketOverview || ""}</p>
     <p class="text-ja en-content" style="display:none">${r.marketOverviewEn || ""}</p>
+    ${localContentClass ? `<p class="text-ja ${localContentClass}" style="display:none">${r.marketOverviewLocal || ""}</p>` : ""}
   </div>
 </div>
 
@@ -286,9 +311,11 @@ a{color:inherit;text-decoration:none}
     <div class="section-label">Target Audience</div>
     <h2 class="section-title ja-content">ターゲット層</h2>
     <h2 class="section-title en-content" style="display:none">Target Audience</h2>
+    ${localContentClass ? `<h2 class="section-title ${localContentClass}" style="display:none">Target Audience</h2>` : ""}
     <div class="text-block">
       <p class="text-ja ja-content">${r.targetAudience || ""}</p>
       <p class="text-ja en-content" style="display:none">${r.targetAudienceEn || ""}</p>
+      ${localContentClass ? `<p class="text-ja ${localContentClass}" style="display:none">${r.targetAudienceLocal || ""}</p>` : ""}
     </div>
   </div>
 </div>
@@ -299,9 +326,11 @@ a{color:inherit;text-decoration:none}
   <div class="section-label">Sales Strategy</div>
   <h2 class="section-title ja-content">販売戦略</h2>
   <h2 class="section-title en-content" style="display:none">Sales Strategy</h2>
+  ${localContentClass ? `<h2 class="section-title ${localContentClass}" style="display:none">Sales Strategy</h2>` : ""}
   <div class="text-block">
     <p class="text-ja ja-content">${r.salesStrategy || ""}</p>
     <p class="text-ja en-content" style="display:none">${r.salesStrategyEn || ""}</p>
+    ${localContentClass ? `<p class="text-ja ${localContentClass}" style="display:none">${r.salesStrategyLocal || ""}</p>` : ""}
   </div>
 </div>
 
@@ -312,9 +341,11 @@ a{color:inherit;text-decoration:none}
     <div class="section-label">Partnership Value</div>
     <h2 class="section-title ja-content">Blink Japanと組む理由</h2>
     <h2 class="section-title en-content" style="display:none">Why Partner with Blink Japan</h2>
+    ${localContentClass ? `<h2 class="section-title ${localContentClass}" style="display:none">Why Partner with Blink Japan</h2>` : ""}
     <div class="text-block">
       <p class="text-ja ja-content">${r.competitiveEdge || ""}</p>
       <p class="text-ja en-content" style="display:none">${r.competitiveEdgeEn || ""}</p>
+      ${localContentClass ? `<p class="text-ja ${localContentClass}" style="display:none">${r.competitiveEdgeLocal || ""}</p>` : ""}
     </div>
     <div class="partner-grid">
       <div class="partner-card">
@@ -361,9 +392,15 @@ a{color:inherit;text-decoration:none}
 
 <script>
 function setLang(lang) {
-  document.querySelectorAll('.ja-content').forEach(el => el.style.display = lang === 'ja' ? '' : 'none');
-  document.querySelectorAll('.en-content').forEach(el => el.style.display = lang === 'en' ? '' : 'none');
-  document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.textContent.trim() === (lang === 'ja' ? '日本語' : 'English')));
+  ['ja','en','ko','zh'].forEach(function(l) {
+    document.querySelectorAll('.' + l + '-content').forEach(function(el) {
+      el.style.display = l === lang ? '' : 'none';
+    });
+  });
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    var labels = {ja:'日本語', en:'English', ko:'한국어', zh:'繁體中文'};
+    btn.classList.toggle('active', btn.textContent.trim() === (labels[lang] || ''));
+  });
 }
 </script>
 </body>

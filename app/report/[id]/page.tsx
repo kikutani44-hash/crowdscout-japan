@@ -77,18 +77,15 @@ export default function ReportPage() {
   // Expose setLang to window so inline onclick in generated HTML works
   useEffect(() => {
     if (!html) return;
+    const labels: Record<string, string> = { ja: "日本語", en: "English", ko: "한국어", zh: "繁體中文" };
     (window as unknown as Record<string, unknown>).setLang = (lang: string) => {
-      document.querySelectorAll(".ja-content").forEach((el) => {
-        (el as HTMLElement).style.display = lang === "ja" ? "" : "none";
-      });
-      document.querySelectorAll(".en-content").forEach((el) => {
-        (el as HTMLElement).style.display = lang === "en" ? "" : "none";
+      ["ja", "en", "ko", "zh"].forEach((l) => {
+        document.querySelectorAll(`.${l}-content`).forEach((el) => {
+          (el as HTMLElement).style.display = l === lang ? "" : "none";
+        });
       });
       document.querySelectorAll(".lang-btn").forEach((btn) => {
-        btn.classList.toggle(
-          "active",
-          btn.textContent?.trim() === (lang === "ja" ? "日本語" : "English")
-        );
+        btn.classList.toggle("active", btn.textContent?.trim() === (labels[lang] ?? ""));
       });
     };
   }, [html]);
