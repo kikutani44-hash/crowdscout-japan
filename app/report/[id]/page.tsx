@@ -74,6 +74,25 @@ export default function ReportPage() {
     if (html || error) return;
   }, [html, error]);
 
+  // Expose setLang to window so inline onclick in generated HTML works
+  useEffect(() => {
+    if (!html) return;
+    (window as unknown as Record<string, unknown>).setLang = (lang: string) => {
+      document.querySelectorAll(".ja-content").forEach((el) => {
+        (el as HTMLElement).style.display = lang === "ja" ? "" : "none";
+      });
+      document.querySelectorAll(".en-content").forEach((el) => {
+        (el as HTMLElement).style.display = lang === "en" ? "" : "none";
+      });
+      document.querySelectorAll(".lang-btn").forEach((btn) => {
+        btn.classList.toggle(
+          "active",
+          btn.textContent?.trim() === (lang === "ja" ? "日本語" : "English")
+        );
+      });
+    };
+  }, [html]);
+
   if (error) {
     return (
       <div style={{ padding: 40, fontFamily: "sans-serif", maxWidth: 600 }}>
