@@ -37,6 +37,8 @@ export async function POST(request: Request) {
       platform: project.platform,
     };
 
+    const { translateOfferLetter } = await import("@/lib/claude");
+
     if (emailType === "second") {
       const vars = await generateSecondEmailVariables(sharedParams);
       const letter = buildFollowUpLetter({
@@ -52,10 +54,10 @@ export async function POST(request: Request) {
         crowdfundingTarget: vars.crowdfundingTarget,
       });
 
-      const text_translated = langInfo.code !== "en"
-        ? await import("@/lib/claude").then((m) => m.translateOfferLetter(letter.text, langInfo.code))
-        : null;
-      const text_ja = await translateOfferLetterToJapanese(letter.text);
+      const [text_translated, text_ja] = await Promise.all([
+        langInfo.code !== "en" ? translateOfferLetter(letter.text, langInfo.code) : Promise.resolve(null),
+        translateOfferLetterToJapanese(letter.text),
+      ]);
 
       return NextResponse.json({
         letter: { ...letter, text_translated, text_ja, lang: langInfo, emailType: "second" },
@@ -76,10 +78,10 @@ export async function POST(request: Request) {
       japanAppealPoint: vars.japanAppealPoint,
     });
 
-    const text_translated = langInfo.code !== "en"
-      ? await import("@/lib/claude").then((m) => m.translateOfferLetter(letter.text, langInfo.code))
-      : null;
-    const text_ja = await translateOfferLetterToJapanese(letter.text);
+    const [text_translated, text_ja] = await Promise.all([
+      langInfo.code !== "en" ? translateOfferLetter(letter.text, langInfo.code) : Promise.resolve(null),
+      translateOfferLetterToJapanese(letter.text),
+    ]);
 
     return NextResponse.json({
       letter: {
