@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-export const maxDuration = 60;
 import { generateFirstEmailVariables, generateSecondEmailVariables, translateOfferLetterToJapanese } from "@/lib/claude";
 import { detectLanguage } from "@/lib/language-detect";
 import { buildOfferLetter, buildFollowUpLetter } from "@/lib/offer-letter";
 import { findLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
+
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
