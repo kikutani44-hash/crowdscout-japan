@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const maxDuration = 60;
 import { generateFirstEmailVariables, generateSecondEmailVariables, translateOfferLetterToJapanese } from "@/lib/claude";
 import { detectLanguage } from "@/lib/language-detect";
 import { buildOfferLetter, buildFollowUpLetter } from "@/lib/offer-letter";
