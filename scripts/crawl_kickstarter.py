@@ -83,8 +83,8 @@ def map_kickstarter_project(item: dict[str, Any], min_raised: int = MIN_RAISED_U
     if state == "successful":
         if newest_mode:
             return None  # newest sort targets live campaigns only
-        if goal > 0 and pledged < goal:
-            return None
+        # Note: goal is in local currency; pledged is USD — do not compare them.
+        # state=successful already guarantees the campaign met its goal.
         if not within_days_since_end(int(item.get("deadline") or 0), MAX_DAYS_SINCE_END):
             return None
         status = "ended"

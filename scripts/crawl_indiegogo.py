@@ -481,7 +481,7 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
             "original_url": url,
             "image_url": image_url,
             "raised_usd": raised_usd,
-            "goal_usd": max(int(raised_usd * 0.2), 1),  # Indiegogo often omits goal on page
+            "goal_usd": 0,  # Indiegogo does not expose goal — set to 0 so achievement rate is not calculated
             "backers": backers,
             "category": category,
             "country": None,

@@ -214,7 +214,7 @@ def parse_card_data(card: dict[str, Any], category: str = "テクノロジー・
         "original_url": url,
         "image_url": img,
         "raised_usd": raised_usd,
-        "goal_usd": max(int(raised_usd * 0.1), 1),
+        "goal_usd": 0,  # Zeczec does not expose goal — set to 0 so achievement rate is not calculated
         "backers": backers,
         "category": category,
         "country": "TW",
