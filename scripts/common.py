@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -77,7 +78,7 @@ def compute_campaign_metrics(
     elif launched:
         days_elapsed = max(1, int((now - launched).total_seconds() // 86400))
     elif deadline and status == "ended":
-        days_elapsed = max(1, int((deadline - now).total_seconds() // 86400))
+        days_elapsed = max(1, int((now - deadline).total_seconds() // 86400))
     else:
         days_elapsed = 1
 

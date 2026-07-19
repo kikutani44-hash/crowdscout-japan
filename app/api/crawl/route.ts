@@ -1,9 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyAuthToken } from "@/lib/auth";
 
-const VPS_WEBHOOK_URL = process.env.VPS_WEBHOOK_URL ?? "http://160.251.182.50/crawl";
-const VPS_WEBHOOK_SECRET = process.env.VPS_WEBHOOK_SECRET ?? "crowdjarvis2026";
+export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => ({})) as { token?: string };
+  const payload = body.token ? verifyAuthToken(body.token) : null;
+  if (!payload || payload.role !== "admin") {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
-export async function POST() {
+  const VPS_WEBHOOK_URL = process.env.VPS_WEBHOOK_URL;
+  const VPS_WEBHOOK_SECRET = process.env.VPS_WEBHOOK_SECRET;
+
+  if (!VPS_WEBHOOK_URL || !VPS_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: "VPS_WEBHOOK_URL / VPS_WEBHOOK_SECRET が設定されていません" }, { status: 500 });
+  }
+
   try {
     const res = await fetch(VPS_WEBHOOK_URL, {
       method: "POST",

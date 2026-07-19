@@ -23,7 +23,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install playwright requests python-dotenv
+          pip install playwright requests python-dotenv anthropic
           playwright install chromium --with-deps
 
       - name: Run Zeczec crawler

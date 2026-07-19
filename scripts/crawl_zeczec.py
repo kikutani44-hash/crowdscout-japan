@@ -70,6 +70,15 @@ CATEGORY_URLS = [
     "https://www.zeczec.com/categories?category=21&scope=active",
 ]
 
+# Zeczec category ID → Japanese label
+ZECZEC_CATEGORY_MAP: dict[str, str] = {
+    "7":  "ファッション・アパレル",
+    "8":  "デザイン・プロダクト",
+    "11": "テクノロジー・ガジェット",
+    "13": "ライフスタイル",
+    "21": "フード・ドリンク",
+}
+
 
 def parse_ntd(text: str) -> int:
     text = text.replace(",", "").replace("NT$", "").replace("$", "").strip()
@@ -141,7 +150,7 @@ def scrape_category_page(page, cat_url: str, captured_images: dict[str, bytes] |
     return projects_data
 
 
-def parse_card_data(card: dict[str, Any]) -> dict[str, Any] | None:
+def parse_card_data(card: dict[str, Any], category: str = "テクノロジー・ガジェット") -> dict[str, Any] | None:
     url = card.get("url") or ""
     text = card.get("text") or ""
     title = card.get("title") or ""
@@ -185,7 +194,7 @@ def parse_card_data(card: dict[str, Any]) -> dict[str, Any] | None:
         print(f"[zeczec] skip (raised ${raised_usd:,}): {title[:40]}")
         return None
 
-    status = "active" if days_remaining else "ended"
+    status = "active" if days_remaining is not None else "ended"
     deadline_ts = None
     if days_remaining:
         deadline_dt = datetime.now(timezone.utc) + timedelta(days=days_remaining)
@@ -207,7 +216,7 @@ def parse_card_data(card: dict[str, Any]) -> dict[str, Any] | None:
         "raised_usd": raised_usd,
         "goal_usd": max(int(raised_usd * 0.1), 1),
         "backers": backers,
-        "category": "テクノロジー・ガジェット",
+        "category": category,
         "country": "TW",
         "status": status,
         **metrics,
@@ -253,6 +262,10 @@ def crawl_zeczec(max_projects: int = 20) -> list[dict[str, Any]]:
         for cat_url in CATEGORY_URLS:
             if len(projects) >= max_projects:
                 break
+            # Extract category ID from URL for proper category mapping
+            cat_id_match = re.search(r"category=(\d+)", cat_url)
+            cat_id = cat_id_match.group(1) if cat_id_match else ""
+            cat_label = ZECZEC_CATEGORY_MAP.get(cat_id, "その他")
             cards = scrape_category_page(list_page, cat_url, captured_images)
             print(f"[zeczec] found {len(cards)} cards, captured {len(captured_images)} images")
             for card in cards:
@@ -263,7 +276,7 @@ def crawl_zeczec(max_projects: int = 20) -> list[dict[str, Any]]:
                     continue
                 seen_urls.add(url)
                 try:
-                    result = parse_card_data(card)
+                    result = parse_card_data(card, category=cat_label)
                     if result and use_storage:
                         raw_img = result.get("image_url") or ""
                         img_key = raw_img.split("?")[0]
