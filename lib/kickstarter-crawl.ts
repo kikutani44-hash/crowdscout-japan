@@ -1,7 +1,7 @@
 import { createServerSupabase } from "@/lib/supabase";
 
 const DISCOVER_BASE = "https://www.kickstarter.com/discover/advanced.json";
-const MIN_RAISED_USD = 50000;
+const MIN_RAISED_USD = 10000;
 const MAX_DAYS_SINCE_END = 180;
 
 const CATEGORY_IDS = [16, 7, 11, 10];
@@ -160,15 +160,15 @@ export async function runKickstarterCrawl(): Promise<number> {
   const projects: Record<string, unknown>[] = [];
   const seenUrls = new Set<string>();
 
-  // popular (magic) — 20 pages per category
+  // popular (magic) — 40 pages per category
   for (const categoryId of CATEGORY_IDS) {
-    const batch = await fetchCategoryPages(categoryId, "magic", 20, seenUrls);
+    const batch = await fetchCategoryPages(categoryId, "magic", 40, seenUrls);
     projects.push(...batch);
   }
 
-  // newest — 10 pages per category, relaxed $1,000 minimum
+  // newest — 20 pages per category, relaxed $1,000 minimum
   for (const categoryId of CATEGORY_IDS) {
-    const batch = await fetchCategoryPages(categoryId, "newest", 10, seenUrls, 1_000);
+    const batch = await fetchCategoryPages(categoryId, "newest", 20, seenUrls, 1_000);
     projects.push(...batch);
   }
 

@@ -14,7 +14,7 @@ on:
       max_projects:
         description: 'Max projects (blank = no limit)'
         required: false
-        default: '500'
+        default: '1000'
 
 jobs:
   crawl:

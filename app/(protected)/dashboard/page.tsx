@@ -103,6 +103,11 @@ export default async function DashboardPage() {
             value={String(stats.byOfferStatus["未接触"])}
           />
           <StatCard
+            icon={<span className="text-sm">👀</span>}
+            label="ウォッチ中"
+            value={String(stats.byOfferStatus["ウォッチ中"] ?? 0)}
+          />
+          <StatCard
             icon={<Handshake className="h-4 w-4 text-blue-400" />}
             label="交渉中"
             value={String(stats.byOfferStatus["交渉中"])}
@@ -177,8 +182,8 @@ export default async function DashboardPage() {
         {/* オファーパイプライン */}
         <section className="rounded-xl border border-border bg-card p-5">
           <h2 className="mb-4 text-lg font-semibold">オファーパイプライン</h2>
-          <div className="grid gap-3 sm:grid-cols-4">
-            {(["未接触", "交渉中", "獲得済み", "却下"] as const).map((status) => {
+          <div className="grid gap-3 sm:grid-cols-5">
+            {(["未接触", "ウォッチ中", "交渉中", "獲得済み", "却下"] as const).map((status) => {
               const count = stats.byOfferStatus[status];
               const pct = stats.totalProjects
                 ? Math.round((count / stats.totalProjects) * 100)

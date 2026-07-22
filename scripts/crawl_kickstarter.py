@@ -266,7 +266,7 @@ def main() -> int:
     parser.add_argument(
         "--pages",
         type=int,
-        default=20,
+        default=40,
         help="Discover pages per Kickstarter parent category",
     )
     parser.add_argument(

@@ -30,6 +30,7 @@ export interface DashboardStats {
 export function getDashboardStats(projects: Project[]): DashboardStats {
   const byOfferStatus: Record<OfferStatus, number> = {
     未接触: 0,
+    ウォッチ中: 0,
     交渉中: 0,
     獲得済み: 0,
     却下: 0,

@@ -225,6 +225,7 @@ export function ProductCard({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="未接触">未接触</SelectItem>
+            <SelectItem value="ウォッチ中">👀 ウォッチ中</SelectItem>
             <SelectItem value="交渉中">交渉中</SelectItem>
             <SelectItem value="獲得済み">獲得済み</SelectItem>
             <SelectItem value="却下">却下</SelectItem>
