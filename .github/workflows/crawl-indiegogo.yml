@@ -4,33 +4,49 @@ on:
   workflow_dispatch:
     inputs:
       max_projects:
-        description: 'Max projects to crawl'
+        description: 'Max projects per category group'
         required: false
-        default: '200'
+        default: '100'
 
 jobs:
-  crawl:
+  crawl-tech:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: |
           pip install playwright requests python-dotenv anthropic
           playwright install chromium --with-deps
-
-      - name: Run Indiegogo crawler
+      - name: Crawl Tech & Health
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects }} --force-translate
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects }} --categories technology,health,healthcare,fitness --force-translate
+
+  crawl-lifestyle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install playwright requests python-dotenv anthropic
+          playwright install chromium --with-deps
+      - name: Crawl Design & Lifestyle
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cd scripts
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects }} --categories design,lifestyle,fashion,food,outdoor,sport,mobility --force-translate

@@ -3,45 +3,57 @@ name: Crawl Kickstarter
 on:
   workflow_dispatch:
     inputs:
-      sort:
-        description: 'Sort order: magic (popular) or newest'
-        required: false
-        default: 'magic'
-        type: choice
-        options:
-          - magic
-          - newest
       max_projects:
-        description: 'Max projects (blank = no limit)'
+        description: 'Max projects per job (blank = no limit)'
         required: false
-        default: '1000'
+        default: '500'
 
 jobs:
-  crawl:
+  crawl-magic:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install dependencies
         run: |
           pip install playwright requests python-dotenv anthropic
           playwright install chromium --with-deps
-
-      - name: Run Kickstarter crawler
+      - name: Crawl magic (popular)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          ARGS="--sort ${{ github.event.inputs.sort }} --force-translate"
+          ARGS="--sort magic --pages 40 --force-translate"
+          if [ -n "${{ github.event.inputs.max_projects }}" ]; then
+            ARGS="$ARGS --max ${{ github.event.inputs.max_projects }}"
+          fi
+          python3 crawl_kickstarter.py $ARGS
+
+  crawl-newest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install playwright requests python-dotenv anthropic
+          playwright install chromium --with-deps
+      - name: Crawl newest (live campaigns)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cd scripts
+          ARGS="--sort newest --pages 20 --force-translate"
           if [ -n "${{ github.event.inputs.max_projects }}" ]; then
             ARGS="$ARGS --max ${{ github.event.inputs.max_projects }}"
           fi
