@@ -52,3 +52,24 @@ jobs:
         run: |
           cd scripts
           python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories design,lifestyle,fashion,food,outdoor,sport,mobility --force-translate
+
+  crawl-archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install playwright requests python-dotenv anthropic
+          playwright install chromium --with-deps
+      - name: Crawl archive (お宝発掘 180-730日)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cd scripts
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '200' }} --archive --force-translate

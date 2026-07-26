@@ -33,6 +33,9 @@ from common import (
 )
 
 API_BASE = "https://platform.wadiz.kr/main2/api/v9/main"
+
+MIN_ARCHIVE_DAYS = 180
+MAX_ARCHIVE_DAYS = 730
 WADIZ_DETAIL_BASE = "https://www.wadiz.kr/web/campaign/detail"
 KRW_PER_USD = float(os.environ.get("KRW_PER_USD", "1350"))
 
@@ -134,7 +137,7 @@ def infer_status(item: dict[str, Any]) -> str:
     return "ended"
 
 
-def map_wadiz_project(item: dict[str, Any]) -> dict[str, Any] | None:
+def map_wadiz_project(item: dict[str, Any], archive_mode: bool = False) -> dict[str, Any] | None:
     if not matches_wadiz_filters(item):
         return None
 
@@ -156,6 +159,24 @@ def map_wadiz_project(item: dict[str, Any]) -> dict[str, Any] | None:
     backers = int(item.get("participants") or 0)
 
     end_dt = parse_wadiz_datetime(item.get("endDate"))
+
+    # archive_mode フィルタ: 180〜730日前に終了した案件のみ
+    if archive_mode:
+        if status != "ended":
+            return None
+        if end_dt:
+            now = datetime.now(end_dt.tzinfo or ZoneInfo("Asia/Seoul"))
+            elapsed = (now - end_dt).days
+            if not (MIN_ARCHIVE_DAYS <= elapsed <= MAX_ARCHIVE_DAYS):
+                return None
+        else:
+            return None
+        status = "archived"
+    elif status == "ended" and end_dt:
+        # 通常モード: 180日以内に終了したもののみ
+        now = datetime.now(end_dt.tzinfo or ZoneInfo("Asia/Seoul"))
+        if (now - end_dt).days > 180:
+            return None
     start_dt = parse_wadiz_datetime(item.get("startDate") or item.get("openDate"))
     deadline_ts = int(end_dt.timestamp()) if end_dt else None
     launched_ts = int(start_dt.timestamp()) if start_dt else None
@@ -201,7 +222,7 @@ def fetch_wadiz_page(page: int, idx: int = 0) -> dict[str, Any] | None:
         return None
 
 
-def crawl_wadiz(max_pages: int = 10, idx: int = 0) -> list[dict[str, Any]]:
+def crawl_wadiz(max_pages: int = 10, idx: int = 0, archive_mode: bool = False) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     seen_urls: set[str] = set()
 
@@ -218,7 +239,7 @@ def crawl_wadiz(max_pages: int = 10, idx: int = 0) -> list[dict[str, Any]]:
 
         page_added = 0
         for item in items:
-            mapped = map_wadiz_project(item)
+            mapped = map_wadiz_project(item, archive_mode=archive_mode)
             if not mapped:
                 continue
             url = mapped["original_url"]
@@ -243,9 +264,10 @@ def main() -> int:
     parser.add_argument("--idx", type=int, default=0, help="API idx parameter")
     parser.add_argument("--no-save", action="store_true", help="Skip writing output files")
     parser.add_argument("--no-supabase", action="store_true", help="Skip Supabase upsert")
+    parser.add_argument("--archive", action="store_true", help="Archive mode: collect projects ended 180-730 days ago")
     args = parser.parse_args()
 
-    projects = crawl_wadiz(max_pages=args.pages, idx=args.idx)
+    projects = crawl_wadiz(max_pages=args.pages, idx=args.idx, archive_mode=args.archive)
     print(f"[wadiz] total matched: {len(projects)}")
 
     if not projects:

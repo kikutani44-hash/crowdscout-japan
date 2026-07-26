@@ -36,6 +36,16 @@ from common import (
 
 EXPLORE_URLS = INDIEGOGO_EXPLORE_URLS
 
+MIN_ARCHIVE_DAYS = 180
+MAX_ARCHIVE_DAYS = 730
+
+
+def days_since_deadline(deadline_ts: int | None) -> int | None:
+    if not deadline_ts:
+        return None
+    deadline = datetime.fromtimestamp(deadline_ts, tz=timezone.utc)
+    return (datetime.now(timezone.utc) - deadline).days
+
 _DATE_FORMATS = (
     "%B %d, %Y",
     "%b %d, %Y",
@@ -338,7 +348,7 @@ def collect_project_urls(page, explore_urls: list[str], max_links: int) -> list[
     return found
 
 
-def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -> dict[str, Any] | None:
+def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None, archive_mode: bool = False) -> dict[str, Any] | None:
     print(f"[indiegogo] scraping {url}")
     page.goto(url, wait_until="domcontentloaded", timeout=90000)
     dismiss_cookie_consent(page)
@@ -461,6 +471,21 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
         is_indemand=is_indemand,
         body_text=text,
     )
+
+    # archive_mode: 180〜730日前に終了したお宝候補のみ収集
+    if archive_mode:
+        if status != "ended":
+            return None
+        elapsed = days_since_deadline(deadline_ts)
+        if elapsed is None or not (MIN_ARCHIVE_DAYS <= elapsed <= MAX_ARCHIVE_DAYS):
+            return None
+        status = "archived"
+    elif status == "ended":
+        # 通常モード: 180日以内に終了したもののみ
+        elapsed = days_since_deadline(deadline_ts)
+        if elapsed is not None and elapsed > 180:
+            return None
+
     metrics = compute_campaign_metrics(
         status=status,
         backers=backers,
@@ -493,7 +518,7 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None) -
     )
 
 
-def crawl_indiegogo(max_projects: int = 40, category_slugs: list[str] | None = None) -> list[dict[str, Any]]:
+def crawl_indiegogo(max_projects: int = 40, category_slugs: list[str] | None = None, archive_mode: bool = False) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
     explore_urls = resolve_indiegogo_explore_urls(category_slugs)
     max_links = max(max_projects * 4, len(explore_urls) * 12)
@@ -515,7 +540,7 @@ def crawl_indiegogo(max_projects: int = 40, category_slugs: list[str] | None = N
                 break
             try:
                 url = clean_project_url(item.get("href") or "")
-                mapped = scrape_project_page(page, url, preview=item)
+                mapped = scrape_project_page(page, url, preview=item, archive_mode=archive_mode)
                 if mapped:
                     projects.append(mapped)
             except Exception as exc:
@@ -549,10 +574,15 @@ def main() -> int:
         action="store_true",
         help="Re-translate even when title_ja / subtitle_ja already exist",
     )
+    parser.add_argument(
+        "--archive",
+        action="store_true",
+        help="Archive mode: collect projects ended 180-730 days ago (お宝発掘)",
+    )
     args = parser.parse_args()
 
     slugs = parse_category_slugs(args.categories or None)
-    projects = crawl_indiegogo(max_projects=args.max, category_slugs=slugs)
+    projects = crawl_indiegogo(max_projects=args.max, category_slugs=slugs, archive_mode=args.archive)
     print(f"[indiegogo] total matched: {len(projects)}")
 
     if not projects:
