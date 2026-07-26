@@ -1,0 +1,35 @@
+name: Crawl Wadiz
+
+on:
+  workflow_dispatch:
+    inputs:
+      pages:
+        description: 'Max API pages to fetch (20 projects/page)'
+        required: false
+        default: '20'
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests python-dotenv anthropic
+
+      - name: Run Wadiz crawler
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cd scripts
+          python3 crawl_wadiz.py --pages ${{ github.event.inputs.pages }}

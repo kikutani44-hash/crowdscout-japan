@@ -43,7 +43,7 @@ export async function fetchProjects(filters?: {
   }
 
   const supabase = createServerSupabase();
-  let query = supabase.from("projects").select("*");
+  let query = supabase.from("projects").select("*").limit(5000);
 
   if (filters?.platform && filters.platform !== "all") {
     query = query.eq("platform", filters.platform);
