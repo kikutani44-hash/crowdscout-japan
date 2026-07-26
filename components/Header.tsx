@@ -15,14 +15,18 @@ interface HeaderProps {
 }
 
 export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: HeaderProps) {
-  const { role, logout } = useAuth();
+  const { role, token, logout } = useAuth();
   const router = useRouter();
   const [updating, setUpdating] = useState(false);
 
   const handleDataUpdate = async () => {
     setUpdating(true);
     try {
-      const res = await fetch("/api/crawl", { method: "POST" });
+      const res = await fetch("/api/crawl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error ?? "データ更新に失敗しました");
