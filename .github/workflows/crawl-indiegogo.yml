@@ -1,6 +1,8 @@
 name: Crawl Indiegogo
 
 on:
+  schedule:
+    - cron: '0 19 * * *'   # 毎日 04:00 JST
   workflow_dispatch:
     inputs:
       max_projects:
@@ -28,7 +30,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects }} --categories technology,health,healthcare,fitness --force-translate
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories technology,health,healthcare,fitness --force-translate
 
   crawl-lifestyle:
     runs-on: ubuntu-latest
@@ -49,4 +51,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects }} --categories design,lifestyle,fashion,food,outdoor,sport,mobility --force-translate
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories design,lifestyle,fashion,food,outdoor,sport,mobility --force-translate

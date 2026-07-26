@@ -72,7 +72,7 @@ def within_days_since_end(deadline_ts: int, max_days: int) -> bool:
     return 0 <= delta.days <= max_days
 
 
-def map_kickstarter_project(item: dict[str, Any], min_raised: int = MIN_RAISED_USD, newest_mode: bool = False) -> dict[str, Any] | None:
+def map_kickstarter_project(item: dict[str, Any], min_raised: int = MIN_RAISED_USD, newest_mode: bool = False, archive_mode: bool = False) -> dict[str, Any] | None:
     pledged = int(float(item.get("usd_pledged") or item.get("pledged") or 0))
     goal = int(float(item.get("goal") or 0))
     state = str(item.get("state") or "")
@@ -85,10 +85,21 @@ def map_kickstarter_project(item: dict[str, Any], min_raised: int = MIN_RAISED_U
             return None  # newest sort targets live campaigns only
         # Note: goal is in local currency; pledged is USD — do not compare them.
         # state=successful already guarantees the campaign met its goal.
-        if not within_days_since_end(int(item.get("deadline") or 0), MAX_DAYS_SINCE_END):
-            return None
-        status = "ended"
+        days_since_end = int(item.get("deadline") or 0)
+        if archive_mode:
+            # archive mode: 180〜730日前に終了したお宝候補
+            if within_days_since_end(days_since_end, MAX_DAYS_SINCE_END):
+                return None  # 通常クロールの範囲は除外
+            if not within_days_since_end(days_since_end, 730):
+                return None  # 730日以上前は除外
+            status = "archived"
+        else:
+            if not within_days_since_end(days_since_end, MAX_DAYS_SINCE_END):
+                return None
+            status = "ended"
     elif state == "live":
+        if archive_mode:
+            return None  # archiveモードはライブ不要
         status = "active"
     else:
         return None
@@ -146,6 +157,7 @@ def crawl_kickstarter(
     min_projects: int | None = None,
     skip_contacts: bool = False,
     sort: str = "magic",
+    archive_mode: bool = False,
 ) -> list[dict[str, Any]]:
     newest_mode = sort == "newest"
     min_raised = MIN_RAISED_USD_NEWEST if newest_mode else MIN_RAISED_USD
@@ -188,7 +200,7 @@ def crawl_kickstarter(
                 for item in batch:
                     if limit and len(projects) >= limit:
                         break
-                    mapped = map_kickstarter_project(item, min_raised=min_raised, newest_mode=newest_mode)
+                    mapped = map_kickstarter_project(item, min_raised=min_raised, newest_mode=newest_mode, archive_mode=archive_mode)
                     if not mapped:
                         continue
                     if not is_allowed_category(mapped["category"]):
@@ -316,6 +328,11 @@ def main() -> int:
         action="store_true",
         help="Skip visiting project pages to extract maker website / SNS",
     )
+    parser.add_argument(
+        "--archive",
+        action="store_true",
+        help="Archive mode: collect projects ended 180-730 days ago (お宝発掘)",
+    )
     args = parser.parse_args()
 
     slugs = parse_category_slugs(args.categories or None)
@@ -326,6 +343,7 @@ def main() -> int:
         min_projects=args.min,
         skip_contacts=args.no_contacts,
         sort=args.sort,
+        archive_mode=args.archive,
     )
     print(f"[kickstarter] total matched: {len(projects)}")
     if args.min and len(projects) < args.min:

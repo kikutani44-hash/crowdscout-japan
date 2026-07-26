@@ -1,7 +1,7 @@
 import type { PlatformFilterValue } from "@/lib/platforms";
 
 export type Platform = "kickstarter" | "indiegogo" | "wadiz" | "zeczec";
-export type ProjectStatus = "active" | "ended";
+export type ProjectStatus = "active" | "ended" | "archived";
 export type OfferStatus = "未接触" | "ウォッチ中" | "交渉中" | "獲得済み" | "却下";
 
 export interface JapanCfSiteResult {
@@ -70,6 +70,7 @@ export interface ProjectFilters {
   offerStatus?: OfferStatus | "all";
   sortBy?: "score" | "raised_usd" | "backers" | "created_at" | "live_momentum";
   liveHotOnly?: boolean;
+  archivedOnly?: boolean;
 }
 
 export interface DashboardStats {

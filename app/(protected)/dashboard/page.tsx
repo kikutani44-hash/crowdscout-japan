@@ -25,7 +25,10 @@ import {
 } from "lucide-react";
 
 export default async function DashboardPage() {
-  const projects = await fetchProjects();
+  const [projects, archivedProjects] = await Promise.all([
+    fetchProjects(),
+    fetchProjects({ archivedOnly: true, japanUnenteredOnly: true, sortBy: "score" }),
+  ]);
   const stats = getDashboardStats(projects);
 
   const offerChartData = Object.entries(stats.byOfferStatus).map(([name, count]) => ({
@@ -208,6 +211,48 @@ export default async function DashboardPage() {
           platformChartData={platformChartData}
           raisedChartData={raisedChartData}
         />
+
+        {/* お宝発掘セクション */}
+        {archivedProjects.length > 0 && (
+          <section className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">💎 お宝発掘</h2>
+                <p className="text-xs text-muted-foreground">
+                  終了180〜730日 · 日本未参入 · {archivedProjects.length}件
+                </p>
+              </div>
+              <Link
+                href="/dashboard/archive"
+                className="rounded-md border border-amber-500/40 px-3 py-1 text-xs hover:bg-amber-500/10"
+              >
+                全件表示
+              </Link>
+            </div>
+            <ul className="divide-y divide-border">
+              {archivedProjects.slice(0, 8).map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <a
+                      href={p.original_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate font-medium hover:underline block"
+                    >
+                      {getDisplayTitle(p)}
+                    </a>
+                    <p className="text-xs text-muted-foreground">
+                      {p.platform} · スコア {p.score} · {formatUsd(p.raised_usd)}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="shrink-0 border-amber-500/40 text-amber-400">
+                    {p.offer_status}
+                  </Badge>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* 優先オファー候補 */}

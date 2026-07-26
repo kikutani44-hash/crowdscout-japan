@@ -45,6 +45,14 @@ export async function fetchProjects(filters?: {
   const supabase = createServerSupabase();
   let query = supabase.from("projects").select("*").limit(5000);
 
+  // archivedOnly: お宝発掘モード（180〜730日前に終了した案件）
+  if (filters?.archivedOnly) {
+    query = query.eq("status", "archived");
+  } else {
+    // 通常表示からarchivedを除外
+    query = query.neq("status", "archived");
+  }
+
   if (filters?.platform && filters.platform !== "all") {
     query = query.eq("platform", filters.platform);
   }
