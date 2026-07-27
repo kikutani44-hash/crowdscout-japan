@@ -31,6 +31,7 @@ export function createServerSupabase(): SupabaseClient {
 export async function fetchProjects(filters?: {
   search?: string;
   japanUnenteredOnly?: boolean;
+  archivedOnly?: boolean;
   platform?: string;
   category?: string;
   offerStatus?: string;

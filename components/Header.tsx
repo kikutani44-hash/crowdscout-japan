@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { BarChart3, Loader2, LogOut, RefreshCw, Telescope } from "lucide-react";
+import { BarChart3, LogOut, Telescope } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
-import { Button } from "@/components/ui/button";
 import { authRoleLabel } from "@/lib/auth-types";
 
 interface HeaderProps {
@@ -15,29 +12,7 @@ interface HeaderProps {
 }
 
 export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: HeaderProps) {
-  const { role, token, logout } = useAuth();
-  const router = useRouter();
-  const [updating, setUpdating] = useState(false);
-
-  const handleDataUpdate = async () => {
-    setUpdating(true);
-    try {
-      const res = await fetch("/api/crawl", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error ?? "データ更新に失敗しました");
-      }
-      router.refresh();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "データ更新に失敗しました");
-    } finally {
-      setUpdating(false);
-    }
-  };
+  const { role, logout } = useAuth();
 
   return (
     <header className="border-b border-border bg-card/40 backdrop-blur">
@@ -81,27 +56,6 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
             <BarChart3 className="h-4 w-4" />
             ダッシュボード
           </Link>
-          {role === "admin" && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleDataUpdate}
-              disabled={updating}
-            >
-              {updating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  更新中...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4" />
-                  データ更新
-                </>
-              )}
-            </Button>
-          )}
           <button
             type="button"
             onClick={logout}

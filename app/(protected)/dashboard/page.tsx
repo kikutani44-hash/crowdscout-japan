@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { CrawlButton } from "@/components/CrawlButton";
 import { GuestPasswordIssuer } from "@/components/GuestPasswordIssuer";
 import { DashboardCharts } from "@/components/DashboardCharts";
 import { Badge } from "@/components/ui/badge";
@@ -84,7 +83,6 @@ export default async function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-8 px-4 py-8">
-        <CrawlButton />
         <GuestPasswordIssuer />
 
         {/* サマリーカード */}
