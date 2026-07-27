@@ -215,7 +215,7 @@ export default async function DashboardPage() {
           <section className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">💎 お宝発掘</h2>
+                <h2 className="text-lg font-semibold">📦 過去のサクセス案件</h2>
                 <p className="text-xs text-muted-foreground">
                   終了180〜730日 · 日本未参入 · {archivedProjects.length}件
                 </p>

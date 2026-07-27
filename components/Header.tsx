@@ -50,6 +50,12 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
             <p className="text-lg font-semibold text-emerald-400">{japanUnenteredCount}</p>
           </div>
           <Link
+            href="/dashboard/archive"
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary"
+          >
+            📦 過去案件
+          </Link>
+          <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary"
           >

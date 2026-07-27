@@ -19,7 +19,7 @@ export default async function ArchivePage() {
       <header className="border-b border-border bg-card/40 px-4 py-5">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">💎 お宝発掘</h1>
+            <h1 className="text-2xl font-bold">📦 過去のサクセス案件</h1>
             <p className="text-sm text-muted-foreground">
               終了から180〜730日の案件 · 日本未参入の可能性あり
             </p>
