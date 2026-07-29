@@ -1,0 +1,32 @@
+name: Check Japan CF Status
+
+on:
+  schedule:
+    - cron: '0 20 * * *'   # 毎日 05:00 JST（クロール完了後）
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max projects to check per run'
+        required: false
+        default: '50'
+
+jobs:
+  check-japan-cf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install playwright requests python-dotenv
+          playwright install chromium --with-deps
+      - name: Check Japan CF status (Makuake / CAMPFIRE / GREEN FUNDING)
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cd scripts
+          python3 batch_check_japan_cf.py --limit ${{ github.event.inputs.limit || '50' }}

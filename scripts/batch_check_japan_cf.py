@@ -1,19 +1,74 @@
 #!/usr/bin/env python3
-"""Batch Japan CF check for all projects in data/projects_merged.json."""
+"""Batch Japan CF check — reads unchecked projects from Supabase and writes results back."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
-from pathlib import Path
 
+import requests
 from playwright.sync_api import sync_playwright
 
 from check_japan_cf import check_japan_cf
-from common import DATA_DIR, calculate_score, utc_now_iso
+from common import calculate_score, create_browser, utc_now_iso
 
-MERGED_PATH = DATA_DIR / "projects_merged.json"
+SUPABASE_URL = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+
+
+def supabase_headers() -> dict[str, str]:
+    return {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
+
+
+def fetch_unchecked(limit: int) -> list[dict]:
+    """Fetch projects where japan_cf_checked is false or null."""
+    params = {
+        "select": "id,title,title_ja,subtitle,subtitle_ja",
+        "japan_cf_checked": "eq.false",
+        "order": "created_at.desc",
+        "limit": str(limit),
+    }
+    r = requests.get(f"{SUPABASE_URL}/rest/v1/projects", headers=supabase_headers(), params=params)
+    r.raise_for_status()
+    rows = r.json()
+
+    # Also grab rows where japan_cf_checked is null
+    params2 = {**params, "japan_cf_checked": "is.null"}
+    r2 = requests.get(f"{SUPABASE_URL}/rest/v1/projects", headers=supabase_headers(), params=params2)
+    r2.raise_for_status()
+    rows += r2.json()
+
+    # Deduplicate by id
+    seen: set[str] = set()
+    result: list[dict] = []
+    for row in rows:
+        if row["id"] not in seen:
+            seen.add(row["id"])
+            result.append(row)
+    return result[:limit]
+
+
+def update_project(project_id: str, cf_result: dict, score: float) -> None:
+    payload = {
+        "japan_cf_checked": True,
+        "japan_cf_result": cf_result,
+        "score": score,
+        "updated_at": utc_now_iso(),
+    }
+    r = requests.patch(
+        f"{SUPABASE_URL}/rest/v1/projects",
+        headers={**supabase_headers(), "Prefer": "return=minimal"},
+        params={"id": f"eq.{project_id}"},
+        json=payload,
+    )
+    r.raise_for_status()
 
 
 def pick_query(project: dict) -> str:
@@ -21,52 +76,54 @@ def pick_query(project: dict) -> str:
         value = project.get(key)
         if value and str(value).strip():
             text = str(value).strip()
-            # Prefer shorter brand-like prefix for search
             return text.split(":")[0].split("|")[0].strip()[:80]
     return "unknown"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--limit", type=int, default=0, help="Max projects to check (0=all)")
-    parser.add_argument("--force", action="store_true", help="Re-check even if already checked")
+    parser.add_argument("--limit", type=int, default=50, help="Max projects to check per run")
+    parser.add_argument("--force", action="store_true", help="Re-check even if already checked (not yet supported with Supabase mode)")
     args = parser.parse_args()
 
-    if not MERGED_PATH.exists():
-        print(f"[batch_cf] missing {MERGED_PATH}", file=sys.stderr)
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("[batch_cf] ERROR: NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set", file=sys.stderr)
         return 1
 
-    payload = json.loads(MERGED_PATH.read_text(encoding="utf-8"))
-    projects = payload.get("projects") or []
+    projects = fetch_unchecked(args.limit)
+    print(f"[batch_cf] {len(projects)} unchecked projects to process")
+
+    if not projects:
+        print("[batch_cf] nothing to do")
+        return 0
+
     checked = 0
+    entered = 0
+    unentered = 0
 
     with sync_playwright() as playwright:
-        from common import create_browser
-
         browser, context = create_browser(playwright)
         page = context.new_page()
 
         for project in projects:
-            if args.limit and checked >= args.limit:
-                break
-            if project.get("japan_cf_checked") and not args.force:
-                continue
-
             query = pick_query(project)
-            print(f"[batch_cf] checking: {query}", file=sys.stderr)
-            result = check_japan_cf(query, page=page)
-            project["japan_cf_checked"] = True
-            project["japan_cf_result"] = result
-            project["score"] = calculate_score(project)
-            project["updated_at"] = utc_now_iso()
-            checked += 1
+            print(f"[batch_cf] checking ({checked+1}/{len(projects)}): {query}")
+            try:
+                result = check_japan_cf(query, page=page)
+                score = calculate_score({**project, "japan_cf_checked": True, "japan_cf_result": result})
+                update_project(project["id"], result, score)
+                if result.get("isJapanUnentered"):
+                    unentered += 1
+                else:
+                    entered += 1
+                checked += 1
+            except Exception as exc:
+                print(f"[batch_cf] ERROR on {query}: {exc}", file=sys.stderr)
 
         browser.close()
 
-    payload["projects"] = projects
-    payload["cf_checked_at"] = utc_now_iso()
-    MERGED_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(json.dumps({"checked": checked, "path": str(MERGED_PATH)}))
+    print(f"[batch_cf] done: {checked} checked, {unentered} unentered, {entered} entered in Japan")
+    print(json.dumps({"checked": checked, "unentered": unentered, "entered": entered}))
     return 0
 
 
