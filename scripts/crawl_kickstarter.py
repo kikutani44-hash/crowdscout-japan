@@ -23,7 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urlencode
 
@@ -50,17 +50,29 @@ DEFAULT_CATEGORIES = KICKSTARTER_DEMO_SLUGS
 MIN_RAISED_USD_NEWEST = 1_000  # relaxed filter for newest sort
 
 
-def build_discover_url(page_num: int, category_id: int | None = None, sort: str = "magic") -> str:
+def build_discover_url(
+    page_num: int,
+    category_id: int | None = None,
+    sort: str = "magic",
+    archive_mode: bool = False,
+) -> str:
     """Build discover JSON URL matching Kickstarter advanced discover."""
     if category_id in BLOCKED_CATEGORY_IDS:
         raise ValueError(f"category_id={category_id} is blocked (Games)")
 
+    now = datetime.now(timezone.utc)
     params: dict[str, Any] = {
         "sort": sort,
         "page": page_num,
     }
     if category_id:
         params["category_id"] = category_id
+    if archive_mode:
+        # Filter to projects whose deadline fell 180-730 days ago
+        deadline_lte = int((now - timedelta(days=180)).timestamp())
+        deadline_gte = int((now - timedelta(days=730)).timestamp())
+        params["deadline[gte]"] = deadline_gte
+        params["deadline[lte]"] = deadline_lte
     return f"{DISCOVER_BASE}?{urlencode(params)}"
 
 
@@ -186,7 +198,7 @@ def crawl_kickstarter(
             for page_num in range(1, pages_per_category + 1):
                 if limit and len(projects) >= limit:
                     break
-                url = build_discover_url(page_num, category_id, sort=sort)
+                url = build_discover_url(page_num, category_id, sort=sort, archive_mode=archive_mode)
                 print(f"[kickstarter] fetching page {page_num}: {url}")
                 data = fetch_json_page(page, url)
                 if not data:
