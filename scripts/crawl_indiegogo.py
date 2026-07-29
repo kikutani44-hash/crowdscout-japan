@@ -21,7 +21,7 @@ from urllib.parse import urlparse
 
 from playwright.sync_api import sync_playwright
 
-from category_filters import INDIEGOGO_EXPLORE_URLS, is_allowed_category, parse_category_slugs, resolve_indiegogo_explore_urls
+from category_filters import INDIEGOGO_ARCHIVE_EXPLORE_URLS, INDIEGOGO_EXPLORE_URLS, is_allowed_category, parse_category_slugs, resolve_indiegogo_explore_urls
 from common import (
     MIN_RAISED_USD,
     compute_campaign_metrics,
@@ -520,8 +520,15 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None, a
 
 def crawl_indiegogo(max_projects: int = 40, category_slugs: list[str] | None = None, archive_mode: bool = False) -> list[dict[str, Any]]:
     projects: list[dict[str, Any]] = []
-    explore_urls = resolve_indiegogo_explore_urls(category_slugs)
-    max_links = max(max_projects * 4, len(explore_urls) * 12)
+    if archive_mode:
+        # Use closed-campaign explore URLs to surface projects ended 180-730 days ago
+        base_urls = resolve_indiegogo_explore_urls(category_slugs)
+        _CLOSED = "#/?project_type=fixed&sort=most_funded&campaign_type=funding&status=closed&percent_funded_min=100"
+        explore_urls = [u + _CLOSED for u in base_urls] if category_slugs else INDIEGOGO_ARCHIVE_EXPLORE_URLS
+        print(f"[indiegogo] archive mode: using {len(explore_urls)} closed-campaign explore URLs")
+    else:
+        explore_urls = resolve_indiegogo_explore_urls(category_slugs)
+    max_links = max(max_projects * 6, len(explore_urls) * 20) if archive_mode else max(max_projects * 4, len(explore_urls) * 12)
 
     with sync_playwright() as playwright:
         browser, context = create_browser(playwright)

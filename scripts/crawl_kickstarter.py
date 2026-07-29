@@ -159,6 +159,9 @@ def crawl_kickstarter(
     sort: str = "magic",
     archive_mode: bool = False,
 ) -> list[dict[str, Any]]:
+    if archive_mode and sort == "magic":
+        sort = "most_funded"
+        print("[kickstarter] archive mode: switching to sort=most_funded (歴代最高額順)")
     newest_mode = sort == "newest"
     min_raised = MIN_RAISED_USD_NEWEST if newest_mode else MIN_RAISED_USD
     projects: list[dict[str, Any]] = []

@@ -157,6 +157,22 @@ INDIEGOGO_EXPLORE_URLS = [
     "https://www.indiegogo.com/explore/transportation",
 ]
 
+# Archive mode: closed campaigns sorted by most funded (surfaces older high-value campaigns)
+_CLOSED_FILTER = "#/?project_type=fixed&sort=most_funded&campaign_type=funding&status=closed&percent_funded_min=100"
+INDIEGOGO_ARCHIVE_EXPLORE_URLS = [
+    f"https://www.indiegogo.com/explore/{path}{_CLOSED_FILTER}"
+    for path in [
+        "tech-and-innovation",
+        "health-and-fitness",
+        "home",
+        "product-design",
+        "travel-and-outdoors",
+        "food-and-beverages",
+        "fashion-and-wearables",
+        "transportation",
+    ]
+]
+
 # 6 priority groups for demo crawl (CLI slugs)
 DEMO_CATEGORY_SLUGS = (
     "technology,gadget,health,healthcare,fitness,"
