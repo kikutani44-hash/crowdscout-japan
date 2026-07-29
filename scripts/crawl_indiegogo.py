@@ -477,8 +477,10 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None, a
         if status != "ended":
             return None
         elapsed = days_since_deadline(deadline_ts)
-        if elapsed is None or not (MIN_ARCHIVE_DAYS <= elapsed <= MAX_ARCHIVE_DAYS):
+        if elapsed is not None and not (MIN_ARCHIVE_DAYS <= elapsed <= MAX_ARCHIVE_DAYS):
+            # 日付が判明していて範囲外なら除外
             return None
+        # 日付不明(elapsed=None)は status=closed URLから来ているので含める
         status = "archived"
     elif status == "ended":
         # 通常モード: 180日以内に終了したもののみ
