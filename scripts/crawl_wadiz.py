@@ -272,7 +272,7 @@ def main() -> int:
 
     if not projects:
         print("[wadiz] no projects found")
-        return 1
+        return 0 if args.archive else 1
 
     if not args.no_save:
         path = save_json(projects, "wadiz_projects.json")

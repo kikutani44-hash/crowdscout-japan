@@ -587,7 +587,7 @@ def main() -> int:
 
     if not projects:
         print("[indiegogo] no projects found")
-        return 1
+        return 0 if args.archive else 1
 
     if not args.no_save:
         if not args.no_translate:
