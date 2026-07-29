@@ -72,4 +72,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '300' }} --archive --force-translate
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '600' }} --archive --force-translate

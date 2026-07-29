@@ -309,7 +309,7 @@ def clean_project_url(url: str) -> str:
     return f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
 
 
-def collect_project_urls(page, explore_urls: list[str], max_links: int) -> list[dict[str, Any]]:
+def collect_project_urls(page, explore_urls: list[str], max_links: int, scroll_count: int = 5) -> list[dict[str, Any]]:
     found: list[dict[str, Any]] = []
     seen: set[str] = set()
 
@@ -333,7 +333,7 @@ def collect_project_urls(page, explore_urls: list[str], max_links: int) -> list[
                 return found
 
         # Scroll for lazy-loaded cards
-        for _ in range(5):
+        for _ in range(scroll_count):
             page.mouse.wheel(0, 2800)
             page.wait_for_timeout(1500)
             previews = extract_card_previews(page)
@@ -541,7 +541,8 @@ def crawl_indiegogo(max_projects: int = 40, category_slugs: list[str] | None = N
         dismiss_cookie_consent(page)
         page.wait_for_timeout(4000)
 
-        urls = collect_project_urls(page, explore_urls, max_links=max_links)
+        scroll_count = 15 if archive_mode else 5
+        urls = collect_project_urls(page, explore_urls, max_links=max_links, scroll_count=scroll_count)
         print(f"[indiegogo] discovered {len(urls)} candidate URLs (max_links={max_links})")
 
         for item in urls:
