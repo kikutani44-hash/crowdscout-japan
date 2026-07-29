@@ -21,7 +21,7 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: |
-          pip install requests python-dotenv anthropic
+          pip install requests python-dotenv anthropic beautifulsoup4
       - name: Run Wadiz crawler
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -41,7 +41,7 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: |
-          pip install requests python-dotenv anthropic
+          pip install requests python-dotenv anthropic beautifulsoup4
       - name: Crawl archive (お宝発掘 180-730日)
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
