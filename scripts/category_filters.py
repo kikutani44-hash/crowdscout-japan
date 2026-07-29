@@ -89,6 +89,7 @@ ALLOWED_PARENTS = {
     "Travel",
     "Transportation",
     "Environment",
+    "Productivity",  # Indiegogo uses this for tech/hardware products (e.g. GPD mini PCs)
 }
 
 ALLOWED_KEYWORDS = (
