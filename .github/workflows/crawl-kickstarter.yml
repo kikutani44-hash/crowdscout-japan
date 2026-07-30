@@ -72,4 +72,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_kickstarter.py --pages 150 --archive --max ${{ github.event.inputs.max_projects || '1000' }} --force-translate
+          python3 crawl_kickstarter.py --pages 60 --archive --max ${{ github.event.inputs.max_projects || '500' }} --force-translate
