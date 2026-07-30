@@ -224,12 +224,19 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   const handleOfferStatusChange = async (projectId: string, status: OfferStatus) => {
     const project = projects.find((p) => p.id === projectId);
     if (!project) return;
+    const previous = project.offer_status;
     updateProject({ ...project, offer_status: status });
-    await fetch(`/api/projects/${projectId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ offer_status: status }),
-    });
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offer_status: status }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (e) {
+      updateProject({ ...project, offer_status: previous });
+      alert(`ステータスの保存に失敗しました。再度お試しください。\n${e}`);
+    }
   };
 
   return (
