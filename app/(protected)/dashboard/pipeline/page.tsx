@@ -144,6 +144,12 @@ export default async function PipelinePage() {
                         )}
 
                         <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/report/${p.id}`}
+                            className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-[11px] text-primary hover:bg-primary/10"
+                          >
+                            📋 案件詳細
+                          </Link>
                           <a
                             href={p.original_url}
                             target="_blank"
