@@ -8,7 +8,7 @@ import type { OfferStatus } from "@/lib/types";
 
 export const revalidate = 0;
 
-const STATUSES: OfferStatus[] = ["未接触", "ウォッチ中", "交渉中", "獲得済み", "却下"];
+const STATUSES: OfferStatus[] = ["ウォッチ中", "交渉中", "獲得済み", "未接触", "却下"];
 
 const STATUS_STYLE: Record<OfferStatus, { badge: string; card: string; dot: string }> = {
   未接触:   { badge: "border-slate-500/40 text-slate-400",   card: "hover:border-slate-400/30",    dot: "bg-slate-400" },
