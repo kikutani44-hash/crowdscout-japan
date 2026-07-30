@@ -242,9 +242,15 @@ def save_to_supabase(projects: list[dict[str, Any]]) -> int:
         "Prefer": "return=minimal",
     }
 
+    # 手動管理フィールドはupsertで上書きしない
+    MANUAL_FIELDS = {
+        "offer_status", "offer_note", "offer_sent_at",
+        "assignee", "negotiation_status", "memo", "followup_at",
+    }
+
     rows: list[dict[str, Any]] = []
     for project in projects:
-        row = {k: v for k, v in project.items() if k != "id"}
+        row = {k: v for k, v in project.items() if k != "id" and k not in MANUAL_FIELDS}
         row["updated_at"] = utc_now_iso()
         rows.append(row)
 
