@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { logActivity } from "@/lib/activity-log";
+import { useAuth } from "@/components/AuthProvider";
 import { ContactModal } from "@/components/ContactModal";
 import { FilterBar } from "@/components/FilterBar";
 import { Header } from "@/components/Header";
@@ -36,6 +38,7 @@ interface HomeClientProps {
 }
 
 export function HomeClient({ initialProjects }: HomeClientProps) {
+  const { token } = useAuth();
   const [projects, setProjects] = useState(initialProjects);
   const [filters, setFilters] = useState<ProjectFilters>({ sortBy: "live_momentum" });
   const [offerProject, setOfferProject] = useState<Project | null>(null);
@@ -175,6 +178,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   }, []);
 
   const handleTranslate = async (project: Project) => {
+    logActivity(token, "translate", { projectId: project.id, projectTitle: project.title });
     setLoadingAction(`translate-${project.id}`);
     try {
       const res = await fetch("/api/translate", {
@@ -197,6 +201,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   };
 
   const handleCfCheck = async (project: Project) => {
+    logActivity(token, "cf_check", { projectId: project.id, projectTitle: project.title });
     setLoadingAction(`cf-${project.id}`);
     try {
       const res = await fetch("/api/cf-check", {
@@ -224,6 +229,11 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   const handleOfferStatusChange = async (projectId: string, status: OfferStatus) => {
     const project = projects.find((p) => p.id === projectId);
     if (!project) return;
+    logActivity(token, "status_change", {
+      projectId: project.id,
+      projectTitle: project.title,
+      metadata: { from: project.offer_status, to: status },
+    });
     const previous = project.offer_status;
     updateProject({ ...project, offer_status: status });
     try {
@@ -262,7 +272,10 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
               project={project}
               onTranslate={handleTranslate}
               onCfCheck={handleCfCheck}
-              onOffer={setOfferProject}
+              onOffer={(p) => {
+                logActivity(token, "offer_open", { projectId: p.id, projectTitle: p.title });
+                setOfferProject(p);
+              }}
               onOfferStatusChange={handleOfferStatusChange}
               loadingAction={loadingAction}
               isTranslating={translatingIds.has(project.id)}

@@ -61,6 +61,14 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
           >
             🗂️ パイプライン
           </Link>
+          {role === "admin" && (
+            <Link
+              href="/dashboard/activity"
+              className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary"
+            >
+              📋 行動ログ
+            </Link>
+          )}
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary"
