@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ContactModal } from "@/components/ContactModal";
 import { FilterBar } from "@/components/FilterBar";
 import { Header } from "@/components/Header";
@@ -38,6 +39,19 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   const [projects, setProjects] = useState(initialProjects);
   const [filters, setFilters] = useState<ProjectFilters>({ sortBy: "live_momentum" });
   const [offerProject, setOfferProject] = useState<Project | null>(null);
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("project");
+  const highlightRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const el = document.getElementById(`project-${highlightId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-primary", "ring-offset-2");
+      setTimeout(() => el.classList.remove("ring-2", "ring-primary", "ring-offset-2"), 3000);
+    }
+  }, [highlightId]);
   const [cfProject, setCfProject] = useState<Project | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [translatingIds, setTranslatingIds] = useState<Set<string>>(new Set());
@@ -229,8 +243,8 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((project) => (
+            <div key={project.id} id={`project-${project.id}`} className="transition-all duration-500">
             <ProductCard
-              key={project.id}
               project={project}
               onTranslate={handleTranslate}
               onCfCheck={handleCfCheck}
@@ -239,6 +253,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
               loadingAction={loadingAction}
               isTranslating={translatingIds.has(project.id)}
             />
+            </div>
           ))}
         </div>
 
