@@ -45,12 +45,19 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
 
   useEffect(() => {
     if (!highlightId) return;
-    const el = document.getElementById(`project-${highlightId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.classList.add("ring-2", "ring-primary", "ring-offset-2");
-      setTimeout(() => el.classList.remove("ring-2", "ring-primary", "ring-offset-2"), 3000);
-    }
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(`project-${highlightId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-2", "ring-primary", "ring-offset-2");
+        setTimeout(() => el.classList.remove("ring-2", "ring-primary", "ring-offset-2"), 3000);
+      } else if (attempts < 20) {
+        attempts++;
+        setTimeout(tryScroll, 200);
+      }
+    };
+    setTimeout(tryScroll, 300);
   }, [highlightId]);
   const [cfProject, setCfProject] = useState<Project | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
