@@ -56,6 +56,12 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
             📦 過去案件
           </Link>
           <Link
+            href="/dashboard/pipeline"
+            className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary"
+          >
+            🗂️ パイプライン
+          </Link>
+          <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary"
           >
