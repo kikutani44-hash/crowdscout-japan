@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { translateToJapanese } from "@/lib/claude";
+import { createServerSupabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -28,6 +29,14 @@ export async function POST(request: Request) {
       title,
       subtitle ?? ""
     );
+    // Supabaseに保存して次回以降の再翻訳を防ぐ
+    if (projectId) {
+      const supabase = createServerSupabase();
+      await supabase
+        .from("projects")
+        .update({ title_ja, subtitle_ja })
+        .eq("id", projectId);
+    }
     return NextResponse.json({
       project: {
         id: projectId,

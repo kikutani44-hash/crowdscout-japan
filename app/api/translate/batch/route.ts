@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { translateToJapanese } from "@/lib/claude";
+import { createServerSupabase } from "@/lib/supabase";
 
 const MAX_BATCH = 3;
 
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const supabase = createServerSupabase();
     const projects = [];
     for (const item of batch) {
       const { title_ja, subtitle_ja } = await translateToJapanese(
@@ -67,6 +69,11 @@ export async function POST(request: Request) {
         item.subtitle
       );
       projects.push({ id: item.id, title_ja, subtitle_ja });
+      // Supabaseに保存して次回以降の再翻訳を防ぐ
+      await supabase
+        .from("projects")
+        .update({ title_ja, subtitle_ja })
+        .eq("id", item.id);
     }
     return NextResponse.json({ projects });
   } catch (error) {
