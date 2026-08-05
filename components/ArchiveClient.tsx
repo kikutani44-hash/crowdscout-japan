@@ -28,6 +28,11 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
   const { token } = useAuth();
   const [projects, setProjects] = useState(initialProjects);
   const [offerProject, setOfferProject] = useState<Project | null>(null);
+
+  useEffect(() => {
+    logActivity(token, "page_view", { metadata: { page: "archive" } });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [cfProject, setCfProject] = useState<Project | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [translatingIds, setTranslatingIds] = useState<Set<string>>(new Set());
@@ -216,6 +221,8 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
                   logActivity(token, "offer_open", { projectId: p.id, projectTitle: p.title });
                   setOfferProject(p);
                 }}
+                onExternalLink={(p) => logActivity(token, "external_link", { projectId: p.id, projectTitle: p.title })}
+                onCardClick={(p) => logActivity(token, "card_click", { projectId: p.id, projectTitle: p.title })}
                 onOfferStatusChange={handleOfferStatusChange}
                 loadingAction={loadingAction}
                 isTranslating={translatingIds.has(project.id)}

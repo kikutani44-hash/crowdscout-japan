@@ -11,7 +11,10 @@ const ACTION_LABEL: Record<string, string> = {
   offer_open:      "✉️ オファー",
   status_change:   "🔄 ステータス変更",
   view_pipeline:   "🗂️ パイプライン",
-  external_link:   "🔗 元ページ",
+  external_link:   "🔗 元ページ閲覧",
+  page_view:       "👁️ ページ閲覧",
+  card_click:      "🖱️ カードタップ",
+  filter_use:      "🔍 フィルター使用",
 };
 
 type Log = {

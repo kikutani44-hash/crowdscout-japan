@@ -5,7 +5,10 @@ export type ActivityAction =
   | "offer_open"
   | "status_change"
   | "view_pipeline"
-  | "external_link";
+  | "external_link"
+  | "page_view"
+  | "card_click"
+  | "filter_use";
 
 export async function logActivity(
   token: string | null,

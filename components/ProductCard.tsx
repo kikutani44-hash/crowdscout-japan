@@ -44,6 +44,8 @@ interface ProductCardProps {
   onCfCheck: (project: Project) => void;
   onOffer: (project: Project) => void;
   onOfferStatusChange: (projectId: string, status: OfferStatus) => void;
+  onExternalLink?: (project: Project) => void;
+  onCardClick?: (project: Project) => void;
   loadingAction?: string | null;
   isTranslating?: boolean;
 }
@@ -54,6 +56,8 @@ export function ProductCard({
   onCfCheck,
   onOffer,
   onOfferStatusChange,
+  onExternalLink,
+  onCardClick,
   loadingAction,
   isTranslating,
 }: ProductCardProps) {
@@ -67,7 +71,10 @@ export function ProductCard({
   const imageSrc = project.image_url ?? null;
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10">
+    <article
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-lg transition hover:border-primary/40 hover:shadow-primary/10"
+      onClick={() => onCardClick?.(project)}
+    >
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary/40">
         {imageSrc ? (
           isZeczec && !imageSrc.includes("supabase.co") ? (
@@ -270,6 +277,7 @@ export function ProductCard({
           href={project.original_url}
           target="_blank"
           className="block text-center text-xs text-muted-foreground hover:text-primary"
+          onClick={(e) => { e.stopPropagation(); onExternalLink?.(project); }}
         >
           元ページを見る →
         </Link>

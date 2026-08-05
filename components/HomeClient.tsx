@@ -47,6 +47,11 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   const highlightRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    logActivity(token, "page_view", { metadata: { page: "home" } });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (!highlightId) return;
     let attempts = 0;
     const tryScroll = () => {
@@ -226,6 +231,16 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
     }
   };
 
+  const handleFilterChange = (newFilters: ProjectFilters) => {
+    const changed = Object.entries(newFilters).find(
+      ([k, v]) => v !== filters[k as keyof ProjectFilters]
+    );
+    if (changed) {
+      logActivity(token, "filter_use", { metadata: { key: changed[0], value: String(changed[1]) } });
+    }
+    setFilters(newFilters);
+  };
+
   const handleOfferStatusChange = async (projectId: string, status: OfferStatus) => {
     const project = projects.find((p) => p.id === projectId);
     if (!project) return;
@@ -260,7 +275,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6">
         <FilterBar
           filters={filters}
-          onChange={setFilters}
+          onChange={handleFilterChange}
           categoryOptions={categoryOptions}
           platformCounts={platformCounts}
         />
@@ -276,6 +291,8 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
                 logActivity(token, "offer_open", { projectId: p.id, projectTitle: p.title });
                 setOfferProject(p);
               }}
+              onExternalLink={(p) => logActivity(token, "external_link", { projectId: p.id, projectTitle: p.title })}
+              onCardClick={(p) => logActivity(token, "card_click", { projectId: p.id, projectTitle: p.title })}
               onOfferStatusChange={handleOfferStatusChange}
               loadingAction={loadingAction}
               isTranslating={translatingIds.has(project.id)}
