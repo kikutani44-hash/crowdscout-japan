@@ -30,7 +30,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_kickstarter.py --sort magic --pages 40 --max ${{ github.event.inputs.max_projects || '300' }} --force-translate
+          python3 crawl_kickstarter.py --sort magic --pages 40 --max ${{ github.event.inputs.max_projects || '300' }}
 
   crawl-newest:
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_kickstarter.py --sort newest --pages 20 --max ${{ github.event.inputs.max_projects || '300' }} --force-translate
+          python3 crawl_kickstarter.py --sort newest --pages 20 --max ${{ github.event.inputs.max_projects || '300' }}
 
   crawl-archive:
     runs-on: ubuntu-latest
@@ -72,4 +72,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_kickstarter.py --pages 40 --archive --max ${{ github.event.inputs.max_projects || '300' }} --no-contacts --force-translate
+          python3 crawl_kickstarter.py --pages 40 --archive --max ${{ github.event.inputs.max_projects || '300' }} --no-contacts

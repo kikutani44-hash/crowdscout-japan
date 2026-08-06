@@ -30,7 +30,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories technology,health,healthcare,fitness --force-translate
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories technology,health,healthcare,fitness
 
   crawl-lifestyle:
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories design,lifestyle,fashion,food,outdoor,sport,mobility --force-translate
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories design,lifestyle,fashion,food,outdoor,sport,mobility
 
   crawl-archive:
     runs-on: ubuntu-latest
@@ -72,4 +72,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '600' }} --archive --force-translate
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '600' }} --archive

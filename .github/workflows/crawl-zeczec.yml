@@ -33,4 +33,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_zeczec.py --max ${{ github.event.inputs.max_projects }} --force-translate
+          python3 crawl_zeczec.py --max ${{ github.event.inputs.max_projects }}
