@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, LogOut, Telescope } from "lucide-react";
+import Image from "next/image";
+import { BarChart3, LogOut } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { authRoleLabel } from "@/lib/auth-types";
 
@@ -18,8 +19,8 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
     <header className="border-b border-border bg-card/40 backdrop-blur">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-primary">
-            <Telescope className="h-5 w-5" />
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg">
+            <Image src="/icons/icon-96x96.png" alt="CrowdJARVIS" width={40} height={40} />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight">Crowd JARVIS</h1>
