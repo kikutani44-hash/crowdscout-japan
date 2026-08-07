@@ -8,7 +8,7 @@ on:
       max_projects:
         description: 'Max projects per category group'
         required: false
-        default: '100'
+        default: '500'
 
 jobs:
   crawl-tech:
@@ -30,7 +30,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories technology,health,healthcare,fitness
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '500' }} --categories technology,health,healthcare,fitness
 
   crawl-lifestyle:
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '100' }} --categories design,lifestyle,fashion,food,outdoor,sport,mobility
+          python3 crawl_indiegogo.py --max ${{ github.event.inputs.max_projects || '500' }} --categories design,lifestyle,fashion,food,outdoor,sport,mobility
 
   crawl-archive:
     runs-on: ubuntu-latest

@@ -21,7 +21,7 @@ ENV_PATH = ROOT_DIR / ".env.local"
 
 load_dotenv(ENV_PATH)
 
-MIN_RAISED_USD = int(os.environ.get("CRAWL_MIN_RAISED_USD", "10000"))
+MIN_RAISED_USD = int(os.environ.get("CRAWL_MIN_RAISED_USD", "1000"))
 MAX_DAYS_SINCE_END = int(os.environ.get("CRAWL_MAX_DAYS_SINCE_END", "180"))
 USD_RATES: dict[str, float] = {
     "USD": 1.0,
