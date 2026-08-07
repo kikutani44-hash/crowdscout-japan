@@ -197,6 +197,8 @@ This is the FIRST email (hook email). Keep it SHORT (max 4 paragraphs). The goal
 Key rules:
 - Personalize based on the specific product details below
 - Mention one specific thing about the product that makes it interesting for Japan
+- MUST clearly state our core proposition: we would like to handle the Japan exclusive rights and launch their product on Japanese crowdfunding platforms (Makuake, CAMPFIRE, or Green Funding) on their behalf
+- Make it clear we want to be their Japan partner — not just an advisor or analyst
 - Do NOT be generic — avoid clichés like "I hope this email finds you well"
 - Sound genuine and direct, not salesy
 - End with a clear, low-friction call to action ("Would you be open to a quick look?")
