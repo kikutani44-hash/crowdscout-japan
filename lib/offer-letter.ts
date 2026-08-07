@@ -89,14 +89,16 @@ ${COMPANY_URL}`;
 
 // 2通目：レポート送付メール
 export function buildFollowUpLetter(input: FollowUpLetterInput): OfferLetterContent {
-  const subject = `[Japan Market Report] ${input.productTitle} — Please Find Attached`;
+  const subject = `[Japan Market Report] ${input.productTitle} — Exclusive Japan Launch Proposal`;
   const customBlock = input.customNote ? `\n${input.customNote}\n` : "";
 
   const text = `Dear ${input.productTitle} Team,
 
-Thank you for your time. As promised, please find below our Japan Market Analysis Report for ${input.productTitle}.
+Thank you so much for your reply — I was genuinely delighted to hear back from you. It means a great deal to us.
 
-— REPORT SUMMARY —
+As promised, please find below our Japan Market Analysis Report for ${input.productTitle}. We are very excited about the potential of your product in Japan, and we would love to be your exclusive partner to make it happen.
+
+— JAPAN MARKET ANALYSIS REPORT —
 
 ■ Why ${input.productTitle} Will Succeed in Japan
 ${input.japanReasons}
@@ -107,21 +109,24 @@ ${input.japanMarketOverview}
 ■ Target Audience
 ${input.targetAudience}
 
-■ Sales Strategy & Roadmap
-① Crowdfunding launch on Makuake / CAMPFIRE
+■ Launch Strategy & Roadmap
+① Crowdfunding launch on Makuake / CAMPFIRE（Japan's top crowdfunding platforms）
 　（Target: ¥${input.crowdfundingTarget}）
-② PR through media and influencer partnerships
-③ Retail expansion on Amazon Japan and sports/specialty stores
-④ B2B sales to relevant facilities and organizations
+② PR through Japanese media and influencer partnerships
+③ Retail expansion on Amazon Japan and specialty stores
+④ B2B sales to relevant organizations and facilities
 
-■ What We Offer
-・Exclusive distribution rights management in Japan
-・Support for Japanese regulatory compliance（PSE, technical standards）
-・TV shopping and talent collaboration network
-・Direct partnerships with Makuake and CAMPFIRE
+■ What We Offer as Your Japan Partner
+・Exclusive rights management for the Japanese market
+・End-to-end crowdfunding campaign management on Makuake / CAMPFIRE
+・Japanese regulatory compliance support（PSE, technical certification）
+・TV shopping and influencer network
+・Direct relationships with Makuake and CAMPFIRE
 ${customBlock}
-We would love to discuss this further at your convenience.
-Please let us know a time that works for you.
+We would love to move forward and discuss the specifics with you.
+Could we schedule a brief call at your convenience to explore this opportunity together?
+
+We look forward to hearing from you.
 
 Warm regards,
 
