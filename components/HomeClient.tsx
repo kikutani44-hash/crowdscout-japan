@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { logActivity } from "@/lib/activity-log";
 import { useAuth } from "@/components/AuthProvider";
 import { ContactModal } from "@/components/ContactModal";
@@ -39,6 +39,7 @@ interface HomeClientProps {
 
 export function HomeClient({ initialProjects }: HomeClientProps) {
   const { token } = useAuth();
+  const router = useRouter();
   const [projects, setProjects] = useState(initialProjects);
   const [filters, setFilters] = useState<ProjectFilters>({ sortBy: "live_momentum" });
   const [offerProject, setOfferProject] = useState<Project | null>(null);
@@ -60,6 +61,7 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         el.classList.add("ring-2", "ring-primary", "ring-offset-2");
         setTimeout(() => el.classList.remove("ring-2", "ring-primary", "ring-offset-2"), 3000);
+        router.replace("/", { scroll: false });
       } else if (attempts < 20) {
         attempts++;
         setTimeout(tryScroll, 200);
