@@ -93,7 +93,13 @@ function extractSnsUrls(html: string): {
   };
 }
 
-// 公式サイトをフェッチしてコンタクト情報を取得
+// 公式サイトをフェッチしてコンタクト情報を取得（バッチ処理からも使用）
+export async function parseContactFromWebsite(
+  siteUrl: string
+): Promise<Pick<SiteContactResult, "email" | "instagram" | "twitter" | "facebook" | "linkedin">> {
+  return parseContactFromSite(siteUrl);
+}
+
 async function parseContactFromSite(
   siteUrl: string
 ): Promise<Pick<SiteContactResult, "email" | "instagram" | "twitter" | "facebook" | "linkedin">> {
