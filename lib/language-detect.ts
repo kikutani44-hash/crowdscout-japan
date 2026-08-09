@@ -18,7 +18,12 @@ const LANGUAGE_MAP: Record<OfferLanguage, LanguageInfo> = {
 };
 
 export function detectLanguage(project: Pick<Project, "platform" | "country">): LanguageInfo {
-  // プラットフォーム優先
+  // Kickstarter / Indiegogo は英語プラットフォームなので常に英語
+  if (project.platform === "kickstarter" || project.platform === "indiegogo") {
+    return LANGUAGE_MAP["en"];
+  }
+
+  // その他のプラットフォームはプラットフォーム優先
   if (project.platform === "zeczec") return LANGUAGE_MAP["zh-TW"];
   if (project.platform === "wadiz") return LANGUAGE_MAP["ko"];
 
