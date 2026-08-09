@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { BarChart3, LogOut, Mail } from "lucide-react";
+import { BarChart3, LogOut } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { authRoleLabel } from "@/lib/auth-types";
 import { GmailAlertBell } from "@/components/GmailAlertBell";
-import { useState } from "react";
 
 interface HeaderProps {
   totalRaisedJpy: number;
@@ -16,22 +15,6 @@ interface HeaderProps {
 
 export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: HeaderProps) {
   const { role, logout } = useAuth();
-  const [fetching, setFetching] = useState(false);
-  const [fetchResult, setFetchResult] = useState<string | null>(null);
-
-  const handleBatchFetch = async () => {
-    setFetching(true);
-    setFetchResult(null);
-    try {
-      const res = await fetch("/api/contact-search/batch", { method: "POST" });
-      const data = await res.json();
-      setFetchResult(`完了: ${data.processed}件処理・${data.found}件メール取得`);
-    } catch {
-      setFetchResult("エラーが発生しました");
-    } finally {
-      setFetching(false);
-    }
-  };
 
   return (
     <header className="border-b border-border bg-card/40 backdrop-blur">
@@ -87,23 +70,6 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
             >
               📋 行動ログ
             </Link>
-          )}
-          {role === "admin" && (
-            <div className="flex flex-col items-end gap-0.5">
-              <button
-                type="button"
-                onClick={handleBatchFetch}
-                disabled={fetching}
-                className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-secondary disabled:opacity-50"
-                title="maker_websiteからメールアドレスを一括取得"
-              >
-                <Mail className="h-4 w-4" />
-                {fetching ? "取得中..." : "メール一括取得"}
-              </button>
-              {fetchResult && (
-                <span className="text-[10px] text-muted-foreground">{fetchResult}</span>
-              )}
-            </div>
           )}
           <Link
             href="/dashboard"

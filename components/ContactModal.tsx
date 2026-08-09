@@ -95,6 +95,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [emailSending, setEmailSending] = useState(false);
   const [emailSendMessage, setEmailSendMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [emailFetching, setEmailFetching] = useState(false);
   const [emailType, setEmailType] = useState<"first" | "second">("first");
 
   // SNS DM tab
@@ -194,6 +195,32 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
     const newLog = dmLog.filter((e) => e.id !== id);
     setDmLog(newLog);
     saveDmLog(project.id, newLog);
+  };
+
+  const handleFetchEmail = async () => {
+    if (!project) return;
+    setEmailFetching(true);
+    try {
+      const res = await fetch("/api/contact-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: project.id,
+          title: project.title,
+          existingWebsite: project.maker_website ?? null,
+        }),
+      });
+      const data = await res.json();
+      if (data.result?.email) {
+        setEmail(data.result.email);
+      } else {
+        alert("メールアドレスが見つかりませんでした");
+      }
+    } catch {
+      alert("取得に失敗しました");
+    } finally {
+      setEmailFetching(false);
+    }
   };
 
   useEffect(() => {
@@ -336,7 +363,20 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
             </p>
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">送信先メール</label>
-              <Input type="email" placeholder="partner@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <div className="flex gap-2">
+                <Input type="email" placeholder="partner@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFetchEmail}
+                  disabled={emailFetching}
+                  title="公式サイトからメールアドレスを自動取得"
+                  className="shrink-0"
+                >
+                  {emailFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  {emailFetching ? "取得中" : "取得"}
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">追加メッセージ（任意）</label>
