@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateKickstarterMessage } from "@/lib/claude";
+import { generateKickstarterMessage, translateOfferLetterToJapanese } from "@/lib/claude";
 import type { Project } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -20,7 +20,9 @@ export async function POST(req: NextRequest) {
       platform: project.platform,
     });
 
-    return NextResponse.json({ success: true, ...result });
+    const text_ja = await translateOfferLetterToJapanese(result.text);
+
+    return NextResponse.json({ success: true, ...result, text_ja });
   } catch (err) {
     const { parseAnthropicError } = await import("@/lib/api-error");
     return NextResponse.json({ error: parseAnthropicError(err) }, { status: 500 });

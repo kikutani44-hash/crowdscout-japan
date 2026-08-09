@@ -99,7 +99,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [emailType, setEmailType] = useState<"first" | "second">("first");
 
   // KS message tab
-  const [ksMessage, setKsMessage] = useState<{ text: string; charCount: number } | null>(null);
+  const [ksMessage, setKsMessage] = useState<{ text: string; charCount: number; text_ja?: string } | null>(null);
   const [ksLoading, setKsLoading] = useState(false);
   const [ksCopied, setKsCopied] = useState(false);
 
@@ -172,7 +172,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setKsMessage({ text: data.text, charCount: data.charCount });
+      setKsMessage({ text: data.text, charCount: data.charCount, text_ja: data.text_ja });
     } catch (err) {
       alert(err instanceof Error ? err.message : "生成に失敗しました");
     } finally {
@@ -528,6 +528,13 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                   </div>
                   <pre className="whitespace-pre-wrap text-sm leading-relaxed">{ksMessage.text}</pre>
                 </div>
+
+                {ksMessage.text_ja && (
+                  <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-4">
+                    <p className="mb-2 text-[11px] font-medium text-blue-400">🇯🇵 日本語訳（内容確認用）</p>
+                    <pre className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{ksMessage.text_ja}</pre>
+                  </div>
+                )}
 
                 <a
                   href={project.original_url}
