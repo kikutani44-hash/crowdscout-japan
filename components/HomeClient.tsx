@@ -27,6 +27,7 @@ import {
   compareProjectsByLiveMomentum,
   matchesLiveHotFilter,
 } from "@/lib/project-momentum";
+import { compareByNewPotential, isRecentProject } from "@/lib/project-potential";
 import { needsJapaneseTranslation } from "@/lib/project-translation";
 import { usdToJpy } from "@/lib/utils";
 
@@ -162,10 +163,15 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
     if (filters.liveHotOnly) {
       result = result.filter((p) => matchesLiveHotFilter(p, true));
     }
+    if (filters.newOnly) {
+      result = result.filter((p) => isRecentProject(p, 30));
+    }
 
     const sortBy = filters.sortBy ?? "live_momentum";
     if (sortBy === "live_momentum") {
       result.sort(compareProjectsByLiveMomentum);
+    } else if (sortBy === "new_potential") {
+      result.sort(compareByNewPotential);
     } else {
       result.sort((a, b) => {
         const av = a[sortBy as keyof Project];

@@ -36,7 +36,8 @@ import {
   hasValidJapaneseTitle,
 } from "@/lib/project-translation";
 import { useState } from "react";
-import { BarChart2, ExternalLink, Flame, Globe, Languages, Mail, SearchCheck, Timer, Users } from "lucide-react";
+import { BarChart2, ExternalLink, Flame, Globe, Languages, Mail, SearchCheck, Timer, Users, Zap } from "lucide-react";
+import { isHighPotential } from "@/lib/project-potential";
 
 interface ProductCardProps {
   project: Project;
@@ -114,7 +115,13 @@ export function ProductCard({
             {formatCategoryLabel(project.category, project.title, project.subtitle ?? "")}
           </Badge>
         </div>
-        <div className="absolute right-3 top-3">
+        <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
+          {isHighPotential(project) && (
+            <Badge className="border-yellow-400/50 bg-yellow-400/20 text-yellow-300">
+              <Zap className="mr-1 h-3 w-3" />
+              新着注目
+            </Badge>
+          )}
           <Badge className="bg-primary/90 text-base font-bold">{project.score}</Badge>
         </div>
       </div>

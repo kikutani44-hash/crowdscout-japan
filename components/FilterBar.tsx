@@ -80,6 +80,7 @@ export function FilterBar({
             <SelectItem value="raised_usd">調達額順</SelectItem>
             <SelectItem value="backers">支援者数順</SelectItem>
             <SelectItem value="created_at">新着順</SelectItem>
+            <SelectItem value="new_potential">⚡ 新着ポテンシャル順</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -117,6 +118,18 @@ export function FilterBar({
           />
           <label htmlFor="japan-unentered" className="text-sm text-muted-foreground">
             🇯🇵 日本未参入のみ表示（参入済みを除外）
+          </label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="new-only"
+            checked={filters.newOnly ?? false}
+            onCheckedChange={(checked) =>
+              onChange({ ...filters, newOnly: checked, sortBy: checked ? "new_potential" : filters.sortBy })
+            }
+          />
+          <label htmlFor="new-only" className="text-sm text-muted-foreground">
+            ⚡ 新着のみ（30日以内）
           </label>
         </div>
       </div>

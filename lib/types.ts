@@ -68,7 +68,8 @@ export interface ProjectFilters {
   platform?: PlatformFilterValue;
   category?: string;
   offerStatus?: OfferStatus | "all";
-  sortBy?: "score" | "raised_usd" | "backers" | "created_at" | "live_momentum";
+  sortBy?: "score" | "raised_usd" | "backers" | "created_at" | "live_momentum" | "new_potential";
+  newOnly?: boolean;
   liveHotOnly?: boolean;
   archivedOnly?: boolean;
 }
