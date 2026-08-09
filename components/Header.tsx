@@ -5,6 +5,7 @@ import Image from "next/image";
 import { BarChart3, LogOut } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { authRoleLabel } from "@/lib/auth-types";
+import { GmailAlertBell } from "@/components/GmailAlertBell";
 
 interface HeaderProps {
   totalRaisedJpy: number;
@@ -77,6 +78,7 @@ export function Header({ totalRaisedJpy, totalProjects, japanUnenteredCount }: H
             <BarChart3 className="h-4 w-4" />
             ダッシュボード
           </Link>
+          <GmailAlertBell />
           <button
             type="button"
             onClick={logout}
