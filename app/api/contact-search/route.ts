@@ -3,10 +3,11 @@ import { searchMakerContacts } from "@/lib/contact-search";
 import { createServerSupabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
-  const { projectId, title, existingWebsite } = await req.json() as {
+  const { projectId, title, existingWebsite, campaignUrl } = await req.json() as {
     projectId: string;
     title: string;
     existingWebsite?: string | null;
+    campaignUrl?: string | null;
   };
 
   if (!projectId || !title) {
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await searchMakerContacts(title, existingWebsite);
+    const result = await searchMakerContacts(title, existingWebsite, campaignUrl);
 
     // Supabase に自動保存
     if (result.source !== "none") {
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
 
       if (result.officialUrl && !existingWebsite) patch.maker_website = result.officialUrl;
       if (result.email) patch.maker_email = result.email;
+      if (result.contactFormUrl) patch.maker_contact_form = result.contactFormUrl;
       if (result.instagram) patch.maker_instagram = result.instagram;
       if (result.twitter) patch.maker_twitter = result.twitter;
       if (result.facebook) patch.maker_facebook = result.facebook;

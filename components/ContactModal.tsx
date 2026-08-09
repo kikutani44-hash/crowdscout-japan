@@ -96,6 +96,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [emailSending, setEmailSending] = useState(false);
   const [emailSendMessage, setEmailSendMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [emailFetching, setEmailFetching] = useState(false);
+  const [contactFormUrl, setContactFormUrl] = useState<string | null>(null);
   const [emailType, setEmailType] = useState<"first" | "second">("first");
 
   // KS message tab
@@ -225,6 +226,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const handleFetchEmail = async () => {
     if (!project) return;
     setEmailFetching(true);
+    setContactFormUrl(null);
     try {
       const res = await fetch("/api/contact-search", {
         method: "POST",
@@ -233,11 +235,14 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
           projectId: project.id,
           title: project.title,
           existingWebsite: project.maker_website ?? null,
+          campaignUrl: project.original_url ?? null,
         }),
       });
       const data = await res.json();
       if (data.result?.email) {
         setEmail(data.result.email);
+      } else if (data.result?.contactFormUrl) {
+        setContactFormUrl(data.result.contactFormUrl);
       } else {
         alert("メールアドレスが見つかりませんでした");
       }
@@ -251,6 +256,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   useEffect(() => {
     if (open && project) {
       setEmail(project.maker_email ?? "");
+      setContactFormUrl(project.maker_email ? null : (project.maker_contact_form ?? null));
       setCustomNote("");
       setMessage(null);
       setEmailSendMessage(null);
@@ -404,6 +410,21 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                   {emailFetching ? "取得中" : "取得"}
                 </Button>
               </div>
+              {contactFormUrl && !email && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
+                  <p className="mb-2 text-amber-400">
+                    ⚠️ メールアドレスは見つかりませんでした。公式サイトの問い合わせフォームから送信してください。
+                  </p>
+                  <a
+                    href={contactFormUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded border border-amber-500/40 px-2 py-1 text-amber-300 hover:bg-amber-500/10"
+                  >
+                    問い合わせフォームを開く →
+                  </a>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm text-muted-foreground">追加メッセージ（任意）</label>

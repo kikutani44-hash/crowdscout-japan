@@ -6,16 +6,65 @@
 export interface SiteContactResult {
   officialUrl: string | null;
   email: string | null;
+  contactFormUrl: string | null;
   instagram: string | null;
   twitter: string | null;
   facebook: string | null;
   linkedin: string | null;
-  source: "google_search" | "site_parse" | "none";
+  source: "campaign_page" | "google_search" | "site_parse" | "none";
 }
 
 // ブランド名をタイトルから抽出
 function extractBrand(title: string): string {
   return title.split(/[:—–|]/)[0].trim();
+}
+
+// クラファンサイト・SNS・大手ECサイトを除外リスト（公式サイト判定用）
+const NON_OFFICIAL_DOMAINS = [
+  "kickstarter.com", "indiegogo.com", "makuake.com", "wadiz.kr", "zeczec.com",
+  "greenfunding.jp", "campfire.jp",
+  "facebook.com", "instagram.com", "twitter.com", "x.com", "linkedin.com",
+  "youtube.com", "tiktok.com", "discord.gg", "discord.com",
+  "amazon.com", "amazon.co.jp", "rakuten.co.jp",
+  "kickstarter-cf.imgix.net", "ksr-ugc.imgix.net",
+];
+
+function isNonOfficialDomain(url: string): boolean {
+  return NON_OFFICIAL_DOMAINS.some((d) => url.includes(d));
+}
+
+// Kickstarter/Indiegogoのキャンペーンページから、クリエイターが掲載している
+// 外部の公式サイトリンクを直接抽出する（Google検索より確実な一次情報）
+export async function extractWebsiteFromCampaignPage(
+  campaignUrl: string
+): Promise<string | null> {
+  try {
+    const res = await fetch(campaignUrl, {
+      signal: AbortSignal.timeout(10000),
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; CrowdJARVIS/1.0)" },
+    });
+    if (!res.ok) return null;
+
+    const html = await res.text();
+    const hrefMatches = html.match(/href="(https?:\/\/[^"]+)"/g) ?? [];
+    const campaignHost = new URL(campaignUrl).hostname;
+
+    for (const match of hrefMatches) {
+      const url = match.replace(/^href="/, "").replace(/"$/, "");
+      if (url.includes(campaignHost)) continue;
+      if (isNonOfficialDomain(url)) continue;
+      // Kickstarter外部リンクのリダイレクト形式 (?ref=...) はそのまま使える
+      try {
+        const parsed = new URL(url);
+        return `${parsed.protocol}//${parsed.hostname}`;
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // Hunter.io Domain Search API でメールアドレスを検索
@@ -120,17 +169,32 @@ function extractSnsUrls(html: string): {
   };
 }
 
+// ページHTMLに問い合わせフォーム（<form>タグ）が存在するか判定
+function hasContactForm(html: string): boolean {
+  return /<form[\s>]/i.test(html);
+}
+
+// 追加で試すコンタクトページのパス候補
+const CONTACT_PATHS = [
+  "/contact",
+  "/pages/contact",
+  "/pages/contact-us",
+  "/contact-us",
+  "/pages/support",
+  "/support",
+  "/pages/about",
+  "/about",
+];
+
+type ContactPageResult = Pick<SiteContactResult, "email" | "instagram" | "twitter" | "facebook" | "linkedin" | "contactFormUrl">;
+
 // 公式サイトをフェッチしてコンタクト情報を取得（バッチ処理からも使用）
-export async function parseContactFromWebsite(
-  siteUrl: string
-): Promise<Pick<SiteContactResult, "email" | "instagram" | "twitter" | "facebook" | "linkedin">> {
+export async function parseContactFromWebsite(siteUrl: string): Promise<ContactPageResult> {
   return parseContactFromSite(siteUrl);
 }
 
-async function parseContactFromSite(
-  siteUrl: string
-): Promise<Pick<SiteContactResult, "email" | "instagram" | "twitter" | "facebook" | "linkedin">> {
-  const empty = { email: null, instagram: null, twitter: null, facebook: null, linkedin: null };
+async function parseContactFromSite(siteUrl: string): Promise<ContactPageResult> {
+  const empty: ContactPageResult = { email: null, contactFormUrl: null, instagram: null, twitter: null, facebook: null, linkedin: null };
 
   try {
     // まずトップページを取得
@@ -143,39 +207,48 @@ async function parseContactFromSite(
     const html = await res.text();
     const email = extractEmails(html);
     const sns = extractSnsUrls(html);
+    let contactFormUrl: string | null = hasContactForm(html) ? siteUrl : null;
 
-    // メールが見つからなければ /contact ページも試す
-    if (!email) {
-      const contactUrl = new URL("/contact", siteUrl).href;
+    if (email) {
+      return { email, contactFormUrl, ...sns };
+    }
+
+    // メールが見つからなければ、候補のコンタクトページを順に試す
+    for (const path of CONTACT_PATHS) {
       try {
+        const contactUrl = new URL(path, siteUrl).href;
         const contactRes = await fetch(contactUrl, {
           signal: AbortSignal.timeout(6000),
           headers: { "User-Agent": "Mozilla/5.0 (compatible; CrowdJARVIS/1.0)" },
         });
-        if (contactRes.ok) {
-          const contactHtml = await contactRes.text();
-          const contactEmail = extractEmails(contactHtml);
-          if (contactEmail) {
-            return { email: contactEmail, ...sns };
-          }
-        }
-      } catch {
-        // /contact が存在しない場合は無視
-      }
+        if (!contactRes.ok) continue;
 
-      // サイトスクレイピングで見つからなければ Hunter.io で検索
-      try {
-        const domain = new URL(siteUrl).hostname.replace(/^www\./, "");
-        const hunterEmail = await searchEmailViaHunter(domain);
-        if (hunterEmail) {
-          return { email: hunterEmail, ...sns };
+        const contactHtml = await contactRes.text();
+        const contactEmail = extractEmails(contactHtml);
+        if (contactEmail) {
+          return { email: contactEmail, contactFormUrl, ...sns };
+        }
+        // メールは無いがフォームがあれば記録しておく（最初に見つかったもの優先）
+        if (!contactFormUrl && hasContactForm(contactHtml)) {
+          contactFormUrl = contactUrl;
         }
       } catch {
-        // Hunter.io 失敗は無視
+        continue;
       }
     }
 
-    return { email, ...sns };
+    // サイトスクレイピングで見つからなければ Hunter.io で検索
+    try {
+      const domain = new URL(siteUrl).hostname.replace(/^www\./, "");
+      const hunterEmail = await searchEmailViaHunter(domain);
+      if (hunterEmail) {
+        return { email: hunterEmail, contactFormUrl, ...sns };
+      }
+    } catch {
+      // Hunter.io 失敗は無視
+    }
+
+    return { email: null, contactFormUrl, ...sns };
   } catch {
     return empty;
   }
@@ -184,18 +257,31 @@ async function parseContactFromSite(
 // メインエントリーポイント
 export async function searchMakerContacts(
   title: string,
-  existingWebsite?: string | null
+  existingWebsite?: string | null,
+  campaignUrl?: string | null
 ): Promise<SiteContactResult> {
   const brand = extractBrand(title);
+  const empty: SiteContactResult = {
+    officialUrl: null, email: null, contactFormUrl: null,
+    instagram: null, twitter: null, facebook: null, linkedin: null, source: "none",
+  };
 
-  // 公式サイト（既存 or 新規検索）
+  // 公式サイトの特定: ① 既存DB ② Kickstarter/Indiegogoページの直リンク ③ Google検索
   let officialUrl = existingWebsite ?? null;
-  if (!officialUrl) {
-    officialUrl = await searchOfficialSite(brand);
+  let source: SiteContactResult["source"] = "site_parse";
+
+  if (!officialUrl && campaignUrl) {
+    officialUrl = await extractWebsiteFromCampaignPage(campaignUrl);
+    if (officialUrl) source = "campaign_page";
   }
 
   if (!officialUrl) {
-    return { officialUrl: null, email: null, instagram: null, twitter: null, facebook: null, linkedin: null, source: "none" };
+    officialUrl = await searchOfficialSite(brand);
+    if (officialUrl) source = "google_search";
+  }
+
+  if (!officialUrl) {
+    return empty;
   }
 
   // サイトを解析してコンタクト情報を取得
@@ -204,6 +290,6 @@ export async function searchMakerContacts(
   return {
     officialUrl,
     ...contacts,
-    source: existingWebsite ? "site_parse" : "google_search",
+    source,
   };
 }

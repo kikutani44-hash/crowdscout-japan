@@ -28,6 +28,7 @@ export async function POST() {
       const contacts = await parseContactFromWebsite(project.maker_website!);
       const patch: Record<string, string | null> = {};
       if (contacts.email) { patch.maker_email = contacts.email; found++; }
+      if (contacts.contactFormUrl) patch.maker_contact_form = contacts.contactFormUrl;
       if (contacts.instagram) patch.maker_instagram = contacts.instagram;
       if (contacts.twitter) patch.maker_twitter = contacts.twitter;
       if (contacts.facebook) patch.maker_facebook = contacts.facebook;
