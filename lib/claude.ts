@@ -444,7 +444,7 @@ export async function generateKickstarterMessage(params: {
 
 We'd love to launch ${productTitle} on Japan's top crowdfunding platforms (Makuake / CAMPFIRE) as your dedicated Japan partner — we handle everything: campaign, regulatory compliance, and post-campaign retail.
 
-We've prepared a Japan Market Analysis Report for your product. Could you share the best email address to send it to?`;
+We've prepared a Japan Market Analysis Report for your product. We would be delighted to send it to you — please reach us anytime at cbec@blink-japan.com. We look forward to hearing from you!`;
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return { text: fallback, charCount: fallback.length };
@@ -469,7 +469,8 @@ Rules:
 - Open with one specific, genuine compliment about THIS product
 - Introduce us: Blink Japan — a Japanese corporation in its 21st year, strong in TV media and digital marketing (¥12B+ managed ad spend, certified Yahoo! Japan / Google agency), direct relationships with Makuake and CAMPFIRE (Japan's top crowdfunding platforms)
 - Core proposal: we want to launch their product on Japanese crowdfunding as their dedicated Japan partner — we take the lead on campaign, regulatory compliance (PSE etc.), and post-campaign retail
-- KEY CTA: we have prepared a Japan Market Analysis Report for their product — ask them for the best EMAIL ADDRESS to send it to (this moves the conversation to email)
+- KEY CTA: we have prepared a Japan Market Analysis Report for their product — tell them we would be delighted to send it, share our email address cbec@blink-japan.com, and warmly say we look forward to hearing from them (this moves the conversation to email)
+- Do NOT include any URLs (platform spam filters flag links); the email address is fine
 - Warm, professional, concise. 3-4 short paragraphs
 - Return only the message text, nothing else`,
       },
