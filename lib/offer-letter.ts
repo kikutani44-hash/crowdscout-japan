@@ -3,6 +3,7 @@ export interface OfferLetterInput {
   productUrl: string;
   platform: string;
   raisedUsd: number;
+  goalUsd: number;
   backers: number;
   category?: string;
   customNote?: string;
@@ -54,13 +55,22 @@ export function buildOfferLetter(input: OfferLetterInput): OfferLetterContent {
   const platform = platformDisplayName(input.platform);
   const customBlock = input.customNote ? `\n${input.customNote}\n` : "";
 
+  const achievementRate = input.goalUsd > 0 ? (input.raisedUsd / input.goalUsd) * 100 : 0;
+  const isSuccessful = achievementRate >= 100 || input.raisedUsd >= 10_000;
+
+  const openingLine = isSuccessful
+    ? `I came across your campaign for ${input.productTitle} on ${platform} — congratulations on raising over ${raised} from ${backers} backers. ${input.productDescriptionOneLine}`
+    : `I came across your campaign for ${input.productTitle} on ${platform} — your product caught my eye right away, and I wanted to reach out early while your campaign is still running. ${input.productDescriptionOneLine}`;
+
   const text = `Dear ${input.productTitle} Team,
 
-I came across your campaign for ${input.productTitle} on ${platform} — congratulations on raising over ${raised} from ${backers} backers. ${input.productDescriptionOneLine}
+${openingLine}
 
 My name is ${SENDER}, and I represent Blink Japan, a company with deep roots in Japanese media, marketing, and consumer distribution.
 
 I believe ${input.productTitle} has exceptional potential in Japan, where ${input.japanAppealPoint} resonates deeply with consumers.
+
+We would love to bring ${input.productTitle} to Japan through crowdfunding platforms such as Makuake and CAMPFIRE, and we sincerely hope to be your dedicated Japan partner.
 
 What sets us apart from other distributors:
 
@@ -68,7 +78,15 @@ What sets us apart from other distributors:
 
 ・Digital Marketing — Certified agency for Yahoo! Japan and Google, having managed over ¥12 billion in advertising, consistently delivering top-tier results in performance marketing
 
-・Market Access — Through our extensive network in Japan's digital business community, we maintain strong relationships with leading e-commerce platforms and online marketing channels, including connections to Japan's top crowdfunding platforms, Makuake and CAMPFIRE.
+・Market Access — Direct relationships with Japan's top crowdfunding platforms, Makuake and CAMPFIRE, as well as leading e-commerce channels.
+
+As interest in Japan grows, we understand you may be receiving approaches from multiple parties. When evaluating any Japan partner, we encourage you to ask:
+
+・Is your company legally registered in Japan, and how many years has that entity been in business?
+・Can you share your company's own track record in Japan — specifically in sales, advertising, and TV/media relationships? (Not affiliated group results, but your company's results alone.)
+・Are you able to introduce us directly to your contacts at Makuake or CAMPFIRE? At Blink Japan, we already have direct relationships with both platforms and can make introductions when needed.
+
+We have been in business for 21 years as a registered Japanese corporation, and we are proud to stand behind every one of these answers.
 
 We have prepared a Japan Market Analysis Report for ${input.productTitle}, covering market size, target demographics, and a step-by-step launch roadmap.
 

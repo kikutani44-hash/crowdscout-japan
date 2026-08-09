@@ -71,6 +71,7 @@ export async function POST(request: Request) {
       productUrl: project.original_url,
       platform: project.platform,
       raisedUsd: project.raised_usd,
+      goalUsd: project.goal_usd,
       backers: project.backers,
       category: project.category,
       customNote: customNote?.trim() || undefined,
