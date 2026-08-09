@@ -18,6 +18,33 @@ function extractBrand(title: string): string {
   return title.split(/[:—–|]/)[0].trim();
 }
 
+// Hunter.io Domain Search API でメールアドレスを検索
+async function searchEmailViaHunter(domain: string): Promise<string | null> {
+  const apiKey = process.env.HUNTER_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const url = new URL("https://api.hunter.io/v2/domain-search");
+    url.searchParams.set("domain", domain);
+    url.searchParams.set("api_key", apiKey);
+    url.searchParams.set("limit", "5");
+
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+
+    const data = await res.json() as {
+      data?: { emails?: Array<{ value: string; confidence: number }> };
+    };
+
+    const emails = data.data?.emails ?? [];
+    // confidenceが高い順に並べて最初のものを返す
+    const best = emails.sort((a, b) => b.confidence - a.confidence)[0];
+    return best?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Google Custom Search API でブランドの公式サイトを検索
 async function searchOfficialSite(brand: string): Promise<string | null> {
   const apiKey = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
@@ -134,6 +161,17 @@ async function parseContactFromSite(
         }
       } catch {
         // /contact が存在しない場合は無視
+      }
+
+      // サイトスクレイピングで見つからなければ Hunter.io で検索
+      try {
+        const domain = new URL(siteUrl).hostname.replace(/^www\./, "");
+        const hunterEmail = await searchEmailViaHunter(domain);
+        if (hunterEmail) {
+          return { email: hunterEmail, ...sns };
+        }
+      } catch {
+        // Hunter.io 失敗は無視
       }
     }
 
