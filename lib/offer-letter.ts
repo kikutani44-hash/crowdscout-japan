@@ -135,14 +135,21 @@ ${input.targetAudience}
 ④ B2B sales to relevant organizations and facilities
 
 ■ What We Offer as Your Japan Partner
-・Exclusive rights management for the Japanese market
-・End-to-end crowdfunding campaign management on Makuake / CAMPFIRE
-・Japanese regulatory compliance support（PSE, technical certification）
+・Full ownership and operation of your crowdfunding campaign on Makuake / CAMPFIRE — managed entirely by Blink Japan
+・Complete handling of Japanese regulatory requirements（PSE, technical certification）on your behalf
 ・TV shopping and influencer network
-・Direct relationships with Makuake and CAMPFIRE
+・Direct relationships with key contacts at Makuake and CAMPFIRE
+・21 years of operational history as a registered Japanese corporation
 ${customBlock}
-We would love to move forward and discuss the specifics with you.
-Could we schedule a brief call at your convenience to explore this opportunity together?
+We would love to take this conversation to the next level. We suggest the following approach:
+
+Step 1 — Written Exchange:
+We will send you a formal partnership proposal outlining the key terms, launch timeline, and projected outcomes — so you can review everything carefully and ask any questions in writing.
+
+Step 2 — Video Call:
+Once we are aligned on the basics, we would love to connect on Zoom or Google Meet with an English-speaking member of our team to finalize the details and move forward together.
+
+We believe this approach will give you the confidence to make the best decision for your product and your brand.
 
 We look forward to hearing from you.
 
