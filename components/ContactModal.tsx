@@ -21,7 +21,7 @@ import { formatUsd } from "@/lib/utils";
 import { getDisplayTitle } from "@/lib/project-translation";
 import { Copy, Eye, FileText, Instagram, Loader2, Mail, MessageSquare, Send, Twitter } from "lucide-react";
 
-type TabId = "email" | "sns" | "dm-log" | "japan-page";
+type TabId = "email" | "ks-message" | "sns" | "dm-log" | "japan-page";
 
 interface ContactModalProps {
   project: Project | null;
@@ -98,6 +98,11 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [emailFetching, setEmailFetching] = useState(false);
   const [emailType, setEmailType] = useState<"first" | "second">("first");
 
+  // KS message tab
+  const [ksMessage, setKsMessage] = useState<{ text: string; charCount: number } | null>(null);
+  const [ksLoading, setKsLoading] = useState(false);
+  const [ksCopied, setKsCopied] = useState(false);
+
   // SNS DM tab
   const [snsPlatform, setSnsPlatform] = useState<"instagram" | "twitter">("instagram");
   const [snsDm, setSnsDm] = useState<SnsDmResult | null>(null);
@@ -152,6 +157,26 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       // silently handle
     } finally {
       setSnsLoading(false);
+    }
+  };
+
+  const handleGenerateKsMessage = async () => {
+    if (!project) return;
+    setKsLoading(true);
+    setKsMessage(null);
+    try {
+      const res = await fetch("/api/ks-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setKsMessage({ text: data.text, charCount: data.charCount });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "生成に失敗しました");
+    } finally {
+      setKsLoading(false);
     }
   };
 
@@ -233,6 +258,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       setPreview(null);
 
       setSnsDm(null);
+      setKsMessage(null);
       setJpContent(null);
       setActiveTab("email");
       setEmailType("first");
@@ -294,6 +320,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: "email", label: "メール", icon: <Mail className="h-3.5 w-3.5" /> },
+    { id: "ks-message", label: "KSメッセージ", icon: <Send className="h-3.5 w-3.5" /> },
     { id: "sns", label: "SNS DM", icon: <Instagram className="h-3.5 w-3.5" /> },
     { id: "dm-log", label: "DM記録", icon: <MessageSquare className="h-3.5 w-3.5" /> },
     { id: "japan-page", label: "日本ページ", icon: <FileText className="h-3.5 w-3.5" /> },
@@ -471,6 +498,53 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
         )}
 
         {/* ─── タブ: SNS DM ─── */}
+        {/* ─── タブ: KSメッセージ ─── */}
+        {activeTab === "ks-message" && (
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              📨 メールアドレスが取得できない案件向け。{project.platform === "indiegogo" ? "Indiegogo" : "Kickstarter"}の「クリエイターに連絡」機能に貼り付ける短文フックを生成します。返信が来たらメールアドレスを聞き出し、メールでの本格提案に切り替えます。
+            </p>
+
+            <Button onClick={handleGenerateKsMessage} disabled={ksLoading} className="w-full">
+              {ksLoading ? <><Loader2 className="h-4 w-4 animate-spin" />生成中...</> : "メッセージ文を自動生成"}
+            </Button>
+
+            {ksMessage && (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-border bg-card p-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">{ksMessage.charCount}文字</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(ksMessage.text);
+                        setKsCopied(true);
+                        setTimeout(() => setKsCopied(false), 2000);
+                      }}
+                      className="flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                    >
+                      <Copy className="h-3 w-3" />
+                      {ksCopied ? "コピー済み ✓" : "コピー"}
+                    </button>
+                  </div>
+                  <pre className="whitespace-pre-wrap text-sm leading-relaxed">{ksMessage.text}</pre>
+                </div>
+
+                <a
+                  href={project.original_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block w-full rounded-lg border border-emerald-500/30 bg-emerald-500/5 py-2 text-center text-sm text-emerald-400 hover:bg-emerald-500/10"
+                >
+                  {project.platform === "indiegogo" ? "Indiegogo" : "Kickstarter"}ページを開いてメッセージを送る →
+                </a>
+                <p className="text-[11px] text-muted-foreground">
+                  💡 プロジェクトページのクリエイター名をクリック →「Contact me」からメッセージを送信できます（要ログイン）
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === "sns" && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 flex-wrap">

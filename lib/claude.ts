@@ -424,6 +424,62 @@ export interface SnsDmResult {
   charCount: number;
 }
 
+export interface KsMessageResult {
+  text: string;
+  charCount: number;
+}
+
+// Kickstarter/Indiegogoのメッセージ機能用の短文フック生成
+export async function generateKickstarterMessage(params: {
+  productTitle: string;
+  productSubtitle: string | null;
+  category: string;
+  raisedUsd: number;
+  platform: string;
+}): Promise<KsMessageResult> {
+  const { productTitle, productSubtitle, category, raisedUsd, platform } = params;
+  const platformName = platform === "indiegogo" ? "Indiegogo" : "Kickstarter";
+
+  const fallback = `Hi! I'm Yoshitaka Kikutani from Blink Japan, a 21-year-old Japanese corporation with deep roots in TV media and digital marketing (¥12B+ in managed ads, certified Yahoo! Japan / Google agency).
+
+We'd love to launch ${productTitle} on Japan's top crowdfunding platforms (Makuake / CAMPFIRE) as your dedicated Japan partner — we handle everything: campaign, regulatory compliance, and post-campaign retail.
+
+We've prepared a Japan Market Analysis Report for your product. Could you share the best email address to send it to?`;
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { text: fallback, charCount: fallback.length };
+  }
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 1024,
+    messages: [
+      {
+        role: "user",
+        content: `You are writing a message to a crowdfunding creator via ${platformName}'s built-in "contact the creator" message feature, proposing a Japan market launch partnership.
+
+Product: ${productTitle}
+Category: ${category}
+Raised: $${Math.round(raisedUsd / 1000)}K
+${productSubtitle ? `Description: ${productSubtitle}` : ""}
+
+Rules:
+- Write in English
+- 500-900 characters (this is a platform message, not a formal email — no "Dear Sir", no signature block)
+- Open with one specific, genuine compliment about THIS product
+- Introduce us: Blink Japan — a Japanese corporation in its 21st year, strong in TV media and digital marketing (¥12B+ managed ad spend, certified Yahoo! Japan / Google agency), direct relationships with Makuake and CAMPFIRE (Japan's top crowdfunding platforms)
+- Core proposal: we want to launch their product on Japanese crowdfunding as their dedicated Japan partner — we take the lead on campaign, regulatory compliance (PSE etc.), and post-campaign retail
+- KEY CTA: we have prepared a Japan Market Analysis Report for their product — ask them for the best EMAIL ADDRESS to send it to (this moves the conversation to email)
+- Warm, professional, concise. 3-4 short paragraphs
+- Return only the message text, nothing else`,
+      },
+    ],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text.trim() : fallback;
+  return { text, charCount: text.length };
+}
+
 // SNS DM自動生成（Instagram/X向け）
 export async function generateSnsDm(params: {
   productTitle: string;
