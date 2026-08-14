@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { translateToJapanese } from "@/lib/claude";
-import { createServerSupabase } from "@/lib/supabase";
+import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { needsJapaneseTranslation } from "@/lib/translation-status";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -14,14 +15,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "リクエストボディが不正です" }, { status: 400 });
   }
 
-  const { projectId, title, subtitle } = body as {
+  const { projectId, title, subtitle, force = false } = body as {
     projectId?: string;
     title?: string;
     subtitle?: string;
+    force?: boolean;
   };
 
   if (!title) {
     return NextResponse.json({ error: "title が必要です" }, { status: 400 });
+  }
+
+  // 翻訳済みならClaude APIを呼ばずDBの値をそのまま返す（Anthropicクレジット節約）
+  if (!force && projectId && isSupabaseConfigured()) {
+    try {
+      const supabase = createServerSupabase();
+      const { data: existing } = await supabase
+        .from("projects")
+        .select("title, subtitle, title_ja, subtitle_ja")
+        .eq("id", projectId)
+        .maybeSingle();
+
+      if (existing && !needsJapaneseTranslation(existing)) {
+        return NextResponse.json({
+          project: {
+            id: projectId,
+            title_ja: existing.title_ja,
+            subtitle_ja: existing.subtitle_ja,
+          },
+          cached: true,
+        });
+      }
+    } catch {
+      // 参照に失敗した場合は通常どおり翻訳へ進む
+    }
   }
 
   try {
@@ -43,6 +70,7 @@ export async function POST(request: Request) {
         title_ja,
         subtitle_ja,
       },
+      cached: false,
     });
   } catch (error) {
     const { parseAnthropicError } = await import("@/lib/api-error");

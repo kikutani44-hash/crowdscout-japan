@@ -7,11 +7,12 @@ import type { Project } from "@/lib/types";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { projectId, query: rawQuery, title, title_ja } = body as {
+    const { projectId, query: rawQuery, title, title_ja, force = false } = body as {
       projectId?: string;
       query?: string;
       title?: string;
       title_ja?: string | null;
+      force?: boolean;
     };
 
     const query = buildCfSearchQuery(
@@ -20,6 +21,25 @@ export async function POST(request: Request) {
     );
     if (!query) {
       return NextResponse.json({ error: "検索クエリが必要です" }, { status: 400 });
+    }
+
+    // 判定済みなら日本CFサイトを再取得しない（無駄な外部リクエストを削減）
+    // 「再チェック」したい場合は force: true を渡す
+    if (!force && isSupabaseConfigured() && projectId) {
+      const supabase = createServerSupabase();
+      const { data: cached } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", projectId)
+        .maybeSingle();
+
+      if (cached?.japan_cf_checked && cached.japan_cf_result) {
+        return NextResponse.json({
+          project: cached as Project,
+          result: cached.japan_cf_result,
+          cached: true,
+        });
+      }
     }
 
     const result = await checkJapanCf(query);

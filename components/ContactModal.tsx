@@ -121,14 +121,16 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [dmDirection, setDmDirection] = useState<"sent" | "received">("received");
   const [dmPlatform, setDmPlatform] = useState("instagram");
 
-  const loadPreview = useCallback(async () => {
+  // regenerate=true のときだけAIを再実行する。
+  // 通常はサーバー側のキャッシュを使い、Anthropicクレジットを消費しない。
+  const loadPreview = useCallback(async (regenerate = false) => {
     if (!project) return;
     setPreviewLoading(true);
     try {
       const res = await fetch("/api/send-offer/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: project.id, customNote, emailType }),
+        body: JSON.stringify({ projectId: project.id, customNote, emailType, regenerate }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -161,7 +163,9 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
     }
   };
 
-  const handleGenerateKsMessage = async () => {
+  // regenerate=true のときだけAIを再実行する。
+  // 通常はサーバー側のキャッシュを使い、Anthropicクレジットを消費しない。
+  const handleGenerateKsMessage = async (regenerate = false) => {
     if (!project) return;
     setKsLoading(true);
     setKsMessage(null);
@@ -169,7 +173,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       const res = await fetch("/api/ks-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ project }),
+        body: JSON.stringify({ project, regenerate }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -277,6 +281,11 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const handlePreview = async () => {
     setShowPreview(true);
     await loadPreview();
+  };
+
+  const handleRegeneratePreview = async () => {
+    setShowPreview(true);
+    await loadPreview(true);
   };
 
   const handleSendEmail = async () => {
@@ -440,6 +449,18 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                 <Eye className="h-4 w-4" />
                 {previewLoading ? "読込中..." : "メールプレビュー"}
               </Button>
+              {showPreview && preview && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRegeneratePreview}
+                  disabled={previewLoading}
+                  title="AIで文面を作り直します（Anthropicクレジットを消費します）"
+                >
+                  <Loader2 className={`h-4 w-4 ${previewLoading ? "animate-spin" : ""}`} />
+                  文面を再生成
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -526,7 +547,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
               📨 メールアドレスが取得できない案件向け。{project.platform === "indiegogo" ? "Indiegogo" : "Kickstarter"}の「クリエイターに連絡」機能に貼り付ける短文フックを生成します。返信が来たらメールアドレスを聞き出し、メールでの本格提案に切り替えます。
             </p>
 
-            <Button onClick={handleGenerateKsMessage} disabled={ksLoading} className="w-full">
+            <Button onClick={() => handleGenerateKsMessage()} disabled={ksLoading} className="w-full">
               {ksLoading ? <><Loader2 className="h-4 w-4 animate-spin" />生成中...</> : "メッセージ文を自動生成"}
             </Button>
 
@@ -568,6 +589,14 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                 <p className="text-[11px] text-muted-foreground">
                   💡 プロジェクトページのクリエイター名をクリック →「Contact me」からメッセージを送信できます（要ログイン）
                 </p>
+                <button
+                  onClick={() => handleGenerateKsMessage(true)}
+                  disabled={ksLoading}
+                  className="text-[11px] text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+                  title="AIで文面を作り直します（Anthropicクレジットを消費します）"
+                >
+                  文面が気に入らない場合はこちらで再生成
+                </button>
               </div>
             )}
           </div>

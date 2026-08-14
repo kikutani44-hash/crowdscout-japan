@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { findLocalProject } from "@/lib/project-store";
+import { getAiCache, setAiCache, type AiCacheKey } from "@/lib/ai-cache";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? "" });
+
+type MarketAnalysisPayload = Record<string, unknown>;
 
 const PSE_CATEGORIES = ["electronics", "電子機器", "gadget", "tech", "smart", "device", "charging", "battery", "light", "led"];
 const GITEKI_CATEGORIES = ["wireless", "bluetooth", "wifi", "radio", "drone", "speaker", "headphone"];
@@ -32,8 +35,15 @@ function estimateGiteki(category: string, title: string): { required: boolean; n
 
 export async function POST(request: Request) {
   try {
-    const { projectId } = await request.json();
+    const { projectId, regenerate = false } = await request.json();
     if (!projectId) return NextResponse.json({ error: "projectId が必要です" }, { status: 400 });
+
+    // 分析済みなら再生成しない（Anthropicクレジット節約）
+    const cacheKey: AiCacheKey = { kind: "market_analysis", projectId };
+    if (!regenerate) {
+      const cached = await getAiCache<MarketAnalysisPayload>(cacheKey);
+      if (cached) return NextResponse.json({ ...cached, cached: true });
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let project: any = await findLocalProject(projectId);
@@ -94,11 +104,14 @@ export async function POST(request: Request) {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     const analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : { verdict: "分析失敗", targetAudience: content };
 
-    return NextResponse.json({
+    const payload = {
       analysis,
       pse: estimatePse(category, title),
       giteki: estimateGiteki(category, title),
-    });
+    };
+    await setAiCache(cacheKey, payload);
+
+    return NextResponse.json({ ...payload, cached: false });
   } catch (error) {
     const { parseAnthropicError } = await import("@/lib/api-error");
     return NextResponse.json({ error: parseAnthropicError(error) }, { status: 500 });

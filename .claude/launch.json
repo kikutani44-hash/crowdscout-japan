@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "crowdjarvis-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/kiku44/Downloads/CrowdScout_Japan/crowdscout-japan", "run", "dev", "--", "-p", "3000"],
+      "port": 3000
+    },
+    {
       "name": "sedori-scout-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "/Users/kiku44/Downloads/CrowdScout_Japan/sedori-scout", "run", "dev", "--", "-p", "3300"],

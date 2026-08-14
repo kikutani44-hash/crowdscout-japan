@@ -4,14 +4,31 @@ import { detectLanguage } from "@/lib/language-detect";
 import { buildOfferLetter, buildFollowUpLetter } from "@/lib/offer-letter";
 import { findLocalProject } from "@/lib/project-store";
 import { createServerSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getAiCache, setAiCache, hashVariant, type AiCacheKey } from "@/lib/ai-cache";
 
 export const maxDuration = 60;
 
+type LetterPayload = Record<string, unknown>;
+
 export async function POST(request: Request) {
   try {
-    const { projectId, customNote, emailType = "first" } = await request.json();
+    const { projectId, customNote, emailType = "first", regenerate = false } = await request.json();
     if (!projectId) {
       return NextResponse.json({ error: "projectId が必要です" }, { status: 400 });
+    }
+
+    // 同じ案件・同じ備考なら再生成せずキャッシュを返す（Anthropicクレジット節約）
+    // 1通目は Sonnet を3回（変数生成 + 日本語訳 + 現地語訳）呼ぶため効果が大きい
+    const cacheKey: AiCacheKey = {
+      kind: emailType === "second" ? "offer_second" : "offer_first",
+      projectId,
+      variant: hashVariant(customNote?.trim()),
+    };
+    if (!regenerate) {
+      const cached = await getAiCache<LetterPayload>(cacheKey);
+      if (cached) {
+        return NextResponse.json({ letter: { ...cached, cached: true } });
+      }
     }
 
     let project = await findLocalProject(projectId);
@@ -59,9 +76,16 @@ export async function POST(request: Request) {
         translateOfferLetterToJapanese(letter.text),
       ]);
 
-      return NextResponse.json({
-        letter: { ...letter, text_translated, text_ja, lang: langInfo, emailType: "second" },
-      });
+      const payload = {
+        ...letter,
+        text_translated,
+        text_ja,
+        lang: langInfo,
+        emailType: "second" as const,
+      };
+      await setAiCache(cacheKey, payload);
+
+      return NextResponse.json({ letter: { ...payload, cached: false } });
     }
 
     // 1通目
@@ -84,16 +108,17 @@ export async function POST(request: Request) {
       translateOfferLetterToJapanese(letter.text),
     ]);
 
-    return NextResponse.json({
-      letter: {
-        ...letter,
-        text_translated,
-        text_ja,
-        lang: langInfo,
-        emailType: "first",
-        personalized: !!process.env.ANTHROPIC_API_KEY,
-      },
-    });
+    const payload = {
+      ...letter,
+      text_translated,
+      text_ja,
+      lang: langInfo,
+      emailType: "first" as const,
+      personalized: !!process.env.ANTHROPIC_API_KEY,
+    };
+    await setAiCache(cacheKey, payload);
+
+    return NextResponse.json({ letter: { ...payload, cached: false } });
   } catch (error) {
     const { parseAnthropicError } = await import("@/lib/api-error");
     return NextResponse.json({ error: parseAnthropicError(error) }, { status: 500 });
