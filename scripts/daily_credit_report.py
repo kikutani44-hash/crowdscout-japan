@@ -22,9 +22,14 @@ import os
 import subprocess
 import sys
 import urllib.error
+import socket
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+# 応答が返らない場合に長時間ぶら下がらないようにする
+socket.setdefaulttimeout(10)
+NET_TIMEOUT = 10
 
 ROOT = Path(__file__).resolve().parent.parent
 ENV_FILE = ROOT / ".env.local"
@@ -88,6 +93,7 @@ class Supabase:
             "NEXT_PUBLIC_SUPABASE_ANON_KEY", ""
         )
         self.ok = bool(self.base and self.key)
+        self.failures: list[str] = []
 
     def _headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         headers = {"apikey": self.key, "Authorization": f"Bearer {self.key}"}
@@ -101,9 +107,10 @@ class Supabase:
             req = urllib.request.Request(
                 f"{self.base}/rest/v1/{query}", headers=self._headers()
             )
-            with urllib.request.urlopen(req, timeout=60) as res:
+            with urllib.request.urlopen(req, timeout=NET_TIMEOUT) as res:
                 return json.loads(res.read().decode())
-        except Exception:
+        except Exception as exc:
+            self.failures.append(f"{query.split('?')[0]}: {exc}")
             return []
 
     def count(self, query: str) -> int:
@@ -114,9 +121,10 @@ class Supabase:
                 f"{self.base}/rest/v1/{query}",
                 headers=self._headers({"Prefer": "count=exact", "Range": "0-0"}),
             )
-            with urllib.request.urlopen(req, timeout=60) as res:
+            with urllib.request.urlopen(req, timeout=NET_TIMEOUT) as res:
                 return int(res.headers.get("Content-Range", "0/0").split("/")[-1])
-        except Exception:
+        except Exception as exc:
+            self.failures.append(f"{query.split('?')[0]}: {exc}")
             return -1
 
 
@@ -159,7 +167,7 @@ def crawl_runs(hours: int) -> list[str]:
     try:
         proc = subprocess.run(
             ["gh", "run", "list", "--limit", "15", "--json", "name,conclusion,status,createdAt"],
-            cwd=ROOT, capture_output=True, text=True, timeout=60,
+            cwd=ROOT, capture_output=True, text=True, timeout=NET_TIMEOUT,
         )
         if proc.returncode != 0:
             return []
@@ -198,11 +206,19 @@ def main() -> int:
         print("\n  Supabaseに接続できません（.env.local を確認してください）")
         return 1
 
+    print("\n  集計中...", end="", flush=True)
     new_projects, tr_cost, by_platform = translation_cost(db, since)
     gen_counts, gen_cost = generation_cost(db, since)
     total = tr_cost + gen_cost
+    print("\r" + " " * 20 + "\r", end="")
 
-    print(f"\n■ このアプリの消費額（概算）:  ${total:.2f}")
+    if db.failures:
+        print("\n  ⚠ データ取得に失敗した項目があります。下の金額は過少表示です:")
+        for msg in db.failures:
+            print(f"    - {msg}")
+
+    print(f"\n■ このアプリの消費額（概算）:  ${total:.2f}"
+          + ("  ← 不完全" if db.failures else ""))
     print(f"  ├ 翻訳（Haiku）    ${tr_cost:.2f}   新規案件 {new_projects} 件")
     if by_platform:
         print("  │   " + " / ".join(f"{k} {v}件" for k, v in sorted(by_platform.items())))
