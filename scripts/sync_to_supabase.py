@@ -8,7 +8,13 @@ import json
 import sys
 from pathlib import Path
 
-from common import DATA_DIR, replace_supabase_projects, save_to_supabase, utc_now_iso
+from common import (
+    DATA_DIR,
+    hydrate_existing_translations,
+    replace_supabase_projects,
+    save_to_supabase,
+    utc_now_iso,
+)
 from translator import translate_projects
 
 MERGED_PATH = DATA_DIR / "projects_merged.json"
@@ -58,6 +64,7 @@ def main() -> int:
     print(f"[sync] {len(projects)} projects from {args.file}")
     if args.translate:
         print("[sync] translating projects via Claude API...")
+        hydrate_existing_translations(projects)
         translate_projects(projects, force=args.force_translate)
         if args.file == MERGED_PATH:
             MERGED_PATH.write_text(

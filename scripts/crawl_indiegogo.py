@@ -30,6 +30,7 @@ from common import (
     normalize_project,
     parse_money_to_usd,
     save_json,
+    hydrate_existing_translations,
     save_to_supabase,
     utc_now_iso,
 )
@@ -602,6 +603,9 @@ def main() -> int:
     if not args.no_save:
         if not args.no_translate:
             from translator import translate_projects
+
+            # 既にDBにある訳を先に埋めて、二度目の翻訳を防ぐ
+            hydrate_existing_translations(projects)
 
             print(f"[indiegogo] translating {len(projects)} projects...")
             translate_projects(projects, force=args.force_translate)

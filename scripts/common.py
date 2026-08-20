@@ -221,6 +221,70 @@ def save_json(projects: list[dict[str, Any]], filename: str) -> Path:
     return path
 
 
+def hydrate_existing_translations(projects: list[dict[str, Any]]) -> int:
+    """既にSupabaseにある日本語訳をクロール結果に流し込む。
+
+    クロールで作った dict には title_ja が入っていないため、
+    そのまま translate_projects に渡すと既訳の案件まで翻訳し直してしまう。
+    先にDBの訳を埋めておくことで、needs_japanese_translation() が
+    正しくスキップ判定できるようになり、Anthropicクレジットを節約できる。
+
+    戻り値: 既訳を流し込めた件数。
+    """
+    url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
+    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    if not url or not key or not projects:
+        return 0
+
+    try:
+        import requests
+    except ImportError:
+        return 0
+
+    base = url.rstrip("/")
+    headers = {"apikey": key, "Authorization": f"Bearer {key}"}
+
+    by_url: dict[str, dict[str, Any]] = {}
+    for project in projects:
+        original_url = project.get("original_url")
+        if original_url:
+            by_url[original_url] = project
+
+    urls = list(by_url)
+    hydrated = 0
+    CHUNK = 50  # URLが長いのでクエリ文字列が肥大しないよう分割する
+    for i in range(0, len(urls), CHUNK):
+        chunk = urls[i : i + CHUNK]
+        quoted = ",".join('"' + u.replace('"', '\\"') + '"' for u in chunk)
+        try:
+            res = requests.get(
+                f"{base}/rest/v1/projects",
+                headers=headers,
+                params={
+                    "original_url": f"in.({quoted})",
+                    "select": "original_url,title_ja,subtitle_ja",
+                },
+                timeout=30,
+            )
+            if not res.ok:
+                continue
+            for row in res.json():
+                project = by_url.get(row.get("original_url") or "")
+                if not project:
+                    continue
+                if row.get("title_ja") and not project.get("title_ja"):
+                    project["title_ja"] = row["title_ja"]
+                    hydrated += 1
+                if row.get("subtitle_ja") and not project.get("subtitle_ja"):
+                    project["subtitle_ja"] = row["subtitle_ja"]
+        except Exception as exc:  # 失敗しても翻訳自体は続行できる
+            print(f"[supabase] translation hydrate failed: {exc}", file=sys.stderr)
+
+    if hydrated:
+        print(f"[supabase] reused {hydrated} existing translations (翻訳スキップ)")
+    return hydrated
+
+
 def save_to_supabase(projects: list[dict[str, Any]]) -> int:
     url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
