@@ -167,7 +167,6 @@ def crawl_kickstarter(
     category_slugs: list[str] | None = None,
     max_projects: int | None = None,
     min_projects: int | None = None,
-    skip_contacts: bool = False,
     sort: str = "magic",
     archive_mode: bool = False,
 ) -> list[dict[str, Any]]:
@@ -280,11 +279,9 @@ def crawl_kickstarter(
     if limit:
         projects = projects[:limit]
 
-    if not skip_contacts and projects:
-        print(f"[kickstarter] extracting contacts from {len(projects)} project pages...")
-        enriched = enrich_kickstarter_projects(projects)
-        print(f"[kickstarter] contacts found on {enriched}/{len(projects)} projects")
-
+    # 連絡先取得はここでは行わない。
+    # 1件ずつ個別ページを開く重い処理なので、Supabaseへの保存を終えてから
+    # main() 側で実行する（途中で打ち切られても収集結果を失わないため）。
     return projects
 
 
@@ -356,7 +353,6 @@ def main() -> int:
         category_slugs=slugs,
         max_projects=args.max,
         min_projects=args.min,
-        skip_contacts=args.no_contacts,
         sort=args.sort,
         archive_mode=args.archive,
     )
@@ -385,6 +381,14 @@ def main() -> int:
             if saved:
                 mode = "replaced" if args.replace else "upserted"
                 print(f"[kickstarter] {saved} rows {mode} to Supabase")
+
+    # 保存が終わってから連絡先を取得する。
+    # 取得は重く、GitHub Actionsの上限で打ち切られることがあるが、
+    # ここまで来ていれば案件データ自体は既にSupabaseに入っている。
+    if not args.no_contacts and projects:
+        print(f"[kickstarter] extracting contacts from {len(projects)} project pages...")
+        enriched = enrich_kickstarter_projects(projects)
+        print(f"[kickstarter] contacts found on {enriched}/{len(projects)} projects")
 
     print(json.dumps({"count": len(projects), "top": projects[:3]}, ensure_ascii=False, indent=2))
     return 0

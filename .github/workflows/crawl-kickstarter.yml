@@ -13,13 +13,14 @@ on:
 jobs:
   crawl-magic:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install dependencies
+        timeout-minutes: 15
         run: |
           pip install playwright requests python-dotenv anthropic beautifulsoup4
           playwright install chromium --with-deps
@@ -30,17 +31,18 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_kickstarter.py --sort magic --pages 60 --max ${{ github.event.inputs.max_projects || '1000' }}
+          python3 crawl_kickstarter.py --sort magic --pages 60 --max ${{ github.event.inputs.max_projects || '1000' }} --no-contacts
 
   crawl-newest:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install dependencies
+        timeout-minutes: 15
         run: |
           pip install playwright requests python-dotenv anthropic beautifulsoup4
           playwright install chromium --with-deps
@@ -51,17 +53,18 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           cd scripts
-          python3 crawl_kickstarter.py --sort newest --pages 40 --max ${{ github.event.inputs.max_projects || '1000' }}
+          python3 crawl_kickstarter.py --sort newest --pages 40 --max ${{ github.event.inputs.max_projects || '1000' }} --no-contacts
 
   crawl-archive:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install dependencies
+        timeout-minutes: 15
         run: |
           pip install playwright requests python-dotenv anthropic beautifulsoup4
           playwright install chromium --with-deps
