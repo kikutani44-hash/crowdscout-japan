@@ -70,9 +70,11 @@ export function ProductCard({
   const japanCfStatus = getJapanCfDisplayStatus(project);
   const displayTitle = getDisplayTitle(project);
   const displaySubtitle = getDisplaySubtitle(project);
-  // 終了済み案件は「残り日数」ではなく「いつ終わったか」を見せる
-  const endedAgo =
-    project.status !== "active" ? formatMonthsSinceEnd(project.deadline_at) : null;
+  // 終了済み案件は「残り日数」ではなく「いつ終わったか」を見せる。
+  // status はクロール次第で更新が遅れ、終了済みでも "active" のまま残ることが
+  // あるため、status ではなく終了日そのもので判定する
+  // （formatMonthsSinceEnd は終了日が未来なら null を返す）。
+  const endedAgo = formatMonthsSinceEnd(project.deadline_at);
   // 日本での想定価格。AIを使わず計算で出しているのでクレジットは消費しない。
   const jpPrice = estimateJapanPrice(project.raised_usd, project.backers);
   const jpVerdict = japanPriceVerdict(jpPrice);
