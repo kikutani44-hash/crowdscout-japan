@@ -186,9 +186,10 @@ export default async function PipelinePage({
                                     ? "text-amber-400"
                                     : "text-emerald-400"
                               }`}
-                              title="海外の1人あたり平均支援額に、輸入・認証・CF手数料・流通マージンを見込んだ概算（2.5〜3.5倍）"
+                              title="海外CF価格の30〜50%で卸してもらえた場合の日本での想定販売価格。卸掛率は交渉次第で動くため目安です。"
                             >
-                              🇯🇵 日本想定 {jp.shortLabel}
+                              🇯🇵 日本CF想定 {jp.shortLabel}
+                              <span className="text-muted-foreground"> （海外 {jp.overseasLabel}）</span>
                             </p>
                           );
                         })()}

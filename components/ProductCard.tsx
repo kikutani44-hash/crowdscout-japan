@@ -221,14 +221,14 @@ export function ProductCard({
                   ? "border-amber-500/40 bg-amber-500/5"
                   : "border-emerald-500/30 bg-emerald-500/5"
             }`}
-            title="海外の1人あたり平均支援額から、輸入・認証・CF手数料・流通マージンを見込んだ概算（2.5〜3.5倍）。目安としてお使いください。"
+            title="海外CF価格の30〜50%で卸してもらえた場合に、送料・関税・認証・CF手数料・自社利益を乗せた日本での想定販売価格。卸掛率は交渉次第で動くため目安です。"
           >
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[11px] text-muted-foreground">日本での想定価格</span>
+              <span className="text-[11px] text-muted-foreground">日本CF 想定価格</span>
               <span className="text-sm font-bold text-foreground">{jpPrice.shortLabel}</span>
             </div>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              海外 約{Math.round(jpPrice.avgPledgeJpy).toLocaleString()}円/人
+              海外 {jpPrice.overseasLabel} → 卸値想定 {jpPrice.wholesaleLabel}
               {jpVerdict ? ` · ${jpVerdict.note}` : ""}
             </p>
           </div>

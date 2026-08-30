@@ -1,53 +1,65 @@
 /**
- * 海外クラファン価格から「日本でいくらになるか」を概算する。
+ * 海外クラファン価格から「日本でいくらで売ることになるか」を概算する。
  *
  * 従来はこの数字を市場分析（Sonnet）で毎回生成していたが、
  * 計算で出せる内容なのでAIを使わずに常時表示する。クレジット消費ゼロ。
  *
- * ■ なぜこの数字が要るか
- * 日本CFでの想定価格が現実離れしていれば、その時点で見送れる。
- * 例: 海外22万円の電動芝刈り機 → 日本では60〜70万円。
- *     この金額でクラファンは成立しないと即断できる。
+ * ■ 前提となるビジネスモデル
+ * ブリンクジャパンは代理店として小売価格で仕入れるのではなく、
+ * 日本の独占権を取得してメーカーから「卸値」で仕入れる。
+ * したがって出発点は海外の小売価格ではなく、そこから卸掛率を掛けた金額。
+ *
+ *   海外CF価格 22万円
+ *     → 卸値（30〜50%）      6.6万〜11万円
+ *     → 送料・関税・認証      上乗せ
+ *     → CF手数料（約20%）     上乗せ
+ *     → 自社利益              上乗せ
+ *     → 日本CF価格           16万〜27万円
  *
  * ■ 精度について
- * あくまで一次スクリーニング用の概算。実際の価格は
- * 原価・ロット・認証費用・送料で大きく動くため、
- * 「桁を見て足切りする」用途に留めること。
+ * 卸掛率は交渉次第で大きく動くため、あくまで一次スクリーニング用。
+ * 「桁を見て見送るかどうか」の判断に留め、実際の条件は交渉で確認すること。
  */
 
 /** 想定為替レート。既存コード（lib/claude.ts の日本向けページ生成）と揃えている。 */
 export const USD_JPY = Number(process.env.NEXT_PUBLIC_USD_JPY ?? 150);
 
 /**
- * 海外CF価格に対する日本CF価格の倍率。
- *
- * 内訳の目安:
- *   輸入送料・関税        × 1.2〜1.3
- *   認証取得（PSE/技適等） 商品単価に按分
- *   CFプラットフォーム手数料 約20%
- *   輸入元マージン・広告費  残り
- *
- * 実運用で観測される 2.5〜3.5倍 をレンジとして採用する。
+ * 海外CF小売価格に対する卸掛率。
+ * 理想的な条件で30%、現実的な着地点として50%を見込む。
+ * 実際の掛率は交渉とロット次第。
  */
-export const JP_MULTIPLE_LOW = 2.5;
-export const JP_MULTIPLE_HIGH = 3.5;
+export const WHOLESALE_RATE_BEST = 0.3;
+export const WHOLESALE_RATE_TYPICAL = 0.5;
+
+/**
+ * 卸値から日本CF販売価格までの倍率。
+ * 国際送料・関税・認証取得（PSE/技適等）・CF手数料（約20%）・
+ * 広告費・自社利益を含む。
+ */
+export const LANDED_MULTIPLE = 2.5;
 
 export interface JapanPriceEstimate {
   /** 海外での1人あたり平均支援額（USD） */
   avgPledgeUsd: number;
-  /** 同（円換算） */
-  avgPledgeJpy: number;
-  /** 日本での想定価格レンジ（円） */
+  /** 同（円換算）＝海外CF小売価格の目安 */
+  overseasJpy: number;
+  /** 想定卸値レンジ（円） */
+  wholesaleLow: number;
+  wholesaleHigh: number;
+  /** 日本CFでの想定販売価格レンジ（円） */
   jpyLow: number;
   jpyHigh: number;
-  /** 「22.0万円 → 55〜77万円」のような表示用文字列 */
-  label: string;
-  /** カード上での短縮表示「55〜77万円」 */
+  /** カード上での短縮表示「16.5万円〜27.5万円」 */
   shortLabel: string;
+  /** 卸値の表示用「6.6万円〜11.0万円」 */
+  wholesaleLabel: string;
+  /** 海外価格の表示用 */
+  overseasLabel: string;
 }
 
 /** 円を「55万円」「1,200万円」のように読みやすく整形する。 */
-function formatJpy(value: number): string {
+export function formatJpy(value: number): string {
   if (value >= 100_000_000) return `${(value / 100_000_000).toFixed(1)}億円`;
   if (value >= 10_000) {
     const man = value / 10_000;
@@ -74,24 +86,33 @@ export function estimateJapanPrice(
   // 1人あたり数ドルは「応援だけの支援枠」で商品価格ではないため除外する
   if (avgPledgeUsd < 20) return null;
 
-  const avgPledgeJpy = avgPledgeUsd * USD_JPY;
-  const jpyLow = avgPledgeJpy * JP_MULTIPLE_LOW;
-  const jpyHigh = avgPledgeJpy * JP_MULTIPLE_HIGH;
+  const overseasJpy = avgPledgeUsd * USD_JPY;
 
-  const shortLabel = `${formatJpy(jpyLow)}〜${formatJpy(jpyHigh)}`;
+  // 卸値（掛率が低いほど有利なので low = 理想条件）
+  const wholesaleLow = overseasJpy * WHOLESALE_RATE_BEST;
+  const wholesaleHigh = overseasJpy * WHOLESALE_RATE_TYPICAL;
+
+  const jpyLow = wholesaleLow * LANDED_MULTIPLE;
+  const jpyHigh = wholesaleHigh * LANDED_MULTIPLE;
+
   return {
     avgPledgeUsd,
-    avgPledgeJpy,
+    overseasJpy,
+    wholesaleLow,
+    wholesaleHigh,
     jpyLow,
     jpyHigh,
-    label: `海外 ${formatJpy(avgPledgeJpy)} → 日本 ${shortLabel}`,
-    shortLabel,
+    shortLabel: `${formatJpy(jpyLow)}〜${formatJpy(jpyHigh)}`,
+    wholesaleLabel: `${formatJpy(wholesaleLow)}〜${formatJpy(wholesaleHigh)}`,
+    overseasLabel: formatJpy(overseasJpy),
   };
 }
 
 /**
  * 日本CFで現実的に売れる価格帯かどうかのざっくり判定。
- * 高額すぎる案件を一覧上で足切りするために使う。
+ *
+ * 足切りではなく目安。卸掛率は交渉で動くため、
+ * 高額でもまずアプローチして条件を聞く価値はある。
  */
 export function japanPriceVerdict(
   estimate: JapanPriceEstimate | null,
@@ -99,10 +120,10 @@ export function japanPriceVerdict(
   if (!estimate) return null;
   const mid = (estimate.jpyLow + estimate.jpyHigh) / 2;
   if (mid >= 300_000) {
-    return { level: "very-high", note: "日本CFでは相当厳しい価格帯" };
+    return { level: "very-high", note: "高額。条件次第" };
   }
   if (mid >= 100_000) {
-    return { level: "high", note: "高価格帯。訴求次第" };
+    return { level: "high", note: "高価格帯" };
   }
-  return { level: "ok", note: "日本CFで現実的な価格帯" };
+  return { level: "ok", note: "現実的な価格帯" };
 }
