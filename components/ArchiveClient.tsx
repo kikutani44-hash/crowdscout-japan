@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { logActivity } from "@/lib/activity-log";
@@ -28,6 +29,30 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
   const { token } = useAuth();
   const [projects, setProjects] = useState(initialProjects);
   const [offerProject, setOfferProject] = useState<Project | null>(null);
+
+  // パイプラインから「案件へ」で飛んできたとき、該当カードまでスクロールして強調する。
+  // 過去案件はトップページに存在しないため、こちら側にも同じ仕組みが要る。
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get("project");
+  useEffect(() => {
+    if (!highlightId) return;
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(`project-${highlightId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-2", "ring-primary", "ring-offset-2");
+        setTimeout(() => el.classList.remove("ring-2", "ring-primary", "ring-offset-2"), 3000);
+        // 再訪時に再び飛ばないようパラメータを消す
+        router.replace("/dashboard/archive", { scroll: false });
+      } else if (attempts < 20) {
+        attempts++;
+        setTimeout(tryScroll, 200);
+      }
+    };
+    setTimeout(tryScroll, 300);
+  }, [highlightId, router]);
 
   useEffect(() => {
     logActivity(token, "page_view", { metadata: { page: "archive" } });
@@ -212,8 +237,8 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {projects.map((project) => (
+              <div key={project.id} id={`project-${project.id}`} className="transition-all duration-500">
               <ProductCard
-                key={project.id}
                 project={project}
                 onTranslate={handleTranslate}
                 onCfCheck={handleCfCheck}
@@ -227,6 +252,7 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
                 loadingAction={loadingAction}
                 isTranslating={translatingIds.has(project.id)}
               />
+              </div>
             ))}
           </div>
         )}

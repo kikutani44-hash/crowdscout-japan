@@ -234,7 +234,12 @@ export default async function PipelinePage({
 
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           <Link
-                            href={`/?project=${p.id}`}
+                            href={
+                              // 過去案件はトップページに存在しないため、アーカイブページへ飛ばす
+                              p.status === "archived"
+                                ? `/dashboard/archive?project=${p.id}`
+                                : `/?project=${p.id}`
+                            }
                             className="inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 text-[11px] text-primary hover:bg-primary/10"
                           >
                             📋 案件へ
