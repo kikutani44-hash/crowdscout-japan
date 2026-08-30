@@ -55,6 +55,11 @@ const HEADERS = {
  * "Nomis ONE™ - Inflatable Rooftop Tent" → "Nomis ONE"
  */
 function leadingSegment(title: string): string {
+  // "Roller Pro Carry-On Luggage by Peak Design" のように
+  // ブランドが後ろに来る書き方があるため、"by 〜" を優先して拾う。
+  const byBrand = title.match(/\bby\s+([A-Za-z0-9][\w&.'\-]*(?:\s+[A-Za-z0-9][\w&.'\-]*){0,2})\s*$/);
+  if (byBrand) return byBrand[1].trim();
+
   let head = title.split(/[:—–|｜]/)[0];
   head = head.replace(/[™®©]/g, "");
   head = head.split(/\s+[-–—]\s+/)[0];
@@ -183,6 +188,10 @@ async function checkJapanDomains(brand: string): Promise<JapanPresenceEvidence[]
       if (html === null) return;
       // ドメインパーキング・売出し中のページを除外する
       if (/domain (is )?for sale|このドメインは.*販売|parked (free )?at/i.test(html)) return;
+      // 日本語が1文字も無いドメインは日本向けサイトとは言えない。
+      // 実測: jp.rollerpro.com は JavaScript のリダイレクトだけの空ページで、
+      // Peak Design の日本サイトではなかった（誤検出だった）。
+      if (!/[぀-ゟ゠-ヿ一-龯]/.test(html)) return;
       found.push({
         kind: "domain",
         label: `日本向けドメインが存在: ${host}`,
