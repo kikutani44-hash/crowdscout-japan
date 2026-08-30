@@ -33,6 +33,40 @@ export function formatDaysRemaining(days: number | null | undefined, status: Pro
   return `残り${days}日`;
 }
 
+/**
+ * 終了からの経過を「8ヶ月前」のような表記にする。
+ *
+ * 過去案件へオファーをかける際、どれくらい前に終わった案件かは
+ * 「まだ日本に入っていない可能性」と「相手がまだ動いているか」の
+ * 両方の判断材料になるため、カード上で必ず見えるようにする。
+ * まだ終了していない場合は null。
+ */
+export function formatMonthsSinceEnd(
+  deadlineAt: string | null | undefined,
+): string | null {
+  if (!deadlineAt) return null;
+  const end = new Date(deadlineAt).getTime();
+  if (Number.isNaN(end)) return null;
+
+  const days = Math.floor((Date.now() - end) / 86_400_000);
+  if (days < 0) return null; // まだ終わっていない
+
+  if (days < 30) return `${days}日前`;
+  const months = Math.floor(days / 30.44);
+  if (months < 12) return `${months}ヶ月前`;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return rest === 0 ? `${years}年前` : `${years}年${rest}ヶ月前`;
+}
+
+/** 終了日を「2025/03/14」形式で返す（ツールチップ等で正確な日付を出す用）。 */
+export function formatEndDate(deadlineAt: string | null | undefined): string | null {
+  if (!deadlineAt) return null;
+  const d = new Date(deadlineAt);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export function formatBackersPerDay(value: number | null | undefined): string {
   const n = value ?? 0;
   if (n >= 100) return `${Math.round(n)}人/日`;

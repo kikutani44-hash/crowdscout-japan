@@ -2,6 +2,8 @@ import Link from "next/link";
 import { fetchProjects } from "@/lib/supabase";
 import { getDisplayTitle } from "@/lib/project-translation";
 import { formatUsd } from "@/lib/utils";
+import { formatEndDate, formatMonthsSinceEnd } from "@/lib/project-momentum";
+import { estimateJapanPrice, japanPriceVerdict } from "@/lib/japan-price";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Mail, Globe, ExternalLink } from "lucide-react";
 import type { OfferStatus } from "@/lib/types";
@@ -24,10 +26,30 @@ const STATUS_STYLE: Record<OfferStatus, { badge: string; dot: string }> = {
   "却下":    { badge: "border-red-500/40 text-red-400",     dot: "bg-red-400" },
 };
 
-export default async function PipelinePage() {
+type ViewFilter = "all" | "archived" | "active";
+
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams?: { view?: string };
+}) {
   // 過去案件(archived)もパイプラインには表示する。
   // ウォッチは付けられるのに一覧に出ない、という取りこぼしを防ぐため。
-  const projects = await fetchProjects({ sortBy: "score", includeArchived: true });
+  const all = await fetchProjects({ sortBy: "score", includeArchived: true });
+
+  const rawView = searchParams?.view;
+  const view: ViewFilter =
+    rawView === "archived" || rawView === "active" ? rawView : "all";
+
+  // 過去案件から先にオファーをかける運用のため、過去だけに絞り込めるようにする
+  const projects =
+    view === "archived"
+      ? all.filter((p) => p.status === "archived")
+      : view === "active"
+        ? all.filter((p) => p.status !== "archived")
+        : all;
+
+  const archivedCount = all.filter((p) => p.status === "archived").length;
 
   const byStatus: Record<OfferStatus, typeof projects> = {
     "未接触": [],
@@ -61,6 +83,33 @@ export default async function PipelinePage() {
           </Link>
         </div>
       </header>
+
+      {/* 過去案件 / 現行案件の絞り込み */}
+      <div className="border-b border-border bg-card/10">
+        <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 text-sm">
+          <span className="mr-1 text-muted-foreground">表示:</span>
+          {(
+            [
+              { key: "all", label: "すべて", count: all.length },
+              { key: "archived", label: "📦 過去案件のみ", count: archivedCount },
+              { key: "active", label: "進行中のみ", count: all.length - archivedCount },
+            ] as const
+          ).map((tab) => (
+            <Link
+              key={tab.key}
+              href={tab.key === "all" ? "/dashboard/pipeline" : `/dashboard/pipeline?view=${tab.key}`}
+              className={`rounded-full border px-3 py-1.5 transition ${
+                view === tab.key
+                  ? "border-primary bg-primary/10 font-medium text-primary"
+                  : "border-border text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              {tab.label}
+              <span className="ml-1.5 font-bold">{tab.count}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
 
       {/* サマリーバー */}
       <div className="border-b border-border bg-card/20">
@@ -123,13 +172,45 @@ export default async function PipelinePage() {
                           {p.backers > 0 && ` · ${p.backers.toLocaleString()}人`}
                         </p>
 
+                        {(() => {
+                          // 日本での想定価格（計算のみ・クレジット消費なし）
+                          const jp = estimateJapanPrice(p.raised_usd, p.backers);
+                          const v = japanPriceVerdict(jp);
+                          if (!jp) return null;
+                          return (
+                            <p
+                              className={`mt-1 text-xs ${
+                                v?.level === "very-high"
+                                  ? "text-red-400"
+                                  : v?.level === "high"
+                                    ? "text-amber-400"
+                                    : "text-emerald-400"
+                              }`}
+                              title="海外の1人あたり平均支援額に、輸入・認証・CF手数料・流通マージンを見込んだ概算（2.5〜3.5倍）"
+                            >
+                              🇯🇵 日本想定 {jp.shortLabel}
+                            </p>
+                          );
+                        })()}
+
                         <div className="mt-2 flex flex-wrap gap-1">
                           <Badge variant="outline" className={`text-[10px] ${style.badge}`}>
                             {p.offer_status}
                           </Badge>
                           {p.status === "archived" && (
-                            <Badge variant="outline" className="text-[10px] border-purple-500/40 text-purple-400">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] border-purple-500/40 text-purple-400"
+                              title={
+                                formatEndDate(p.deadline_at)
+                                  ? `終了日: ${formatEndDate(p.deadline_at)}`
+                                  : undefined
+                              }
+                            >
                               📦 過去案件
+                              {formatMonthsSinceEnd(p.deadline_at)
+                                ? ` · ${formatMonthsSinceEnd(p.deadline_at)}終了`
+                                : ""}
                             </Badge>
                           )}
                           {isJapanUnentered && (

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { estimateJapanPrice, japanPriceVerdict } from "@/lib/japan-price";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -23,6 +24,8 @@ import {
 import {
   formatBackersPerDay,
   formatDaysRemaining,
+  formatEndDate,
+  formatMonthsSinceEnd,
 } from "@/lib/project-momentum";
 import {
   calcAchievementRate,
@@ -67,6 +70,12 @@ export function ProductCard({
   const japanCfStatus = getJapanCfDisplayStatus(project);
   const displayTitle = getDisplayTitle(project);
   const displaySubtitle = getDisplaySubtitle(project);
+  // 終了済み案件は「残り日数」ではなく「いつ終わったか」を見せる
+  const endedAgo =
+    project.status !== "active" ? formatMonthsSinceEnd(project.deadline_at) : null;
+  // 日本での想定価格。AIを使わず計算で出しているのでクレジットは消費しない。
+  const jpPrice = estimateJapanPrice(project.raised_usd, project.backers);
+  const jpVerdict = japanPriceVerdict(jpPrice);
   const showEnglishTitle = hasValidJapaneseTitle(project) && displayTitle !== project.title;
   const isZeczec = project.platform === "zeczec";
   const imageSrc = project.image_url ?? null;
@@ -177,11 +186,16 @@ export function ProductCard({
                 : "border-border/60 bg-secondary/30"
             }`}
           >
-            <p className="flex items-center justify-center gap-1 text-lg font-bold text-foreground">
+            <p
+              className="flex items-center justify-center gap-1 text-lg font-bold text-foreground"
+              title={endedAgo ? `終了日: ${formatEndDate(project.deadline_at)}` : undefined}
+            >
               <Timer className="h-4 w-4 text-muted-foreground" />
-              {formatDaysRemaining(project.days_remaining, project.status)}
+              {endedAgo ?? formatDaysRemaining(project.days_remaining, project.status)}
             </p>
-            <p className="text-[11px] text-muted-foreground">残り日数</p>
+            <p className="text-[11px] text-muted-foreground">
+              {endedAgo ? "終了時期" : "残り日数"}
+            </p>
           </div>
           <div
             className={`rounded-md border px-3 py-2 text-center ${
@@ -197,6 +211,28 @@ export function ProductCard({
             <p className="text-[11px] text-muted-foreground">勢い（支援者/日）</p>
           </div>
         </div>
+
+        {jpPrice && (
+          <div
+            className={`rounded-md border px-3 py-2 ${
+              jpVerdict?.level === "very-high"
+                ? "border-red-500/40 bg-red-500/5"
+                : jpVerdict?.level === "high"
+                  ? "border-amber-500/40 bg-amber-500/5"
+                  : "border-emerald-500/30 bg-emerald-500/5"
+            }`}
+            title="海外の1人あたり平均支援額から、輸入・認証・CF手数料・流通マージンを見込んだ概算（2.5〜3.5倍）。目安としてお使いください。"
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[11px] text-muted-foreground">日本での想定価格</span>
+              <span className="text-sm font-bold text-foreground">{jpPrice.shortLabel}</span>
+            </div>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              海外 約{Math.round(jpPrice.avgPledgeJpy).toLocaleString()}円/人
+              {jpVerdict ? ` · ${jpVerdict.note}` : ""}
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-1.5">
           <Badge variant={project.pse_ok ? "success" : "outline"}>

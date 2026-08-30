@@ -19,7 +19,7 @@ import {
 } from "@/lib/japan-cf-status";
 import { formatUsd } from "@/lib/utils";
 import { getDisplayTitle } from "@/lib/project-translation";
-import { Copy, Eye, FileText, Instagram, Loader2, Mail, MessageSquare, Send, Twitter } from "lucide-react";
+import { Copy, Eye, FileText, Globe, Instagram, Loader2, Mail, MessageSquare, Send, Twitter } from "lucide-react";
 
 type TabId = "email" | "ks-message" | "sns" | "dm-log" | "japan-page";
 
@@ -96,6 +96,13 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [emailSending, setEmailSending] = useState(false);
   const [emailSendMessage, setEmailSendMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [emailFetching, setEmailFetching] = useState(false);
+  // 公式サイトの生存チェック（過去案件では会社が畳まれていることがある）
+  const [siteCheck, setSiteCheck] = useState<{
+    alive: boolean;
+    reason: string;
+    cached?: boolean;
+  } | null>(null);
+  const [siteChecking, setSiteChecking] = useState(false);
   const [contactFormUrl, setContactFormUrl] = useState<string | null>(null);
   const [emailType, setEmailType] = useState<"first" | "second">("first");
 
@@ -160,6 +167,27 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       // silently handle
     } finally {
       setSnsLoading(false);
+    }
+  };
+
+  // 公式サイトが今も生きているかを確認する。
+  // AIは使わずHTTPリクエストのみ。結果はDBに保存し、2回目以降は再取得しない。
+  const handleCheckSite = async (force = false) => {
+    if (!project?.maker_website) return;
+    setSiteChecking(true);
+    try {
+      const res = await fetch("/api/site-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: project.id, url: project.maker_website, force }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSiteCheck({ alive: data.alive, reason: data.reason, cached: data.cached });
+    } catch (err) {
+      setSiteCheck({ alive: false, reason: err instanceof Error ? err.message : "チェックに失敗しました" });
+    } finally {
+      setSiteChecking(false);
     }
   };
 
@@ -419,6 +447,34 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                   {emailFetching ? "取得中" : "取得"}
                 </Button>
               </div>
+              {project.maker_website && (
+                <div className="flex items-center gap-2 text-xs">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCheckSite(false)}
+                    disabled={siteChecking}
+                    title="公式サイトが今も生きているか確認します（AIは使いません）"
+                  >
+                    {siteChecking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Globe className="h-3.5 w-3.5" />}
+                    {siteChecking ? "確認中" : "サイト生存チェック"}
+                  </Button>
+                  {siteCheck && (
+                    <span className={siteCheck.alive ? "text-emerald-400" : "text-red-400"}>
+                      {siteCheck.alive ? "✅" : "⚠️"} {siteCheck.reason}
+                      {siteCheck.cached && (
+                        <button
+                          onClick={() => handleCheckSite(true)}
+                          className="ml-2 underline text-muted-foreground hover:text-foreground"
+                        >
+                          再チェック
+                        </button>
+                      )}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {contactFormUrl && !email && (
                 <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
                   <p className="mb-2 text-amber-400">

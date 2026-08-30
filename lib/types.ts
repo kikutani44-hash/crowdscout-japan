@@ -46,6 +46,10 @@ export interface Project {
   giteki_ok: boolean;
   maker_email: string | null;
   maker_website: string | null;
+  /** 公式サイトの生存チェック結果（true=生存 / false=到達不可 / null=未チェック） */
+  site_alive?: boolean | null;
+  site_status_code?: number | null;
+  site_checked_at?: string | null;
   maker_contact_form: string | null;
   maker_instagram: string | null;
   maker_twitter: string | null;
