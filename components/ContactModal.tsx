@@ -103,6 +103,8 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
     cached?: boolean;
   } | null>(null);
   const [siteChecking, setSiteChecking] = useState(false);
+  // 公式サイトURL。未取得の案件は「取得」実行時に判明するため state で持つ。
+  const [siteUrl, setSiteUrl] = useState<string | null>(null);
   const [contactFormUrl, setContactFormUrl] = useState<string | null>(null);
   const [emailType, setEmailType] = useState<"first" | "second">("first");
 
@@ -172,14 +174,15 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
 
   // 公式サイトが今も生きているかを確認する。
   // AIは使わずHTTPリクエストのみ。結果はDBに保存し、2回目以降は再取得しない。
-  const handleCheckSite = async (force = false) => {
-    if (!project?.maker_website) return;
+  const handleCheckSite = async (force = false, urlOverride?: string) => {
+    const target = urlOverride ?? siteUrl;
+    if (!project || !target) return;
     setSiteChecking(true);
     try {
       const res = await fetch("/api/site-check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ projectId: project.id, url: project.maker_website, force }),
+        body: JSON.stringify({ projectId: project.id, url: target, force }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -271,6 +274,12 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
         }),
       });
       const data = await res.json();
+      // 公式サイトが判明したら、そのまま生存チェックまで済ませる（HTTPのみで無料）
+      const found = data.result?.officialUrl as string | undefined;
+      if (found) {
+        setSiteUrl(found);
+        void handleCheckSite(false, found);
+      }
       if (data.result?.email) {
         setEmail(data.result.email);
       } else if (data.result?.contactFormUrl) {
@@ -288,6 +297,8 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   useEffect(() => {
     if (open && project) {
       setEmail(project.maker_email ?? "");
+      setSiteUrl(project.maker_website ?? null);
+      setSiteCheck(null);
       setContactFormUrl(project.maker_email ? null : (project.maker_contact_form ?? null));
       setCustomNote("");
       setMessage(null);
@@ -447,8 +458,14 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                   {emailFetching ? "取得中" : "取得"}
                 </Button>
               </div>
-              {project.maker_website && (
-                <div className="flex items-center gap-2 text-xs">
+              {!siteUrl && (
+                <p className="text-[11px] text-muted-foreground">
+                  公式サイトは未取得です。「取得」を押すとサイトを特定し、生存チェックまで自動で行います。
+                </p>
+              )}
+
+              {siteUrl && (
+                <div className="flex flex-wrap items-center gap-2 text-xs">
                   <Button
                     variant="outline"
                     size="sm"
