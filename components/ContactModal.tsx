@@ -17,9 +17,10 @@ import {
   getJapanCfDisplayStatus,
   matchesJapanUnenteredOnlyFilter,
 } from "@/lib/japan-cf-status";
+import { contactRouteKindLabel, type ContactRouteResult } from "@/lib/contact-route";
 import { formatUsd } from "@/lib/utils";
 import { getDisplayTitle } from "@/lib/project-translation";
-import { Copy, Eye, FileText, Globe, Instagram, Loader2, Mail, MessageSquare, Send, Twitter } from "lucide-react";
+import { Copy, DoorOpen, Eye, FileText, Globe, Instagram, Loader2, Mail, MessageSquare, Send, Twitter } from "lucide-react";
 
 type TabId = "email" | "ks-message" | "sns" | "dm-log" | "japan-page";
 
@@ -106,6 +107,9 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   // 公式サイトURL。未取得の案件は「取得」実行時に判明するため state で持つ。
   const [siteUrl, setSiteUrl] = useState<string | null>(null);
   const [contactFormUrl, setContactFormUrl] = useState<string | null>(null);
+  // 公式サイトから探した連絡窓口（卸申込フォームが見つかれば最優先で使う）
+  const [routes, setRoutes] = useState<ContactRouteResult | null>(null);
+  const [routesLoading, setRoutesLoading] = useState(false);
   const [emailType, setEmailType] = useState<"first" | "second">("first");
 
   // KS message tab
@@ -129,6 +133,35 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [dmInput, setDmInput] = useState("");
   const [dmDirection, setDmDirection] = useState<"sent" | "received">("received");
   const [dmPlatform, setDmPlatform] = useState("instagram");
+
+  // 公式サイトを開いて「先方に届く窓口」を探す。
+  // Kickstarterのメッセージは送れず、メールも窓口とは限らないため、
+  // 卸申込フォームのように先方が用意した受付導線を優先して見つける。
+  const handleFindRoutes = async (force = false, urlOverride?: string) => {
+    const target = urlOverride ?? siteUrl;
+    if (!project || !target) return;
+    setRoutesLoading(true);
+    try {
+      const res = await fetch("/api/contact-route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: project.id, siteUrl: target, force }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setRoutes(data as ContactRouteResult);
+    } catch (err) {
+      setRoutes({
+        siteUrl: target,
+        routes: [],
+        best: null,
+        summary: err instanceof Error ? err.message : "窓口の探索に失敗しました",
+        failure: "request_failed",
+      });
+    } finally {
+      setRoutesLoading(false);
+    }
+  };
 
   // regenerate=true のときだけAIを再実行する。
   // 通常はサーバー側のキャッシュを使い、Anthropicクレジットを消費しない。
@@ -298,6 +331,7 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
     if (open && project) {
       setEmail(project.maker_email ?? "");
       setSiteUrl(project.maker_website ?? null);
+      setRoutes(project.contact_routes ?? null);
       setSiteCheck(null);
       setContactFormUrl(project.maker_email ? null : (project.maker_contact_form ?? null));
       setCustomNote("");
@@ -489,6 +523,57 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                       )}
                     </span>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleFindRoutes(false)}
+                    disabled={routesLoading}
+                    className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
+                    title="公式サイトから卸申込・問い合わせなどの窓口を探します（AIは使いません）"
+                  >
+                    {routesLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <DoorOpen className="h-3.5 w-3.5" />}
+                    {routesLoading ? "探索中" : "連絡窓口を探す"}
+                  </Button>
+                </div>
+              )}
+
+              {routes && (
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs">
+                  <p className="mb-2 font-semibold text-emerald-300">{routes.summary}</p>
+                  {routes.routes.length > 0 ? (
+                    <ul className="space-y-1.5">
+                      {routes.routes.map((route, index) => (
+                        <li key={route.url} className="flex flex-wrap items-baseline gap-2">
+                          <span
+                            className={
+                              index === 0
+                                ? "rounded bg-emerald-500/25 px-1.5 py-0.5 font-semibold text-emerald-200"
+                                : "rounded bg-muted px-1.5 py-0.5 text-muted-foreground"
+                            }
+                          >
+                            {contactRouteKindLabel(route.kind)}
+                          </span>
+                          <a
+                            href={route.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline underline-offset-2 hover:text-emerald-200"
+                          >
+                            {route.label}
+                          </a>
+                          {route.hasForm ? (
+                            <span className="text-emerald-400">入力フォームあり</span>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  <button
+                    onClick={() => handleFindRoutes(true)}
+                    className="mt-2 underline text-muted-foreground hover:text-foreground"
+                  >
+                    再探索
+                  </button>
                 </div>
               )}
 

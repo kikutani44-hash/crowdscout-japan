@@ -1,3 +1,4 @@
+import type { ContactRouteResult } from "./contact-route";
 import type { JapanPresenceResult } from "./japan-presence";
 import type { PlatformFilterValue } from "@/lib/platforms";
 
@@ -56,6 +57,9 @@ export interface Project {
   japan_presence_score?: number | null;
   japan_presence_result?: JapanPresenceResult | null;
   japan_presence_checked_at?: string | null;
+  /** 公式サイトから見つけた連絡窓口（卸申込フォーム・問い合わせ等） */
+  contact_routes?: ContactRouteResult | null;
+  contact_routes_checked_at?: string | null;
   maker_contact_form: string | null;
   maker_instagram: string | null;
   maker_twitter: string | null;
