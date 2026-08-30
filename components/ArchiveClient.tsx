@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usdToJpy } from "@/lib/utils";
+import { USD_JPY } from "@/lib/japan-price";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -19,6 +21,17 @@ import type { OfferStatus, Project } from "@/lib/types";
 import { needsJapaneseTranslation } from "@/lib/project-translation";
 
 const TRANSLATE_BATCH_SIZE = 3;
+
+// 過去案件は700件を超えるため、調達額で絞れないと目が滑る。
+// ただし「海外で伸びなくても日本で売れる」商品（防犯カメラなど）が
+// 実在するとオーナーから指摘があったため、切り捨てず1クリックで全件に戻せるようにする。
+const AMOUNT_FILTERS = [
+  { key: "10m", label: "1,000万円以上", jpy: 10_000_000 },
+  { key: "7m", label: "700万円以上", jpy: 7_000_000 },
+  { key: "all", label: "すべて", jpy: 0 },
+] as const;
+
+type AmountFilterKey = (typeof AMOUNT_FILTERS)[number]["key"];
 const TRANSLATE_FETCH_TIMEOUT_MS = 55_000;
 
 interface ArchiveClientProps {
@@ -62,7 +75,14 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [translatingIds, setTranslatingIds] = useState<Set<string>>(new Set());
 
-  const japanUnenteredCount = projects.filter((p) =>
+  const [amountFilter, setAmountFilter] = useState<AmountFilterKey>("10m");
+
+  const threshold = AMOUNT_FILTERS.find((f) => f.key === amountFilter)!.jpy;
+  const visibleProjects = projects.filter(
+    (p) => usdToJpy(p.raised_usd ?? 0, USD_JPY) >= threshold
+  );
+
+  const japanUnenteredCount = visibleProjects.filter((p) =>
     p.japan_cf_result ? p.japan_cf_result.isJapanUnentered : true
   ).length;
 
@@ -219,24 +239,61 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-6 flex gap-4 text-sm">
+        <div className="mb-4 flex flex-wrap gap-4 text-sm">
           <span className="rounded-lg border border-border bg-card px-4 py-2">
-            アーカイブ総数 <strong>{projects.length}件</strong>
+            表示中 <strong>{visibleProjects.length}件</strong>
+            <span className="text-muted-foreground"> / 全{projects.length}件</span>
           </span>
           <span className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-2 text-amber-400">
             日本未参入 <strong>{japanUnenteredCount}件</strong>
           </span>
         </div>
 
-        {projects.length === 0 ? (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">調達額</span>
+          {AMOUNT_FILTERS.map((filter) => {
+            const count = projects.filter(
+              (p) => usdToJpy(p.raised_usd ?? 0, USD_JPY) >= filter.jpy
+            ).length;
+            const active = filter.key === amountFilter;
+            return (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={() => setAmountFilter(filter.key)}
+                className={
+                  active
+                    ? "rounded-md border border-primary bg-primary/15 px-3 py-1.5 text-sm font-medium text-primary"
+                    : "rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-secondary"
+                }
+              >
+                {filter.label}
+                <span className="ml-1.5 text-xs opacity-70">{count}</span>
+              </button>
+            );
+          })}
+          <span className="text-xs text-muted-foreground">
+            ※ 海外で伸びなくても日本で売れる商品はあるため、絞り込みは「すべて」で外せます
+          </span>
+        </div>
+
+        {visibleProjects.length === 0 ? (
           <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
             <p className="text-4xl mb-3">💎</p>
-            <p>まだアーカイブ案件がありません。</p>
-            <p className="text-xs mt-2">キャンペーンが終了した案件はここに移動します。</p>
+            <p>
+              {projects.length === 0
+                ? "まだアーカイブ案件がありません。"
+                : "この金額以上の案件はありません。"}
+            </p>
+            <p className="text-xs mt-2">
+              {projects.length === 0
+                ? "キャンペーンが終了した案件はここに移動します。"
+                : "「すべて」を選ぶと全件表示に戻ります。"}
+            </p>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {projects.map((project) => (
+            {visibleProjects.map((project) => (
               <div key={project.id} id={`project-${project.id}`} className="transition-all duration-500">
               <ProductCard
                 project={project}
