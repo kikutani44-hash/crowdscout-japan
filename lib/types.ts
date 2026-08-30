@@ -1,3 +1,4 @@
+import type { JapanPresenceResult } from "./japan-presence";
 import type { PlatformFilterValue } from "@/lib/platforms";
 
 export type Platform = "kickstarter" | "indiegogo" | "wadiz" | "zeczec";
@@ -50,6 +51,11 @@ export interface Project {
   site_alive?: boolean | null;
   site_status_code?: number | null;
   site_checked_at?: string | null;
+  /** 日本参入チェック（自動）の結果。'entered'=販売の形跡あり / 'clear'=形跡なし / 'unknown'=判定できず */
+  japan_presence_verdict?: "entered" | "clear" | "unknown" | null;
+  japan_presence_score?: number | null;
+  japan_presence_result?: JapanPresenceResult | null;
+  japan_presence_checked_at?: string | null;
   maker_contact_form: string | null;
   maker_instagram: string | null;
   maker_twitter: string | null;

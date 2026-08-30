@@ -4,6 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { estimateJapanPrice, japanPriceVerdict } from "@/lib/japan-price";
+import {
+  japanPresenceBadgeClass,
+  japanPresenceBadgeLabel,
+  type JapanPresenceResult,
+} from "@/lib/japan-presence";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -39,7 +44,7 @@ import {
   hasValidJapaneseTitle,
 } from "@/lib/project-translation";
 import { useState } from "react";
-import { BarChart2, ExternalLink, Flame, Globe, Languages, Mail, SearchCheck, Timer, Users, Zap } from "lucide-react";
+import { BarChart2, ExternalLink, Flame, Globe, Languages, Mail, MapPinned, SearchCheck, Timer, Users, Zap } from "lucide-react";
 import { isHighPotential } from "@/lib/project-potential";
 
 interface ProductCardProps {
@@ -66,6 +71,37 @@ export function ProductCard({
   isTranslating,
 }: ProductCardProps) {
   const [analysisOpen, setAnalysisOpen] = useState(false);
+  // 日本参入チェックはカード内で完結させる（親に手を入れずに済むため）
+  const [jpChecking, setJpChecking] = useState(false);
+  const [jpLocal, setJpLocal] = useState<JapanPresenceResult | null>(null);
+
+  const japanPresence = jpLocal ?? project.japan_presence_result ?? null;
+  const japanPresenceVerdict = japanPresence?.verdict ?? project.japan_presence_verdict ?? null;
+
+  async function runJapanPresenceCheck() {
+    setJpChecking(true);
+    try {
+      const res = await fetch("/api/japan-presence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: project.id,
+          title: project.title,
+          officialUrl: project.maker_website,
+        }),
+      });
+      const data = (await res.json()) as JapanPresenceResult & { error?: string };
+      if (!res.ok || data.error) {
+        window.alert(`日本参入チェックに失敗しました: ${data.error ?? res.status}`);
+        return;
+      }
+      setJpLocal(data);
+    } catch (err) {
+      window.alert(`日本参入チェックに失敗しました: ${err instanceof Error ? err.message : err}`);
+    } finally {
+      setJpChecking(false);
+    }
+  }
   const achievement = calcAchievementRate(project.raised_usd, project.goal_usd);
   const japanCfStatus = getJapanCfDisplayStatus(project);
   const displayTitle = getDisplayTitle(project);
@@ -253,7 +289,46 @@ export function ProductCard({
           >
             {getJapanCfBadgeLabel(japanCfStatus)}
           </Badge>
+          {japanPresenceVerdict ? (
+            <Badge
+              className={japanPresenceBadgeClass(japanPresenceVerdict)}
+              title={japanPresence?.summary ?? undefined}
+            >
+              {japanPresenceBadgeLabel(japanPresenceVerdict)}
+            </Badge>
+          ) : null}
         </div>
+
+        {/* 日本参入チェックで形跡が出た場合は、根拠をその場で見せる。
+            判定を鵜呑みにせず、商品名を見て本人が確かめられるようにするため。 */}
+        {japanPresenceVerdict === "entered" && japanPresence?.evidence?.length ? (
+          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-2.5 py-2 text-xs">
+            <p className="font-semibold text-red-200">日本での販売の形跡</p>
+            <ul className="mt-1 space-y-0.5 text-red-100/80">
+              {japanPresence.evidence.map((item, index) => (
+                <li key={index}>
+                  {item.url ? (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 hover:text-red-100"
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    item.label
+                  )}
+                  {item.samples[0] ? (
+                    <span className="block truncate text-red-100/60">
+                      {item.samples[0]}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {project.maker_website ? (
           <a
@@ -311,6 +386,17 @@ export function ProductCard({
           >
             <BarChart2 className="h-3.5 w-3.5" />
             市場分析
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={runJapanPresenceCheck}
+            disabled={jpChecking}
+            className="border-red-500/30 text-red-300 hover:bg-red-500/10"
+            title="ブランド名から日本向けドメイン・Amazon.co.jp・楽天・公式サイトの日本語対応を調べます"
+          >
+            <MapPinned className="h-3.5 w-3.5" />
+            {jpChecking ? "調査中" : "日本参入"}
           </Button>
           <Button size="sm" onClick={() => onOffer(project)}>
             <Mail className="h-3.5 w-3.5" />
