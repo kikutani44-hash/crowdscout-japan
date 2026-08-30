@@ -74,7 +74,7 @@ We would love to bring ${input.productTitle} to Japan through crowdfunding platf
 
 We would like to ask you to entrust the Japan sales rights for ${input.productTitle} to us. Here is what we would bring to that role:
 
-・TV & Media Network — Our founder spent over 40 years in the Japanese television industry before establishing Blink Japan, now in its 21st year. We maintain direct connections to home shopping networks, major broadcasters, and production companies
+・TV & Media Network — Our founder has over 40 years in the Japanese television industry, the last 21 of them leading Blink Japan. We maintain direct connections to home shopping networks, major broadcasters, and production companies
 
 ・Digital Marketing — Certified agency for Yahoo! Japan and Google, having managed over ¥12 billion in advertising, consistently delivering top-tier results in performance marketing
 
