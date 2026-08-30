@@ -33,6 +33,8 @@ export async function POST(req: NextRequest) {
       category: project.category,
       raisedUsd: project.raised_usd,
       platform: project.platform,
+      daysRemaining: project.days_remaining,
+      status: project.status,
     });
 
     const text_ja = await translateOfferLetterToJapanese(result.text);

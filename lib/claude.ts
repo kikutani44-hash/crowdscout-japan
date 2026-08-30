@@ -450,8 +450,17 @@ export async function generateKickstarterMessage(params: {
   category: string;
   raisedUsd: number;
   platform: string;
+  /** 実施中の案件は残り日数、終了済みは null */
+  daysRemaining?: number | null;
+  status?: string | null;
 }): Promise<KsMessageResult> {
   const { productTitle, productSubtitle, category, raisedUsd, platform } = params;
+  // 実施中の案件に「終了おめでとう」と書くと的外れになるため状態を渡す
+  const isLive =
+    params.status === "active" && (params.daysRemaining ?? 0) > 0;
+  const campaignStatus = isLive
+    ? `Campaign status: STILL RUNNING, ${params.daysRemaining} days left`
+    : "Campaign status: already ended";
   const platformName = platform === "indiegogo" ? "Indiegogo" : "Kickstarter";
 
   const fallback = `Hi! I'm Yoshitaka Kikutani from Blink Japan, a Japanese corporation in its 21st year, rooted in video production and media. Our founder has over 40 years in Japanese television, and as a certified Yahoo! Japan and Google agency we have managed over 12 billion yen in advertising to date.
@@ -475,6 +484,7 @@ We've prepared a Japan Market Analysis Report for your product. We would be deli
 Product: ${productTitle}
 Category: ${category}
 Raised: $${Math.round(raisedUsd / 1000)}K
+${campaignStatus}
 ${productSubtitle ? `Description: ${productSubtitle}` : ""}
 
 This is a condensed form of the email below. Keep the same claims, the same order, and the same
@@ -503,6 +513,9 @@ Rules:
 - Write in English, 500-900 characters, 3-4 short paragraphs
 - No "Dear Sir", no signature block (this is a platform message, not a formal email)
 - Open with one specific, genuine compliment about THIS product, then the congratulations
+- If the campaign is STILL RUNNING: congratulate them on the funding so far (not on a finished
+  result), and say we wanted to reach out early while the campaign is still live. Do not write
+  anything that implies the campaign is over
 - Keep the ask explicit: we would like to be entrusted with the Japan sales rights
 - The three strengths above may be compressed, but do not overstate them:
   * the advertising figure is CUMULATIVE - never write "annual" or "per year"
