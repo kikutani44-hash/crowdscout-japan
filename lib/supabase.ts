@@ -32,6 +32,8 @@ export async function fetchProjects(filters?: {
   search?: string;
   japanUnenteredOnly?: boolean;
   archivedOnly?: boolean;
+  /** 過去案件(archived)も含めて取得する。パイプラインなど横断的な一覧で使う */
+  includeArchived?: boolean;
   platform?: string;
   category?: string;
   offerStatus?: string;
@@ -49,8 +51,8 @@ export async function fetchProjects(filters?: {
   // archivedOnly: お宝発掘モード（180〜730日前に終了した案件）
   if (filters?.archivedOnly) {
     query = query.eq("status", "archived");
-  } else {
-    // 通常表示からarchivedを除外
+  } else if (!filters?.includeArchived) {
+    // 通常表示からarchivedを除外（includeArchived指定時は除外しない）
     query = query.neq("status", "archived");
   }
 

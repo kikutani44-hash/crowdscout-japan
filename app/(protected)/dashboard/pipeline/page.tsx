@@ -25,7 +25,9 @@ const STATUS_STYLE: Record<OfferStatus, { badge: string; dot: string }> = {
 };
 
 export default async function PipelinePage() {
-  const projects = await fetchProjects({ sortBy: "score" });
+  // 過去案件(archived)もパイプラインには表示する。
+  // ウォッチは付けられるのに一覧に出ない、という取りこぼしを防ぐため。
+  const projects = await fetchProjects({ sortBy: "score", includeArchived: true });
 
   const byStatus: Record<OfferStatus, typeof projects> = {
     "未接触": [],
@@ -125,6 +127,11 @@ export default async function PipelinePage() {
                           <Badge variant="outline" className={`text-[10px] ${style.badge}`}>
                             {p.offer_status}
                           </Badge>
+                          {p.status === "archived" && (
+                            <Badge variant="outline" className="text-[10px] border-purple-500/40 text-purple-400">
+                              📦 過去案件
+                            </Badge>
+                          )}
                           {isJapanUnentered && (
                             <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-400">
                               🇯🇵 未参入
