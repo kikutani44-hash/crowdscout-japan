@@ -78,7 +78,7 @@ We would like to ask you to entrust the Japan sales rights for ${input.productTi
 
 ・Digital Marketing — Certified agency for Yahoo! Japan and Google, having managed over ¥12 billion in advertising, consistently delivering top-tier results in performance marketing
 
-・Market Access — Direct relationships with Japan's top crowdfunding platforms, Makuake and CAMPFIRE, as well as leading e-commerce channels.
+・Crowdfunding Experience — We are not approaching Makuake as a newcomer. We helped launch and grow the YouTube channel of Tomoaki Makino, a former Japan national team footballer who played in the 2018 FIFA World Cup, and we were involved in the Makuake campaign for his product. As a media company, we have also interviewed the Makuake team directly. We maintain direct relationships with Makuake and CAMPFIRE, as well as leading e-commerce channels.
 
 As interest in Japan grows, we understand you may be receiving approaches from multiple parties. When evaluating any Japan partner, we encourage you to ask:
 

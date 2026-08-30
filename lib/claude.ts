@@ -240,9 +240,23 @@ export async function translateOfferLetterToJapanese(englishText: string): Promi
         role: "user",
         content: `以下の英文ビジネスメール（オファーレター）を、自然で丁寧な日本語に翻訳してください。
 
+この訳は送信前の内容確認に使う。原文と意味がずれると確認の意味がなくなる。
+
 ルール:
 - 会社名・メールアドレス・URL・商品名は原文のまま、または適切な表記で残す
 - ビジネスメールとして読みやすい文体にする
+- 原文にない意味を足さない。特に関係性の強さを格上げしないこと
+  （connections / relationships を「パートナーシップ」「提携」と訳さない。
+    「つながり」「関係」と原文の強さのまま訳す）
+- 英単語をそのまま残さない。固有名詞以外はすべて日本語にする
+- 固有名詞は必ず以下の表記を使う。読みから漢字を推測して当てないこと:
+    Yoshitaka Kikutani → 菊谷佳孝
+    Tomoaki Makino     → 槙野智章
+    Blink Japan        → Blink Japan（訳さない）
+    Makuake / CAMPFIRE → Makuake / CAMPFIRE（訳さない）
+- 金額・数値は原文の桁をそのまま守る。単位換算を誤らないこと:
+    12 billion yen = 120億円（1,200億円ではない）
+    1 billion = 10億
 - 翻訳本文のみを返す（説明やJSONは不要）
 
 --- 英文 ---
@@ -440,9 +454,9 @@ export async function generateKickstarterMessage(params: {
   const { productTitle, productSubtitle, category, raisedUsd, platform } = params;
   const platformName = platform === "indiegogo" ? "Indiegogo" : "Kickstarter";
 
-  const fallback = `Hi! I'm Yoshitaka Kikutani from Blink Japan, a 21-year-old Japanese corporation with deep roots in TV media and digital marketing (¥12B+ in managed ads, certified Yahoo! Japan / Google agency).
+  const fallback = `Hi! I'm Yoshitaka Kikutani from Blink Japan, a Japanese corporation in its 21st year, rooted in video production and media. Our founder has over 40 years in Japanese television, and as a certified Yahoo! Japan and Google agency we have managed over 12 billion yen in advertising to date.
 
-We'd love to launch ${productTitle} on Japan's top crowdfunding platforms (Makuake / CAMPFIRE) as your dedicated Japan partner — we handle everything: campaign, regulatory compliance, and post-campaign retail.
+We would like to bring ${productTitle} to Japan ourselves — acquiring the Japan rights and running the crowdfunding launch on Makuake or CAMPFIRE, where we have connections. After the campaign, we would expand into retail and media channels, drawing on our television and advertising background.
 
 We've prepared a Japan Market Analysis Report for your product. We would be delighted to send it to you — please reach us anytime at cbec@blink-japan.com. We look forward to hearing from you!`;
 
@@ -456,22 +470,58 @@ We've prepared a Japan Market Analysis Report for your product. We would be deli
     messages: [
       {
         role: "user",
-        content: `You are writing a message to a crowdfunding creator via ${platformName}'s built-in "contact the creator" message feature, proposing a Japan market launch partnership.
+        content: `You are writing a SHORT version of our standard Japan outreach email, to be sent through ${platformName}'s built-in "contact the creator" message feature.
 
 Product: ${productTitle}
 Category: ${category}
 Raised: $${Math.round(raisedUsd / 1000)}K
 ${productSubtitle ? `Description: ${productSubtitle}` : ""}
 
+This is a condensed form of the email below. Keep the same claims, the same order, and the same
+tone. Compress — do not invent, embellish, or add anything that is not in it.
+
+--- THE EMAIL WE ARE CONDENSING ---
+I came across your campaign and want to congratulate you on the result. [one-line description of the product]
+
+My name is Yoshitaka Kikutani, and I represent Blink Japan, a company with deep roots in Japanese media, marketing, and consumer distribution.
+
+I believe this product has exceptional potential in Japan.
+
+We would love to bring it to Japan through crowdfunding platforms such as Makuake and CAMPFIRE, and we sincerely hope to be your dedicated Japan partner.
+
+We would like to ask you to entrust the Japan sales rights for this product to us. Here is what we would bring to that role:
+- TV & Media Network: our founder has over 40 years in the Japanese television industry, the last 21 of them leading Blink Japan. We maintain direct connections to home shopping networks, major broadcasters, and production companies.
+- Digital Marketing: certified agency for Yahoo! Japan and Google, having managed over 12 billion yen in advertising.
+- Crowdfunding Experience: we are not approaching Makuake as a newcomer. We helped launch and grow the YouTube channel of Tomoaki Makino, a former Japan national team footballer who played in the 2018 FIFA World Cup, and we were involved in the Makuake campaign for his product. As a media company we have also interviewed the Makuake team directly. We maintain direct relationships with Makuake and CAMPFIRE, as well as leading e-commerce channels.
+
+We have been in business for 21 years as a registered Japanese corporation.
+
+We have prepared a Japan Market Analysis Report for this product. Would you be open to receiving it?
+--- END OF EMAIL ---
+
 Rules:
-- Write in English
-- 500-900 characters (this is a platform message, not a formal email — no "Dear Sir", no signature block)
-- Open with one specific, genuine compliment about THIS product
-- Introduce us: Blink Japan — a Japanese corporation in its 21st year, strong in TV media and digital marketing (¥12B+ managed ad spend, certified Yahoo! Japan / Google agency), direct relationships with Makuake and CAMPFIRE (Japan's top crowdfunding platforms)
-- Core proposal: we want to launch their product on Japanese crowdfunding as their dedicated Japan partner — we take the lead on campaign, regulatory compliance (PSE etc.), and post-campaign retail
-- KEY CTA: we have prepared a Japan Market Analysis Report for their product — tell them we would be delighted to send it, share our email address cbec@blink-japan.com, and warmly say we look forward to hearing from them (this moves the conversation to email)
+- Write in English, 500-900 characters, 3-4 short paragraphs
+- No "Dear Sir", no signature block (this is a platform message, not a formal email)
+- Open with one specific, genuine compliment about THIS product, then the congratulations
+- Keep the ask explicit: we would like to be entrusted with the Japan sales rights
+- The three strengths above may be compressed, but do not overstate them:
+  * the advertising figure is CUMULATIVE - never write "annual" or "per year"
+  * with Makuake and CAMPFIRE we have relationships and connections - never claim a partnership,
+    agreement, or contract
+  * we are a media and video production company - never claim we specialize in cross-border trade
+  * on the Makino channel we HELPED LAUNCH AND GROW it - we do not run or manage it now, so never
+    write "we manage" or "we operate" his channel
+  * on his Makuake campaign we were INVOLVED as a participant - we were not the campaign owner,
+    so never write "we ran" or "we executed" a Makuake campaign
+- The Makino / Makuake experience is the single most persuasive item here because it can be verified.
+  Keep it, and keep the name and the 2018 FIFA World Cup reference (the name alone means little abroad,
+  the World Cup reference is what makes it land). Compress the other strengths instead if space is tight
+- Do NOT promise to handle PSE, certification, or regulatory compliance. Do not mention them at all
+- Do NOT write "you focus on the product, we handle everything" - we are not an agency acting on
+  their behalf; we take on the Japan market as our own business
+- End with the CTA: we have prepared a Japan Market Analysis Report, we would be delighted to send it,
+  our email is cbec@blink-japan.com, and we look forward to hearing from them
 - Do NOT include any URLs (platform spam filters flag links); the email address is fine
-- Warm, professional, concise. 3-4 short paragraphs
 - Return only the message text, nothing else`,
       },
     ],
