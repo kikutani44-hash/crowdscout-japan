@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatUsd } from "@/lib/utils";
 import { getDisplayTitle } from "@/lib/project-translation";
 import { AlertTriangle, CheckCircle, Clock, Mail, XCircle } from "lucide-react";
+import { judgeFollowUp, followUpStageClass, followUpBadgeClass } from "@/lib/followup";
 
 const PLATFORM_LABELS: Record<string, string> = {
   kickstarter: "KS",
@@ -23,10 +24,7 @@ const STATUS_OPTIONS: { value: OfferStatus; label: string; color: string }[] = [
   { value: "未接触", label: "未接触に戻す", color: "text-muted-foreground" },
 ];
 
-function daysSince(dateStr: string | null): number | null {
-  if (!dateStr) return null;
-  return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
-}
+
 
 interface RowState {
   note: string;
@@ -71,31 +69,29 @@ export function FollowUpQueue({ projects }: { projects: Project[] }) {
     <>
       <div className="space-y-3">
         {projects.map((p) => {
-          const days = daysSince(p.offer_sent_at);
-          const needsFollowUp = days !== null && days >= 7;
-          const urgent = days !== null && days >= 14;
+          // 相手が示した期限ではなく、営業日ベースの段階でこちらの行動を切り替える
+          const followUp = judgeFollowUp(p.offer_sent_at);
           const row = rows[p.id];
 
           return (
             <div
               key={p.id}
               className={`rounded-lg border px-4 py-3 ${
-                urgent
-                  ? "border-red-500/30 bg-red-500/5"
-                  : needsFollowUp
-                    ? "border-amber-500/30 bg-amber-500/5"
-                    : "border-border bg-secondary/10"
+                followUp ? followUpStageClass(followUp.stage) : "border-border bg-secondary/10"
               }`}
             >
               <div className="flex items-start gap-3">
-                {/* 経過日数 */}
-                <div className="w-14 shrink-0 text-center pt-1">
-                  {days !== null ? (
+                {/* 経過（営業日）。土日を除いて数える */}
+                <div className="w-16 shrink-0 text-center pt-1">
+                  {followUp ? (
                     <>
-                      <p className={`text-lg font-bold ${urgent ? "text-red-400" : needsFollowUp ? "text-amber-400" : "text-muted-foreground"}`}>
-                        {days}日
+                      <p className={`text-lg font-bold ${followUpBadgeClass(followUp.stage)}`}>
+                        {followUp.businessDays}
                       </p>
-                      <p className="text-[9px] text-muted-foreground">経過</p>
+                      <p className="text-[9px] text-muted-foreground">営業日</p>
+                      <p className="text-[9px] text-muted-foreground">
+                        （{followUp.calendarDays}日）
+                      </p>
                     </>
                   ) : (
                     <Clock className="mx-auto h-4 w-4 text-muted-foreground" />
@@ -171,21 +167,18 @@ export function FollowUpQueue({ projects }: { projects: Project[] }) {
 
                 {/* 2通目ボタン */}
                 <div className="shrink-0 space-y-1 text-right">
-                  {urgent && (
-                    <p className="flex items-center gap-1 text-[10px] text-red-400">
+                  {followUp && followUp.stage !== "waiting" && (
+                    <p
+                      className={`flex items-center gap-1 text-[10px] ${followUpBadgeClass(followUp.stage)}`}
+                      title={followUp.action}
+                    >
                       <AlertTriangle className="h-3 w-3" />
-                      要フォローアップ
-                    </p>
-                  )}
-                  {needsFollowUp && !urgent && (
-                    <p className="flex items-center gap-1 text-[10px] text-amber-400">
-                      <AlertTriangle className="h-3 w-3" />
-                      2通目を送る時期
+                      {followUp.label}
                     </p>
                   )}
                   <Button
                     size="sm"
-                    variant={needsFollowUp ? "default" : "outline"}
+                    variant={followUp && followUp.stage !== "waiting" ? "default" : "outline"}
                     onClick={() => { setSelected(p); setModalOpen(true); }}
                   >
                     2通目を送る

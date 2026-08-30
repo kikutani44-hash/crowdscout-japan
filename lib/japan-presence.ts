@@ -15,11 +15,11 @@
  * 費用: Anthropic APIも有料検索APIも使わない。HTTPリクエストのみ。
  */
 
-export type JapanPresenceVerdict = "entered" | "clear" | "unknown";
+export type JapanPresenceVerdict = "entered" | "caution" | "clear" | "unknown";
 
 export interface JapanPresenceEvidence {
   /** 'domain' | 'amazon' | 'rakuten' | 'official_site' */
-  kind: "domain" | "amazon" | "rakuten" | "official_site";
+  kind: "domain" | "amazon" | "rakuten" | "official_site" | "parent_brand";
   label: string;
   url: string | null;
   /** 見つかった商品名など（最大3件） */
@@ -60,7 +60,7 @@ function leadingSegment(title: string): string {
   const byBrand = title.match(/\bby\s+([A-Za-z0-9][\w&.'\-]*(?:\s+[A-Za-z0-9][\w&.'\-]*){0,2})\s*$/);
   if (byBrand) return byBrand[1].trim();
 
-  let head = title.split(/[:—–|｜]/)[0];
+  let head = title.split(/[,、:—–|｜]/)[0];
   head = head.replace(/[™®©]/g, "");
   head = head.split(/\s+[-–—]\s+/)[0];
   head = head.replace(/\s*\((?:[^)]*)\)\s*$/, "");
@@ -102,6 +102,13 @@ export interface BrandTerms {
   matchKey: string;
   /** 画面表示用 */
   display: string;
+  /**
+   * 親ブランド候補（タイトルの1語目）。
+   * "xTool Apparel Printer" の "xTool" のように、
+   * 商品名と一体化していて2語では日本の商品名に一致しない場合に使う。
+   * 1語だけだと誤検出しやすいため、判定を覆さず注意喚起にとどめる。
+   */
+  parentBrand: string | null;
 }
 
 /**
@@ -132,7 +139,15 @@ export function resolveBrandTerms(title: string, officialUrl?: string | null): B
   if (matchKey.length < 5) return null;
   if (words.length === 1 && TOO_GENERIC.has(words[0].toLowerCase())) return null;
 
-  return { searchTerm, matchKey, display: searchTerm };
+  // 1語目が十分に長く、2語のブランド名と別物なら親ブランド候補として控えておく
+  const first = words[0];
+  const firstNorm = normalize(first);
+  const parentBrand =
+    words.length > 1 && firstNorm.length >= 5 && !TOO_GENERIC.has(first.toLowerCase())
+      ? first
+      : null;
+
+  return { searchTerm, matchKey, display: searchTerm, parentBrand };
 }
 
 async function fetchText(url: string, maxBytes = 900_000): Promise<string | null> {
@@ -352,6 +367,7 @@ export async function checkJapanPresence(
       case "amazon": return "Amazon.co.jp";
       case "rakuten": return "楽天市場";
       case "official_site": return "公式サイトの日本語対応";
+      case "parent_brand": return "親ブランドの日本流通";
     }
   });
 
@@ -382,6 +398,8 @@ export function japanPresenceBadgeLabel(verdict: JapanPresenceVerdict): string {
   switch (verdict) {
     case "entered":
       return "⚠️ 日本販売の形跡あり";
+    case "caution":
+      return "🟡 親ブランドが日本にある";
     case "clear":
       return "✅ 日本販売なし";
     case "unknown":
@@ -393,6 +411,8 @@ export function japanPresenceBadgeClass(verdict: JapanPresenceVerdict): string {
   switch (verdict) {
     case "entered":
       return "border-red-500/50 bg-red-500/20 text-red-200";
+    case "caution":
+      return "border-amber-500/50 bg-amber-500/20 text-amber-200";
     case "clear":
       return "border-emerald-500/50 bg-emerald-500/20 text-emerald-200";
     case "unknown":

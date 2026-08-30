@@ -229,26 +229,41 @@ export async function findContactRoutes(rawSiteUrl: string): Promise<ContactRout
     });
   }
 
-  // 2) リンクが1つも取れないサイト（JSで描画される等）は既定のパスを直接叩く
+  // 2) リンクが1つも取れないサイト（JSで描画される等）は既定のパスを直接叩く。
+  //    ただし、存在しないURLにも中身を返すサイト（302で回り続けるドメイン等）では
+  //    全パスが「窓口あり」に化けるため、先にでたらめなパスで確かめる。
+  //    実測: rocxzoom.com は全URLが302の空応答で、卸窓口が4件も誤検出された。
   if (found.size === 0) {
-    const probes = await Promise.all(
-      FALLBACK_PATHS.map(async (path) => {
-        const url = `${siteUrl}${path}`;
-        const page = await fetchHtml(url, 120_000);
-        if (page === null) return null;
-        const hit = classify(path, "");
-        if (!hit) return null;
-        return {
-          kind: hit.kind,
-          rank: hit.rank,
-          label: contactRouteKindLabel(hit.kind),
-          url,
-          hasForm: /<form[\s>]/i.test(page),
-        };
-      })
-    );
-    for (const probe of probes) {
-      if (probe) found.set(probe.url, probe);
+    const decoy = await fetchHtml(`${siteUrl}/crowdjarvis-nonexistent-path-check`, 60_000);
+    const isCatchAll = decoy !== null && decoy.length > 300;
+
+    if (!isCatchAll) {
+      const probes = await Promise.all(
+        FALLBACK_PATHS.map(async (path) => {
+          const url = `${siteUrl}${path}`;
+          const page = await fetchHtml(url, 120_000);
+          // 中身の無いページは窓口として扱わない
+          if (page === null || page.length < 1_000) return null;
+          const hit = classify(path, "");
+          if (!hit) return null;
+          const hasForm = /<form[\s>]/i.test(page);
+          // そのページが本当にその窓口かを、本文にも語が出るかで確かめる
+          const body = stripTags(page).toLowerCase();
+          const rule = RULES.find((r) => r.kind === hit.kind);
+          const mentioned = rule?.words.some((word) => matchesWord(body, word)) ?? false;
+          if (!hasForm && !mentioned) return null;
+          return {
+            kind: hit.kind,
+            rank: hit.rank,
+            label: contactRouteKindLabel(hit.kind),
+            url,
+            hasForm,
+          };
+        })
+      );
+      for (const probe of probes) {
+        if (probe) found.set(probe.url, probe);
+      }
     }
   }
 

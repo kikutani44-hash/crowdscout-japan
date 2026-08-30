@@ -60,6 +60,10 @@ export interface Project {
   /** 公式サイトから見つけた連絡窓口（卸申込フォーム・問い合わせ等） */
   contact_routes?: ContactRouteResult | null;
   contact_routes_checked_at?: string | null;
+  /** オファー送信に使った窓口のURL（フォーム送信は手作業のため記録する） */
+  offer_sent_via?: string | null;
+  /** 実際に送った本文。2通目で矛盾しないように保存する */
+  offer_sent_text?: string | null;
   maker_contact_form: string | null;
   maker_instagram: string | null;
   maker_twitter: string | null;

@@ -20,7 +20,7 @@ import {
 import { contactRouteKindLabel, type ContactRouteResult } from "@/lib/contact-route";
 import { formatUsd } from "@/lib/utils";
 import { getDisplayTitle } from "@/lib/project-translation";
-import { Copy, DoorOpen, Eye, FileText, Globe, Instagram, Loader2, Mail, MessageSquare, Send, Twitter } from "lucide-react";
+import { ClipboardCheck, Copy, DoorOpen, Eye, FileText, Globe, Instagram, Loader2, Mail, MessageSquare, Send, Twitter } from "lucide-react";
 
 type TabId = "email" | "ks-message" | "sns" | "dm-log" | "japan-page";
 
@@ -110,6 +110,12 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   // 公式サイトから探した連絡窓口（卸申込フォームが見つかれば最優先で使う）
   const [routes, setRoutes] = useState<ContactRouteResult | null>(null);
   const [routesLoading, setRoutesLoading] = useState(false);
+  // 送信の記録（フォームからの手動送信を1クリックで残す）
+  const [recordOpen, setRecordOpen] = useState(false);
+  const [recordVia, setRecordVia] = useState("");
+  const [recordText, setRecordText] = useState("");
+  const [recording, setRecording] = useState(false);
+  const [recordedAt, setRecordedAt] = useState<string | null>(null);
   const [emailType, setEmailType] = useState<"first" | "second">("first");
 
   // KS message tab
@@ -133,6 +139,36 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
   const [dmInput, setDmInput] = useState("");
   const [dmDirection, setDmDirection] = useState<"sent" | "received">("received");
   const [dmPlatform, setDmPlatform] = useState("instagram");
+
+  // 実際に送ったことを記録する。
+  // Kickstarterのメッセージが送れずメールも取れないため、送信は公式サイトの
+  // フォームから手作業で行っている。日時・窓口・本文が残らないと
+  // 返信待ちの管理ができず、2通目を書くときに1通目と矛盾する。
+  const handleRecordSend = async () => {
+    if (!project) return;
+    setRecording(true);
+    try {
+      const sentAt = new Date().toISOString();
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          offer_status: "交渉中",
+          offer_sent_at: sentAt,
+          offer_sent_via: recordVia || null,
+          offer_sent_text: recordText || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setRecordedAt(sentAt);
+      setRecordOpen(false);
+    } catch (err) {
+      window.alert(`記録に失敗しました: ${err instanceof Error ? err.message : err}`);
+    } finally {
+      setRecording(false);
+    }
+  };
 
   // 公式サイトを開いて「先方に届く窓口」を探す。
   // Kickstarterのメッセージは送れず、メールも窓口とは限らないため、
@@ -332,6 +368,10 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
       setEmail(project.maker_email ?? "");
       setSiteUrl(project.maker_website ?? null);
       setRoutes(project.contact_routes ?? null);
+      setRecordedAt(project.offer_sent_at ?? null);
+      setRecordVia(project.offer_sent_via ?? project.contact_routes?.best?.url ?? "");
+      setRecordText(project.offer_sent_text ?? "");
+      setRecordOpen(false);
       setSiteCheck(null);
       setContactFormUrl(project.maker_email ? null : (project.maker_contact_form ?? null));
       setCustomNote("");
@@ -576,6 +616,83 @@ export function ContactModal({ project, open, onOpenChange, onSent }: ContactMod
                   </button>
                 </div>
               )}
+
+              {/* 送信の記録 — フォームから手で送ったことを1クリックで残す */}
+              <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 text-xs">
+                {recordedAt ? (
+                  <p className="text-blue-300">
+                    ✅ 送信済みとして記録されています（
+                    {new Date(recordedAt).toLocaleString("ja-JP")}）
+                    {routes?.best?.url || recordVia ? (
+                      <span className="block truncate text-blue-200/70">
+                        窓口: {recordVia || routes?.best?.url}
+                      </span>
+                    ) : null}
+                    <button
+                      onClick={() => setRecordOpen(true)}
+                      className="mt-1 underline text-muted-foreground hover:text-foreground"
+                    >
+                      記録を更新する
+                    </button>
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-blue-300">
+                      フォームから送信したら、ここに記録してください
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setRecordOpen(true)}
+                      className="border-blue-500/40 text-blue-300 hover:bg-blue-500/10"
+                    >
+                      <ClipboardCheck className="h-3.5 w-3.5" />
+                      送信を記録
+                    </Button>
+                  </div>
+                )}
+
+                {recordOpen && (
+                  <div className="mt-3 space-y-2">
+                    <label className="block">
+                      <span className="text-muted-foreground">送信に使った窓口のURL</span>
+                      <input
+                        value={recordVia}
+                        onChange={(e) => setRecordVia(e.target.value)}
+                        placeholder="https://example.com/pages/become-a-wholesaler"
+                        className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-muted-foreground">
+                        実際に送った本文（2通目を書くときに参照します）
+                      </span>
+                      <textarea
+                        value={recordText}
+                        onChange={(e) => setRecordText(e.target.value)}
+                        rows={6}
+                        placeholder="送った文面をそのまま貼り付けてください"
+                        className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 font-mono text-[11px]"
+                      />
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" onClick={handleRecordSend} disabled={recording}>
+                        {recording ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                        {recording ? "保存中" : "この内容で記録する"}
+                      </Button>
+                      <button
+                        onClick={() => setRecordOpen(false)}
+                        className="text-muted-foreground underline hover:text-foreground"
+                      >
+                        やめる
+                      </button>
+                      <span className="text-muted-foreground">
+                        記録すると「交渉中」になり、返信待ち一覧に並びます
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {contactFormUrl && !email && (
                 <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
