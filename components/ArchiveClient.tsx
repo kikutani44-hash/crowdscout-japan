@@ -205,7 +205,7 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
           <div>
             <h1 className="text-2xl font-bold">📦 過去のサクセス案件</h1>
             <p className="text-sm text-muted-foreground">
-              終了から180〜730日の案件 · 日本未参入の可能性あり
+              終了した案件 · 日本未参入の可能性あり
             </p>
           </div>
           <Link
@@ -232,7 +232,7 @@ export function ArchiveClient({ initialProjects }: ArchiveClientProps) {
           <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
             <p className="text-4xl mb-3">💎</p>
             <p>まだアーカイブ案件がありません。</p>
-            <p className="text-xs mt-2">クロールを実行すると 180〜730日前に終了した案件が追加されます。</p>
+            <p className="text-xs mt-2">キャンペーンが終了した案件はここに移動します。</p>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

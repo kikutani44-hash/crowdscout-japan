@@ -48,12 +48,18 @@ export async function fetchProjects(filters?: {
   const supabase = createServerSupabase();
   let query = supabase.from("projects").select("*").limit(5000);
 
-  // archivedOnly: お宝発掘モード（180〜730日前に終了した案件）
+  // 進行中と終了済みの振り分けは status ではなく「終了日」で行う。
+  // status はクロールでしか更新されず、終了済みでも "active" のまま
+  // 残るため、トップページに終了案件が居座っていた（実測で786件中444件）。
+  const nowIso = new Date().toISOString();
   if (filters?.archivedOnly) {
-    query = query.eq("status", "archived");
+    // 過去案件ページ: 終了日を過ぎたもの、または明示的にarchived
+    query = query.or(`status.eq.archived,deadline_at.lt.${nowIso}`);
   } else if (!filters?.includeArchived) {
-    // 通常表示からarchivedを除外（includeArchived指定時は除外しない）
-    query = query.neq("status", "archived");
+    // トップページ: 実施中のみ。終了日が未設定の案件は判定できないので残す
+    query = query
+      .neq("status", "archived")
+      .or(`deadline_at.gte.${nowIso},deadline_at.is.null`);
   }
 
   if (filters?.platform && filters.platform !== "all") {
