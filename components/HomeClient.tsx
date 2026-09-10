@@ -32,6 +32,10 @@ import { needsJapaneseTranslation } from "@/lib/project-translation";
 import { usdToJpy } from "@/lib/utils";
 
 const TRANSLATE_BATCH_SIZE = 3;
+// 画面を開いたときに自動で翻訳する上限件数。
+// Anthropicクレジットは自動課金のため、1回の表示で際限なく訳さない。
+// 調達額の大きい順に訳し、残りはカードの「翻訳」ボタンか翌日のクロールに任せる。
+const MAX_AUTO_TRANSLATE_PER_VISIT = 30;
 const TRANSLATE_FETCH_TIMEOUT_MS = 55_000;
 
 interface HomeClientProps {
@@ -75,7 +79,10 @@ export function HomeClient({ initialProjects }: HomeClientProps) {
   const [translatingIds, setTranslatingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const missing = initialProjects.filter(needsJapaneseTranslation);
+    const missing = initialProjects
+      .filter(needsJapaneseTranslation)
+      .sort((a, b) => (b.raised_usd ?? 0) - (a.raised_usd ?? 0))
+      .slice(0, MAX_AUTO_TRANSLATE_PER_VISIT);
     if (missing.length === 0) return;
 
     let cancelled = false;

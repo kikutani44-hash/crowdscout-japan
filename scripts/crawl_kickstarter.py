@@ -24,7 +24,7 @@ import argparse
 import json
 import sys
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlencode
 
 from playwright.sync_api import sync_playwright
@@ -170,7 +170,15 @@ def crawl_kickstarter(
     min_projects: int | None = None,
     sort: str = "magic",
     archive_mode: bool = False,
+    on_category_done: Callable[[list[dict[str, Any]]], None] | None = None,
 ) -> list[dict[str, Any]]:
+    """
+    on_category_done を渡すと、カテゴリを1つ取り終えるたびにその分を渡す。
+    全件を集め終えてから保存する作りだと、GitHub Actions の制限時間で
+    打ち切られた瞬間にそれまでの成果がすべて消える。実際に 2026-08-21〜09-09 の
+    20日間、人気順とアーカイブのジョブが毎日90分で打ち切られ、保存ゼロだった。
+    カテゴリ単位で保存すれば、打ち切られても失うのは処理中の1カテゴリ分で済む。
+    """
     if archive_mode and sort == "magic":
         sort = "most_funded"
         print("[kickstarter] archive mode: switching to sort=most_funded (歴代最高額順)")
@@ -195,6 +203,7 @@ def crawl_kickstarter(
             if limit and len(projects) >= limit:
                 break
             print(f"[kickstarter] category: {category_label} (id={category_id})")
+            category_start = len(projects)
             for page_num in range(1, pages_per_category + 1):
                 if limit and len(projects) >= limit:
                     break
@@ -233,6 +242,9 @@ def crawl_kickstarter(
                     f"{skipped_category} excluded by category"
                 )
 
+            if on_category_done and len(projects) > category_start:
+                on_category_done(projects[category_start:])
+
         browser.close()
 
     # Extra pages on Technology if below minimum target (magic sort only)
@@ -245,6 +257,7 @@ def crawl_kickstarter(
                 f"[kickstarter] {len(projects)} < min {min_projects}, "
                 f"fetching Technology pages {extra_start}-{extra_end}..."
             )
+            extra_from = len(projects)
             with sync_playwright() as playwright:
                 browser, context = create_browser(playwright)
                 page = context.new_page()
@@ -268,6 +281,8 @@ def crawl_kickstarter(
                             seen_urls.add(key)
                             projects.append(mapped)
                 browser.close()
+            if on_category_done and len(projects) > extra_from:
+                on_category_done(projects[extra_from:])
 
     projects.sort(key=lambda p: (
         0 if p.get("status") == "active" else 1,
@@ -284,6 +299,40 @@ def crawl_kickstarter(
     # 1件ずつ個別ページを開く重い処理なので、Supabaseへの保存を終えてから
     # main() 側で実行する（途中で打ち切られても収集結果を失わないため）。
     return projects
+
+
+# 1回の実行で新たに翻訳する上限。Anthropicクレジットの使い過ぎを防ぐ。
+# 実績では新着ジョブ424件中、既存訳の再利用が403件で、新規翻訳は約21件だった。
+# ただし長く止まっていたジョブ（アーカイブ等）が再開すると一度に大量に来るため、
+# 上限を設けて調達額の大きいものから訳し、残りは次回以降に回す。
+DEFAULT_TRANSLATE_LIMIT = 60
+
+
+def translate_within_budget(
+    batch: list[dict[str, Any]], args: argparse.Namespace, stats: dict[str, int]
+) -> None:
+    from translation_utils import needs_japanese_translation
+    from translator import translate_projects
+
+    pending = [p for p in batch if args.force_translate or needs_japanese_translation(p)]
+    if not pending:
+        return
+
+    remaining = max(0, args.translate_limit - stats["translated"])
+    # 調達額の大きい順に訳す（オファー対象になりやすいものを優先する）
+    pending.sort(key=lambda p: -float(p.get("raised_usd") or 0))
+    selected, deferred = pending[:remaining], pending[remaining:]
+
+    if deferred:
+        stats["deferred"] += len(deferred)
+        print(
+            f"[kickstarter] 翻訳上限 {args.translate_limit}件に達するため "
+            f"{len(deferred)}件の翻訳を次回に回します"
+        )
+    if selected:
+        print(f"[kickstarter] translating {len(selected)} projects...")
+        translate_projects(selected, force=args.force_translate)
+        stats["translated"] += len(selected)
 
 
 def main() -> int:
@@ -346,9 +395,29 @@ def main() -> int:
         action="store_true",
         help="Archive mode: collect projects ended 180-730 days ago (お宝発掘)",
     )
+    parser.add_argument(
+        "--translate-limit",
+        type=int,
+        default=DEFAULT_TRANSLATE_LIMIT,
+        help="1回の実行で新たに翻訳する上限件数（調達額の大きい順）。0で翻訳しない",
+    )
     args = parser.parse_args()
 
     slugs = parse_category_slugs(args.categories or None)
+
+    # カテゴリごとに保存する（--replace は全件入れ替えなので従来どおり最後にまとめて行う）
+    incremental = not args.no_save and not args.no_supabase and not args.replace
+    stats = {"saved": 0, "translated": 0, "deferred": 0}
+
+    def persist(batch: list[dict[str, Any]]) -> None:
+        if not args.no_translate:
+            # 既にDBにある訳を先に埋めて、二度目の翻訳を防ぐ
+            hydrate_existing_translations(batch)
+            translate_within_budget(batch, args, stats)
+        saved = save_to_supabase(batch)
+        stats["saved"] += saved or 0
+        print(f"[kickstarter] category saved: {saved} rows (累計 {stats['saved']})")
+
     projects = crawl_kickstarter(
         max_pages=args.pages,
         category_slugs=slugs,
@@ -356,6 +425,7 @@ def main() -> int:
         min_projects=args.min,
         sort=args.sort,
         archive_mode=args.archive,
+        on_category_done=persist if incremental else None,
     )
     print(f"[kickstarter] total matched: {len(projects)}")
     if args.min and len(projects) < args.min:
@@ -365,15 +435,18 @@ def main() -> int:
         print("[kickstarter] no projects found")
         return 0 if args.archive else 1
 
-    if not args.no_save:
+    if incremental:
+        path = save_json(projects, "kickstarter_projects.json")
+        print(f"[kickstarter] saved to {path}")
+        print(
+            f"[kickstarter] Supabase: {stats['saved']} rows upserted / "
+            f"翻訳 {stats['translated']}件 / 上限超過で翻訳を見送り {stats['deferred']}件"
+        )
+    elif not args.no_save:
         if not args.no_translate:
-            from translator import translate_projects
-
             # 既にDBにある訳を先に埋めて、二度目の翻訳を防ぐ
             hydrate_existing_translations(projects)
-
-            print(f"[kickstarter] translating {len(projects)} projects...")
-            translate_projects(projects, force=args.force_translate)
+            translate_within_budget(projects, args, stats)
 
         path = save_json(projects, "kickstarter_projects.json")
         print(f"[kickstarter] saved to {path}")
