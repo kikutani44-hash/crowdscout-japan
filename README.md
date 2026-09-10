@@ -189,12 +189,12 @@ Netlify Build Hook の作成: **Site configuration → Build & deploy → Build 
 
 #### 手動実行
 
-- GitHub **Actions** タブ → **Daily Crawl** → **Run workflow**
-- ローカル（CI と同じコマンド）:
+- GitHub **Actions** タブ → **Crawl Kickstarter** / **Crawl Indiegogo** / **Crawl Wadiz** → **Run workflow**
 
-```bash
-npm run crawl:scheduled
-```
+> ⚠️ 旧 `npm run crawl:scheduled` は削除しました（2026-09-10）。
+> `--replace`（案件テーブルを全削除して入れ直す）と `--force-translate`（全件を翻訳し直す）が
+> 付いており、実行するとオファー状況・送信記録・メモが消え、翻訳費も全件分かかるためです。
+> 手元で試す場合は `npm run crawl:kickstarter -- --pages 2 --max 20` のように件数を絞ってください。
 
 #### 初回確認
 
