@@ -202,7 +202,10 @@ def normalize_project(raw: dict[str, Any]) -> dict[str, Any]:
         "maker_email": raw.get("maker_email"),
         "maker_website": raw.get("maker_website"),
         "maker_sns": raw.get("maker_sns"),
-        "created_at": raw.get("created_at") or now,
+        # created_at は送らない。送ると upsert のたびに「今」で上書きされ、
+        # 既存案件まで今日の新規に見えてしまう（2026-09-10 に 483件が「今日の新規」と
+        # 出たが、実際の新規は数十件だった）。DBの既定値 now() に任せれば、
+        # 初回登録時だけ記録され、以後の更新では変わらない。
         "updated_at": now,
     }
     project["score"] = calculate_score(project)

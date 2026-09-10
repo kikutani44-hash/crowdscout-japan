@@ -222,7 +222,6 @@ def parse_card_data(card: dict[str, Any], category: str = "テクノロジー・
         "status": status,
         **metrics,
         "maker_website": None,
-        "created_at": utc_now_iso(),
     })
 
 

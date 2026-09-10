@@ -158,7 +158,6 @@ def map_kickstarter_project(item: dict[str, Any], min_raised: int = MIN_RAISED_U
             "country": item.get("country_displayable_name") or item.get("country"),
             "status": status,
             **metrics,
-            "created_at": utc_now_iso(),
         }
     )
 

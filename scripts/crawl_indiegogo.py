@@ -516,7 +516,6 @@ def scrape_project_page(page, url: str, preview: dict[str, Any] | None = None, a
             "status": status,
             **metrics,
             "maker_website": maker_website,
-            "created_at": utc_now_iso(),
         }
     )
 

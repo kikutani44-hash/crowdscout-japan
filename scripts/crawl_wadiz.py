@@ -206,7 +206,6 @@ def map_wadiz_project(item: dict[str, Any], archive_mode: bool = False) -> dict[
             "status": status,
             **metrics,
             "maker_website": None,
-            "created_at": utc_now_iso(),
         }
     )
 
